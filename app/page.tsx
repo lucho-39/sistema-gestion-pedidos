@@ -99,7 +99,7 @@ export default function HomePage() {
                   Ver Pedidos
                 </Button>
               </Link>
-              <Link href="/pedidos" className="block">
+              <Link href="/pedidos nuevo" className="block">
                 <Button className="w-full justify-start bg-transparent" variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   Nuevo Pedido
