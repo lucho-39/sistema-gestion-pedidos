@@ -1,72 +1,176 @@
-import type { Pedido, ReporteSemanalProductos, ReporteSemanalPedidos } from "./types"
+import type { Pedido, Cliente, Producto } from "./types"
 
-export function generarReporteSemanalProductos(pedidos: Pedido[]): ReporteSemanalProductos {
-  // Agrupar productos por proveedor y sumar cantidades
-  const productosPorProveedor = new Map<string, Map<number, { producto_codigo: string;descripcion: string; cantidad_total: number }>>()
+export interface ReportePedido {
+  pedido: Pedido
+  cliente: Cliente | null
+  items_detalle: Array<{
+    producto: Producto | null
+    cantidad: number
+    subtotal: number
+  }>
+  total: number
+}
 
-  pedidos.forEach((pedido) => {
-    pedido.productos.forEach((producto) => {
-      const proveedorNombre = producto.proveedor.proveedor_nombre
-      const articuloNumero = producto.articulo_numero
+export interface ReporteSemanal {
+  id: string
+  semana_inicio: string
+  semana_fin: string
+  pedidos: Pedido[]
+  resumen: {
+    total_pedidos: number
+    total_items: number
+    productos_unicos: number
+    clientes_unicos: number
+  }
+  productos_mas_pedidos: Array<{
+    articulo_numero: number
+    descripcion: string
+    cantidad_total: number
+    veces_pedido: number
+  }>
+  clientes_activos: Array<{
+    cliente_codigo: number
+    nombre: string
+    pedidos_realizados: number
+    items_totales: number
+  }>
+}
 
-      if (!productosPorProveedor.has(proveedorNombre)) {
-        productosPorProveedor.set(proveedorNombre, new Map())
-      }
+export async function generarReportePedido(
+  pedido: Pedido,
+  clientes: Cliente[],
+  productos: Producto[],
+): Promise<ReportePedido> {
+  // Buscar cliente
+  const cliente = clientes.find((c) => c.cliente_codigo === pedido.cliente_codigo) || null
 
-      const productosProveedor = productosPorProveedor.get(proveedorNombre)!
-
-      if (productosProveedor.has(articuloNumero)) {
-        const productoExistente = productosProveedor.get(articuloNumero)!
-        productoExistente.cantidad_total += producto.cantidad
-      } else {
-        productosProveedor.set(articuloNumero, {
-          producto_codigo: producto.producto_codigo,
-          descripcion: producto.descripcion,
-          cantidad_total: producto.cantidad,
-        })
-      }
-    })
-  })
-
-  // Convertir a formato del reporte y ordenar
-  const proveedores = Array.from(productosPorProveedor.entries()).map(([proveedorNombre, productos]) => {
-    const productosOrdenados = Array.from(productos.entries())
-      .map(([articuloNumero, data]) => ({
-        articulo_numero: articuloNumero,
-        producto_codigo: data.producto_codigo,
-        descripcion: data.descripcion,
-        cantidad_total: data.cantidad_total,
-      }))
-      .sort((a, b) => a.articulo_numero - b.articulo_numero)
+  // Procesar items con detalles
+  const items_detalle = pedido.items.map((item) => {
+    const producto = productos.find((p) => p.articulo_numero === item.articulo_numero) || null
+    const subtotal = item.cantidad * (item.precio_unitario || 0)
 
     return {
-      proveedor_nombre: proveedorNombre,
-      productos: productosOrdenados,
+      producto,
+      cantidad: item.cantidad,
+      subtotal,
     }
   })
 
+  // Calcular total
+  const total = items_detalle.reduce((sum, item) => sum + item.subtotal, 0)
+
   return {
-    fecha_corte: new Date().toISOString(),
-    proveedores,
+    pedido,
+    cliente,
+    items_detalle,
+    total,
   }
 }
 
-export function generarReporteSemanalPedidos(pedidos: Pedido[]): ReporteSemanalPedidos {
-  // Ordenar pedidos por fecha
-  const pedidosOrdenados = pedidos
-    .sort((a, b) => new Date(b.fecha_pedido).getTime() - new Date(a.fecha_pedido).getTime())
-    .map((pedido) => ({
-      pedido_id: pedido.pedido_id,
-      fecha_pedido: pedido.fecha_pedido,
-      cliente_nombre: pedido.cliente.nombre,
-      productos: pedido.productos.map((producto) => ({
-        descripcion: producto.descripcion,
-        cantidad: producto.cantidad,
-      })),
+export async function generarReporteSemanal(
+  fechaInicio: Date,
+  fechaFin: Date,
+  pedidos: Pedido[],
+  clientes: Cliente[],
+  productos: Producto[],
+): Promise<ReporteSemanal> {
+  // Filtrar pedidos de la semana
+  const pedidosSemana = pedidos.filter((pedido) => {
+    const fechaPedido = new Date(pedido.fecha_creacion)
+    return fechaPedido >= fechaInicio && fechaPedido <= fechaFin
+  })
+
+  // Calcular resumen
+  const totalItems = pedidosSemana.reduce(
+    (sum, pedido) => sum + pedido.items.reduce((itemSum, item) => itemSum + item.cantidad, 0),
+    0,
+  )
+
+  const productosUnicos = new Set(pedidosSemana.flatMap((pedido) => pedido.items.map((item) => item.articulo_numero)))
+    .size
+
+  const clientesUnicos = new Set(pedidosSemana.map((pedido) => pedido.cliente_codigo)).size
+
+  // Productos más pedidos
+  const conteoProductos: { [key: number]: { cantidad: number; veces: number; descripcion: string } } = {}
+
+  pedidosSemana.forEach((pedido) => {
+    pedido.items.forEach((item) => {
+      if (!conteoProductos[item.articulo_numero]) {
+        conteoProductos[item.articulo_numero] = {
+          cantidad: 0,
+          veces: 0,
+          descripcion: item.descripcion,
+        }
+      }
+      conteoProductos[item.articulo_numero].cantidad += item.cantidad
+      conteoProductos[item.articulo_numero].veces += 1
+    })
+  })
+
+  const productosMasPedidos = Object.entries(conteoProductos)
+    .map(([articulo, data]) => ({
+      articulo_numero: Number.parseInt(articulo),
+      descripcion: data.descripcion,
+      cantidad_total: data.cantidad,
+      veces_pedido: data.veces,
     }))
+    .sort((a, b) => b.cantidad_total - a.cantidad_total)
+    .slice(0, 10)
+
+  // Clientes activos
+  const conteoClientes: { [key: number]: { pedidos: number; items: number; nombre: string } } = {}
+
+  pedidosSemana.forEach((pedido) => {
+    if (!conteoClientes[pedido.cliente_codigo]) {
+      const cliente = clientes.find((c) => c.cliente_codigo === pedido.cliente_codigo)
+      conteoClientes[pedido.cliente_codigo] = {
+        pedidos: 0,
+        items: 0,
+        nombre: cliente?.nombre || `Cliente ${pedido.cliente_codigo}`,
+      }
+    }
+    conteoClientes[pedido.cliente_codigo].pedidos += 1
+    conteoClientes[pedido.cliente_codigo].items += pedido.items.reduce((sum, item) => sum + item.cantidad, 0)
+  })
+
+  const clientesActivos = Object.entries(conteoClientes)
+    .map(([codigo, data]) => ({
+      cliente_codigo: Number.parseInt(codigo),
+      nombre: data.nombre,
+      pedidos_realizados: data.pedidos,
+      items_totales: data.items,
+    }))
+    .sort((a, b) => b.pedidos_realizados - a.pedidos_realizados)
 
   return {
-    fecha_corte: new Date().toISOString(),
-    pedidos: pedidosOrdenados,
+    id: `semanal-${fechaInicio.toISOString().split("T")[0]}`,
+    semana_inicio: fechaInicio.toISOString().split("T")[0],
+    semana_fin: fechaFin.toISOString().split("T")[0],
+    pedidos: pedidosSemana,
+    resumen: {
+      total_pedidos: pedidosSemana.length,
+      total_items: totalItems,
+      productos_unicos: productosUnicos,
+      clientes_unicos: clientesUnicos,
+    },
+    productos_mas_pedidos: productosMasPedidos,
+    clientes_activos: clientesActivos,
   }
+}
+
+export function formatearFecha(fecha: string | Date): string {
+  const date = typeof fecha === "string" ? new Date(fecha) : fecha
+  return date.toLocaleDateString("es-AR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+}
+
+export function formatearMoneda(monto: number): string {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+  }).format(monto)
 }

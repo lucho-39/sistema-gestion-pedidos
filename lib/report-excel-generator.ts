@@ -1,227 +1,266 @@
-import type { ReporteSemanal, ReporteSemanalProductos, ReporteSemanalPedidos } from "./types"
+import * as XLSX from "xlsx"
+import type { ReporteAutomatico } from "./types"
 
-export async function generarExcelReporteGeneral(reporte: ReporteSemanal): Promise<void> {
+// Función principal para generar y descargar Excel desde un reporte
+export function generateExcelFromReporte(
+  reporte: ReporteAutomatico,
+  tipo: "general" | "productos_por_proveedor" | "pedidos",
+): void {
   try {
-    const XLSX = await import("xlsx")
+    let workbook: XLSX.WorkBook
 
-    // Crear workbook
-    const wb = XLSX.utils.book_new()
+    switch (tipo) {
+      case "general":
+        workbook = generateGeneralExcel(reporte)
+        break
+      case "productos_por_proveedor":
+        workbook = generateProductosPorProveedorExcel(reporte)
+        break
+      case "pedidos":
+        workbook = generatePedidosExcel(reporte)
+        break
+      default:
+        throw new Error(`Tipo de reporte no válido: ${tipo}`)
+    }
 
-    // Hoja de resumen
-    const resumenData = [
-      ["REPORTE SEMANAL GENERAL"],
-      ["Fecha de corte:", new Date(reporte.fecha_corte).toLocaleDateString("es-AR")],
-      [""],
-      ["RESUMEN"],
-      ["Total de pedidos:", reporte.pedidos.length],
-      [
-        "Total de productos:",
-        reporte.pedidos.reduce(
-          (total, pedido) => total + pedido.productos.reduce((subtotal, producto) => subtotal + producto.cantidad, 0),
-          0,
-        ),
-      ],
-      [""],
-      ["DETALLE DE PEDIDOS"],
-      ["Pedido ID", "Cliente", "Fecha", "Productos", "Cantidad Total"],
-    ]
+    // Generar nombre único para el archivo
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, "")
+    const filename = `reporte_${tipo}_${timestamp}.xlsx`
 
-    // Agregar datos de pedidos
-    reporte.pedidos.forEach((pedido) => {
-      const totalProductos = pedido.productos.reduce((total, producto) => total + producto.cantidad, 0)
-      resumenData.push([
-        pedido.pedido_id,
-        pedido.cliente.nombre,
-        new Date(pedido.fecha_pedido).toLocaleDateString("es-AR"),
-        pedido.productos.length,
-        totalProductos,
-      ])
-    })
-
-    const wsResumen = XLSX.utils.aoa_to_sheet(resumenData)
-    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen")
-
-    // Hoja de detalle de productos
-    const productosData = [
-      ["Pedido ID", "Cliente", "Art. Nº", "Descripción", "Código", "Cantidad", "Unidad", "Proveedor"],
-    ]
-
-    reporte.pedidos.forEach((pedido) => {
-      pedido.productos.forEach((producto) => {
-        productosData.push([
-          pedido.pedido_id,
-          pedido.cliente.nombre,
-          producto.articulo_numero,
-          producto.descripcion,
-          producto.producto_codigo || "",
-          producto.cantidad,
-          producto.unidad_medida,
-          `${producto.proveedor.proveedor_id} - ${producto.proveedor.proveedor_nombre}`,
-        ])
-      })
-    })
-
-    const wsProductos = XLSX.utils.aoa_to_sheet(productosData)
-    XLSX.utils.book_append_sheet(wb, wsProductos, "Detalle Productos")
-
-    // Generar archivo y descargar en el navegador
-    const fechaCorte = new Date(reporte.fecha_corte).toISOString().split("T")[0]
-    const fileName = `Reporte_General_${fechaCorte}.xlsx`
-
-    // Escribir el workbook como array buffer
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" })
-
-    // Crear blob y descargar
-    const blob = new Blob([wbout], { type: "application/octet-stream" })
-    const url = URL.createObjectURL(blob)
-
-    const link = document.createElement("a")
-    link.href = url
-    link.download = fileName
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    // Descargar el archivo
+    downloadExcelFile(workbook, filename)
   } catch (error) {
-    console.error("Error generando Excel:", error)
-    throw new Error("Error al generar el archivo Excel")
+    console.error("Error generating Excel:", error)
+    throw error
   }
 }
 
-export async function generarExcelReporteProductos(reporte: ReporteSemanalProductos): Promise<void> {
-  try {
-    const XLSX = await import("xlsx")
+// Generar Excel del reporte general
+function generateGeneralExcel(reporte: ReporteAutomatico): XLSX.WorkBook {
+  const workbook = XLSX.utils.book_new()
 
-    const wb = XLSX.utils.book_new()
+  // Hoja 1: Resumen
+  const resumenData = [
+    ["Reporte General"],
+    [""],
+    ["Fecha de Generación", new Date(reporte.fecha_generacion).toLocaleString("es-AR")],
+    ["Período Inicio", new Date(reporte.fecha_inicio_periodo).toLocaleDateString("es-AR")],
+    ["Período Fin", new Date(reporte.fecha_fin_periodo).toLocaleDateString("es-AR")],
+    ["Tipo", reporte.tipo === "automatico" ? "Automático" : "Manual"],
+    [""],
+    ["RESUMEN"],
+    ["Total Pedidos", reporte.reportes.general.resumen.total_pedidos],
+    ["Total Productos", reporte.reportes.general.resumen.total_productos],
+    ["Total Clientes", reporte.reportes.general.resumen.total_clientes],
+  ]
 
-    // Hoja de resumen por proveedor
-    const resumenData = [
-      ["REPORTE SEMANAL DE PRODUCTOS POR PROVEEDOR"],
-      ["Fecha de corte:", new Date(reporte.fecha_corte).toLocaleDateString("es-AR")],
-      [""],
-      ["RESUMEN POR PROVEEDOR"],
-      ["Proveedor", "Cantidad de Productos", "Cantidad Total"],
-    ]
+  const resumenWS = XLSX.utils.aoa_to_sheet(resumenData)
 
-    reporte.proveedores.forEach((proveedor) => {
-      const cantidadTotal = proveedor.productos.reduce((total, producto) => total + producto.cantidad_total, 0)
-      resumenData.push([proveedor.proveedor_nombre, proveedor.productos.length, cantidadTotal])
-    })
+  // Ajustar anchos de columna
+  resumenWS["!cols"] = [{ width: 20 }, { width: 30 }]
 
-    resumenData.push([""])
-    resumenData.push(["DETALLE POR PROVEEDOR"])
+  XLSX.utils.book_append_sheet(workbook, resumenWS, "Resumen")
 
-    const wsResumen = XLSX.utils.aoa_to_sheet(resumenData)
-    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen")
+  // Hoja 2: Pedidos Detallados
+  const pedidosHeaders = ["Pedido ID", "Cliente", "Fecha Pedido", "Producto", "Cantidad", "Unidad", "Proveedor"]
 
-    // Hoja detallada por cada proveedor
-    reporte.proveedores.forEach((proveedor) => {
-      const proveedorData = [
-        [`PROVEEDOR: ${proveedor.proveedor_nombre}`],
-        [""],
-        ["Art. Nº", "Producto Cod", "Descripción", "Cantidad Total"],
-      ]
+  const pedidosData: any[][] = [pedidosHeaders]
 
-      proveedor.productos
-        .sort((a, b) => a.articulo_numero - b.articulo_numero)
-        .forEach((producto) => {
-          proveedorData.push([producto.articulo_numero, producto.producto_codigo, producto.descripcion, producto.cantidad_total])
-        })
-
-      const wsProveedor = XLSX.utils.aoa_to_sheet(proveedorData)
-      // Limitar nombre de hoja a 31 caracteres (límite de Excel)
-      const sheetName = proveedor.proveedor_nombre.substring(0, 31)
-      XLSX.utils.book_append_sheet(wb, wsProveedor, sheetName)
-    })
-
-    // Generar archivo y descargar
-    const fechaCorte = new Date(reporte.fecha_corte).toISOString().split("T")[0]
-    const fileName = `Reporte_Productos_${fechaCorte}.xlsx`
-
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" })
-    const blob = new Blob([wbout], { type: "application/octet-stream" })
-    const url = URL.createObjectURL(blob)
-
-    const link = document.createElement("a")
-    link.href = url
-    link.download = fileName
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  } catch (error) {
-    console.error("Error generando Excel:", error)
-    throw new Error("Error al generar el archivo Excel")
-  }
-}
-
-export async function generarExcelReportePedidos(reporte: ReporteSemanalPedidos): Promise<void> {
-  try {
-    const XLSX = await import("xlsx")
-
-    const wb = XLSX.utils.book_new()
-
-    // Hoja de resumen
-    const resumenData = [
-      ["REPORTE SEMANAL DE PEDIDOS"],
-      ["Fecha de corte:", new Date(reporte.fecha_corte).toLocaleDateString("es-AR")],
-      [""],
-      ["RESUMEN"],
-      ["Total de pedidos:", reporte.pedidos.length],
-      [""],
-      ["PEDIDOS ORDENADOS POR FECHA"],
-      ["Pedido ID", "Fecha", "Cliente", "Cantidad de Productos", "Total Items"],
-    ]
-
-    reporte.pedidos.forEach((pedido) => {
-      const totalItems = pedido.productos.reduce((total, producto) => total + producto.cantidad, 0)
-      resumenData.push([
-        pedido.pedido_id,
-        new Date(pedido.fecha_pedido).toLocaleDateString("es-AR"),
-        pedido.cliente_nombre,
-        pedido.productos.length,
-        totalItems,
-      ])
-    })
-
-    const wsResumen = XLSX.utils.aoa_to_sheet(resumenData)
-    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen")
-
-    // Hoja detallada de productos por pedido
-    const detalleData = [["Pedido ID", "Fecha", "Cliente", "Producto", "Cantidad"]]
-
-    reporte.pedidos.forEach((pedido) => {
+  reporte.reportes.general.pedidos.forEach((pedido) => {
+    if (pedido.productos && pedido.productos.length > 0) {
       pedido.productos.forEach((producto) => {
-        detalleData.push([
+        pedidosData.push([
           pedido.pedido_id,
+          pedido.cliente?.nombre || "N/A",
           new Date(pedido.fecha_pedido).toLocaleDateString("es-AR"),
-          pedido.cliente_nombre,
-          producto.descripcion,
+          producto.producto?.descripcion || "N/A",
           producto.cantidad,
+          producto.producto?.unidad_medida || "N/A",
+          producto.producto?.proveedor?.proveedor_nombre || "N/A",
         ])
       })
+    } else {
+      pedidosData.push([
+        pedido.pedido_id,
+        pedido.cliente?.nombre || "N/A",
+        new Date(pedido.fecha_pedido).toLocaleDateString("es-AR"),
+        "Sin productos",
+        0,
+        "N/A",
+        "N/A",
+      ])
+    }
+  })
+
+  const pedidosWS = XLSX.utils.aoa_to_sheet(pedidosData)
+
+  // Ajustar anchos de columna
+  pedidosWS["!cols"] = [
+    { width: 10 },
+    { width: 25 },
+    { width: 12 },
+    { width: 40 },
+    { width: 10 },
+    { width: 10 },
+    { width: 25 },
+  ]
+
+  XLSX.utils.book_append_sheet(workbook, pedidosWS, "Pedidos Detallados")
+
+  return workbook
+}
+
+// Generar Excel de productos por proveedor
+function generateProductosPorProveedorExcel(reporte: ReporteAutomatico): XLSX.WorkBook {
+  const workbook = XLSX.utils.book_new()
+
+  // Hoja 1: Resumen por Proveedor
+  const resumenHeaders = ["Proveedor", "Total Productos Diferentes", "Cantidad Total Pedida"]
+
+  const resumenData: any[][] = [resumenHeaders]
+
+  reporte.reportes.productos_por_proveedor.proveedores.forEach((proveedor) => {
+    const cantidadTotal = proveedor.productos.reduce((sum, p) => sum + p.cantidad_total, 0)
+    resumenData.push([proveedor.proveedor_nombre, proveedor.productos.length, cantidadTotal])
+  })
+
+  const resumenWS = XLSX.utils.aoa_to_sheet(resumenData)
+
+  // Ajustar anchos de columna
+  resumenWS["!cols"] = [{ width: 30 }, { width: 20 }, { width: 20 }]
+
+  XLSX.utils.book_append_sheet(workbook, resumenWS, "Resumen por Proveedor")
+
+  // Hoja 2: Detalle por Proveedor
+  const detalleHeaders = ["Proveedor", "Artículo Número", "Descripción", "Unidad Medida", "Cantidad Total"]
+
+  const detalleData: any[][] = [detalleHeaders]
+
+  reporte.reportes.productos_por_proveedor.proveedores.forEach((proveedor) => {
+    proveedor.productos.forEach((producto) => {
+      detalleData.push([
+        proveedor.proveedor_nombre,
+        producto.articulo_numero,
+        producto.descripcion,
+        producto.unidad_medida,
+        producto.cantidad_total,
+      ])
+    })
+  })
+
+  const detalleWS = XLSX.utils.aoa_to_sheet(detalleData)
+
+  // Ajustar anchos de columna
+  detalleWS["!cols"] = [{ width: 25 }, { width: 15 }, { width: 40 }, { width: 15 }, { width: 15 }]
+
+  XLSX.utils.book_append_sheet(workbook, detalleWS, "Detalle por Proveedor")
+
+  return workbook
+}
+
+// Generar Excel de pedidos
+function generatePedidosExcel(reporte: ReporteAutomatico): XLSX.WorkBook {
+  const workbook = XLSX.utils.book_new()
+
+  // Hoja 1: Lista de Pedidos
+  const pedidosHeaders = ["Pedido ID", "Cliente", "Fecha Pedido", "Total Productos"]
+
+  const pedidosData: any[][] = [pedidosHeaders]
+
+  reporte.reportes.pedidos.pedidos.forEach((pedido) => {
+    pedidosData.push([
+      pedido.pedido_id,
+      pedido.cliente_nombre,
+      new Date(pedido.fecha_pedido).toLocaleDateString("es-AR"),
+      pedido.productos.length,
+    ])
+  })
+
+  const pedidosWS = XLSX.utils.aoa_to_sheet(pedidosData)
+
+  // Ajustar anchos de columna
+  pedidosWS["!cols"] = [{ width: 12 }, { width: 30 }, { width: 15 }, { width: 15 }]
+
+  XLSX.utils.book_append_sheet(workbook, pedidosWS, "Lista de Pedidos")
+
+  // Hoja 2: Productos por Pedido
+  const productosHeaders = ["Pedido ID", "Cliente", "Producto", "Cantidad", "Unidad Medida"]
+
+  const productosData: any[][] = [productosHeaders]
+
+  reporte.reportes.pedidos.pedidos.forEach((pedido) => {
+    pedido.productos.forEach((producto) => {
+      productosData.push([
+        pedido.pedido_id,
+        pedido.cliente_nombre,
+        producto.descripcion,
+        producto.cantidad,
+        producto.unidad_medida,
+      ])
+    })
+  })
+
+  const productosWS = XLSX.utils.aoa_to_sheet(productosData)
+
+  // Ajustar anchos de columna
+  productosWS["!cols"] = [{ width: 12 }, { width: 25 }, { width: 40 }, { width: 10 }, { width: 15 }]
+
+  XLSX.utils.book_append_sheet(workbook, productosWS, "Productos por Pedido")
+
+  return workbook
+}
+
+// Función auxiliar para descargar el archivo Excel
+function downloadExcelFile(workbook: XLSX.WorkBook, filename: string): void {
+  try {
+    // Generar el archivo Excel como array buffer
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+      compression: true,
     })
 
-    const wsDetalle = XLSX.utils.aoa_to_sheet(detalleData)
-    XLSX.utils.book_append_sheet(wb, wsDetalle, "Detalle Productos")
+    // Crear blob y URL para descarga
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    })
 
-    // Generar archivo y descargar
-    const fechaCorte = new Date(reporte.fecha_corte).toISOString().split("T")[0]
-    const fileName = `Reporte_Pedidos_${fechaCorte}.xlsx`
+    const url = window.URL.createObjectURL(blob)
 
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" })
-    const blob = new Blob([wbout], { type: "application/octet-stream" })
-    const url = URL.createObjectURL(blob)
-
+    // Crear elemento de descarga temporal
     const link = document.createElement("a")
     link.href = url
-    link.download = fileName
+    link.download = filename
+    link.style.display = "none"
+
+    // Agregar al DOM, hacer clic y remover
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+
+    // Limpiar URL temporal
+    window.URL.revokeObjectURL(url)
+
+    console.log(`Excel file downloaded: ${filename}`)
   } catch (error) {
-    console.error("Error generando Excel:", error)
-    throw new Error("Error al generar el archivo Excel")
+    console.error("Error downloading Excel file:", error)
+    throw error
   }
+}
+
+// Función auxiliar para generar nombres únicos de archivo
+export function generateUniqueFilename(prefix: string, extension = "xlsx"): string {
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, "")
+  const random = Math.random().toString(36).substr(2, 5)
+  return `${prefix}_${timestamp}_${random}.${extension}`
+}
+
+// Función auxiliar para formatear fechas
+export function formatDateForExcel(dateString: string): string {
+  return new Date(dateString).toLocaleDateString("es-AR")
+}
+
+// Función auxiliar para formatear números
+export function formatNumberForExcel(num: number): string {
+  return num.toLocaleString("es-AR")
 }

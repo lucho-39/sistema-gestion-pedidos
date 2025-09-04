@@ -49,9 +49,9 @@ export default function PedidosPage() {
   useEffect(() => {
     const filtered = pedidos.filter(
       (pedido) =>
-        pedido.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pedido.cliente?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         pedido.pedido_id.toString().includes(searchTerm) ||
-        pedido.productos.some((p) => p.descripcion.toLowerCase().includes(searchTerm.toLowerCase())),
+        pedido.productos?.some((p) => p.producto?.descripcion.toLowerCase().includes(searchTerm.toLowerCase())),
     )
     setFilteredPedidos(filtered)
   }, [searchTerm, pedidos])
@@ -227,9 +227,7 @@ export default function PedidosPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-base font-medium">Pedido #{pedido.pedido_id}</CardTitle>
-                      <p className="text-xs text-gray-500">
-                        {formatDate(pedido.fecha_pedido || pedido.fecha_creacion)}
-                      </p>
+                      <p className="text-xs text-gray-500">{formatDate(pedido.fecha_pedido || pedido.created_at)}</p>
                     </div>
                     <div className="flex gap-1">
                       <Link href={`/pedidos/editar/${pedido.pedido_id}`}>
@@ -246,22 +244,22 @@ export default function PedidosPage() {
                 <CardContent className="pt-0 space-y-3">
                   <div className="flex items-center gap-2 text-sm">
                     <User className="h-3 w-3 text-gray-500" />
-                    <span>{pedido.cliente.nombre}</span>
+                    <span>{pedido.cliente?.nombre || "Cliente no encontrado"}</span>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm">
                       <Package className="h-3 w-3 text-gray-500" />
-                      <span>{pedido.productos.length} producto(s)</span>
+                      <span>{pedido.productos?.length || 0} producto(s)</span>
                     </div>
                     <div className="pl-5 space-y-1">
-                      {pedido.productos.slice(0, 2).map((producto, index) => (
+                      {pedido.productos?.slice(0, 2).map((producto, index) => (
                         <p key={index} className="text-xs text-gray-600">
-                          {producto.cantidad}x {producto.descripcion}
+                          {producto.cantidad}x {producto.producto?.descripcion || "Producto no encontrado"}
                         </p>
                       ))}
-                      {pedido.productos.length > 2 && (
-                        <p className="text-xs text-gray-500">+{pedido.productos.length - 2} más...</p>
+                      {(pedido.productos?.length || 0) > 2 && (
+                        <p className="text-xs text-gray-500">+{(pedido.productos?.length || 0) - 2} más...</p>
                       )}
                     </div>
                   </div>
