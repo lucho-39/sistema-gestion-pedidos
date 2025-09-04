@@ -9,7 +9,7 @@ export default function HomePage() {
     <div className="p-4 pb-20 md:pb-4">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center py-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenido al Sistema</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenido</h1>
           <p className="text-gray-600">Administra productos, clientes y pedidos de forma eficiente</p>
         </div>
 
