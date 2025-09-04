@@ -12,7 +12,7 @@ export default function HomePage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenido</h1>
           <p className="text-gray-600">Administra productos, clientes y pedidos</p>
         </div>
-        /*
+         {/*
         <Alert>
           <Database className="h-4 w-4" />
           <AlertDescription>
@@ -22,7 +22,7 @@ export default function HomePage() {
             </Link>
           </AlertDescription>
         </Alert>
-        */
+        */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="pb-3">
