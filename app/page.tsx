@@ -10,9 +10,9 @@ export default function HomePage() {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center py-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenido</h1>
-          <p className="text-gray-600">Administra productos, clientes y pedidos de forma eficiente</p>
+          <p className="text-gray-600">Administra productos, clientes y pedidos</p>
         </div>
-
+        /*
         <Alert>
           <Database className="h-4 w-4" />
           <AlertDescription>
@@ -22,7 +22,7 @@ export default function HomePage() {
             </Link>
           </AlertDescription>
         </Alert>
-
+        */
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="pb-3">
@@ -30,7 +30,7 @@ export default function HomePage() {
                 <Package className="h-5 w-5 text-blue-600" />
                 Productos
               </CardTitle>
-              <CardDescription>Gestiona tu inventario de productos</CardDescription>
+              <CardDescription>Gestiona tu productos</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               <Link href="/productos" className="block">
@@ -72,7 +72,7 @@ export default function HomePage() {
                 <Users className="h-5 w-5 text-green-600" />
                 Clientes
               </CardTitle>
-              <CardDescription>Administra tu base de clientes</CardDescription>
+              <CardDescription>Administra tus clientes</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href="/clientes" className="block">
