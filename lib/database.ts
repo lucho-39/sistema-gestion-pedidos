@@ -72,17 +72,19 @@ export class Database {
     }
   }
 
-  static async createCliente(cliente: Omit<Cliente, "cliente_id" | "created_at" | "updated_at">): Promise<boolean> {
+  static async createCliente(
+    cliente: Omit<Cliente, "cliente_id" | "created_at" | "updated_at">,
+  ): Promise<Cliente | null> {
     this.checkConfiguration()
 
     try {
-      const { error } = await supabase.from("clientes").insert([cliente])
+      const { data, error } = await supabase.from("clientes").insert([cliente]).select().single()
 
       if (error) throw error
-      return true
+      return data
     } catch (error) {
       console.error("Error creating cliente:", error)
-      return false
+      return null
     }
   }
 
@@ -155,17 +157,17 @@ export class Database {
 
   static async createProveedor(
     proveedor: Omit<Proveedor, "proveedor_id" | "created_at" | "updated_at">,
-  ): Promise<boolean> {
+  ): Promise<Proveedor | null> {
     this.checkConfiguration()
 
     try {
-      const { error } = await supabase.from("proveedores").insert([proveedor])
+      const { data, error } = await supabase.from("proveedores").insert([proveedor]).select().single()
 
       if (error) throw error
-      return true
+      return data
     } catch (error) {
       console.error("Error creating proveedor:", error)
-      return false
+      return null
     }
   }
 
@@ -309,25 +311,41 @@ export class Database {
     }
   }
 
-  static async createProducto(producto: Omit<Producto, "created_at" | "updated_at">): Promise<boolean> {
+  static async createProducto(producto: Omit<Producto, "created_at" | "updated_at">): Promise<Producto | null> {
     this.checkConfiguration()
 
     try {
-      const { error } = await supabase.from("productos").insert([
-        {
-          articulo_numero: producto.articulo_numero,
-          producto_codigo: producto.producto_codigo,
-          descripcion: producto.descripcion,
-          unidad_medida: producto.unidad_medida,
-          proveedor_id: producto.proveedor_id,
-        },
-      ])
+      const { data, error } = await supabase
+        .from("productos")
+        .insert([
+          {
+            articulo_numero: producto.articulo_numero,
+            producto_codigo: producto.producto_codigo,
+            descripcion: producto.descripcion,
+            unidad_medida: producto.unidad_medida,
+            proveedor_id: producto.proveedor_id,
+          },
+        ])
+        .select()
+        .single()
 
       if (error) throw error
-      return true
+
+      // Obtener proveedor para el producto creado
+      const proveedor = await this.getProveedorById(data.proveedor_id)
+
+      return {
+        ...data,
+        proveedor: proveedor || {
+          proveedor_id: data.proveedor_id,
+          proveedor_nombre: "Proveedor no encontrado",
+          created_at: "",
+          updated_at: "",
+        },
+      }
     } catch (error) {
       console.error("Error creating producto:", error)
-      return false
+      return null
     }
   }
 
@@ -597,16 +615,23 @@ export class Database {
     this.checkConfiguration()
 
     try {
-      // Obtener pedido básico
+      console.log(`Getting pedido by ID: ${id}`)
+
+      // 1. Obtener pedido básico
       const { data: pedidoData, error: pedidoError } = await supabase
         .from("pedidos")
         .select("pedido_id, cliente_id, fecha_pedido, created_at, updated_at")
         .eq("pedido_id", id)
         .single()
 
-      if (pedidoError) throw pedidoError
+      if (pedidoError) {
+        console.error("Error fetching pedido:", pedidoError)
+        throw pedidoError
+      }
 
-      // Obtener cliente por separado
+      console.log("Pedido data:", pedidoData)
+
+      // 2. Obtener cliente por separado
       const { data: clienteData, error: clienteError } = await supabase
         .from("clientes")
         .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
@@ -617,7 +642,9 @@ export class Database {
         console.error("Error fetching cliente:", clienteError)
       }
 
-      // Obtener productos del pedido por separado
+      console.log("Cliente data:", clienteData)
+
+      // 3. Obtener productos del pedido por separado
       const { data: pedidoProductosData, error: pedidoProductosError } = await supabase
         .from("pedido_productos")
         .select("id, pedido_id, articulo_numero, cantidad, created_at")
@@ -627,7 +654,92 @@ export class Database {
         console.error("Error fetching pedido productos:", pedidoProductosError)
       }
 
-      return {
+      console.log("Pedido productos data:", pedidoProductosData)
+
+      // 4. Si hay productos, obtener sus detalles
+      let productosCompletos: any[] = []
+      if (pedidoProductosData && pedidoProductosData.length > 0) {
+        const articuloNumeros = pedidoProductosData.map((pp) => pp.articulo_numero)
+
+        // Obtener productos
+        const { data: productosData, error: productosError } = await supabase
+          .from("productos")
+          .select("articulo_numero, producto_codigo, descripcion, unidad_medida, proveedor_id, created_at, updated_at")
+          .in("articulo_numero", articuloNumeros)
+
+        if (productosError) {
+          console.error("Error fetching productos:", productosError)
+        }
+
+        console.log("Productos data:", productosData)
+
+        // Obtener proveedores si hay productos
+        if (productosData && productosData.length > 0) {
+          const proveedorIds = [...new Set(productosData.map((p) => p.proveedor_id))]
+
+          const { data: proveedoresData, error: proveedoresError } = await supabase
+            .from("proveedores")
+            .select("proveedor_id, proveedor_nombre, created_at, updated_at")
+            .in("proveedor_id", proveedorIds)
+
+          if (proveedoresError) {
+            console.error("Error fetching proveedores:", proveedoresError)
+          }
+
+          console.log("Proveedores data:", proveedoresData)
+
+          // Crear mapas
+          const productosMap = new Map((productosData || []).map((p) => [p.articulo_numero, p]))
+          const proveedoresMap = new Map((proveedoresData || []).map((p) => [p.proveedor_id, p]))
+
+          // Combinar datos
+          productosCompletos = pedidoProductosData.map((pp) => {
+            const producto = productosMap.get(pp.articulo_numero)
+            const proveedor = producto ? proveedoresMap.get(producto.proveedor_id) : null
+
+            return {
+              id: pp.id,
+              pedido_id: pp.pedido_id,
+              articulo_numero: pp.articulo_numero,
+              cantidad: pp.cantidad,
+              created_at: pp.created_at,
+              producto: producto
+                ? {
+                    articulo_numero: producto.articulo_numero,
+                    producto_codigo: producto.producto_codigo || "",
+                    descripcion: producto.descripcion,
+                    unidad_medida: producto.unidad_medida,
+                    proveedor_id: producto.proveedor_id,
+                    created_at: producto.created_at,
+                    updated_at: producto.updated_at,
+                    proveedor: proveedor || {
+                      proveedor_id: producto.proveedor_id,
+                      proveedor_nombre: "Proveedor no encontrado",
+                      created_at: "",
+                      updated_at: "",
+                    },
+                  }
+                : {
+                    articulo_numero: pp.articulo_numero,
+                    producto_codigo: "",
+                    descripcion: "Producto no encontrado",
+                    unidad_medida: "unidad",
+                    proveedor_id: 1,
+                    created_at: "",
+                    updated_at: "",
+                    proveedor: {
+                      proveedor_id: 1,
+                      proveedor_nombre: "Proveedor no encontrado",
+                      created_at: "",
+                      updated_at: "",
+                    },
+                  },
+            }
+          })
+        }
+      }
+
+      const pedidoCompleto = {
         pedido_id: pedidoData.pedido_id,
         cliente_id: pedidoData.cliente_id,
         fecha_pedido: pedidoData.fecha_pedido,
@@ -636,51 +748,90 @@ export class Database {
         incluido_en_reporte: false,
         fecha_inclusion_reporte: undefined,
         reporte_id: undefined,
-        cliente: clienteData || null,
-        productos: pedidoProductosData || [],
+        cliente: clienteData || {
+          cliente_id: pedidoData.cliente_id,
+          cliente_codigo: 0,
+          nombre: "Cliente no encontrado",
+          domicilio: "",
+          telefono: "",
+          cuil: "",
+          created_at: "",
+          updated_at: "",
+        },
+        productos: productosCompletos,
       }
+
+      console.log("Complete pedido:", pedidoCompleto)
+      return pedidoCompleto
     } catch (error) {
-      console.error("Error fetching pedido:", error)
+      console.error("Error in getPedidoById:", error)
       return null
     }
   }
 
-  static async createPedido(pedido: {
-    cliente_id: number
-    fecha_pedido: string
-    productos: { articulo_numero: number; cantidad: number }[]
-  }): Promise<number | null> {
+  // Método corregido para crear pedidos
+  static async createPedido(pedido: Omit<Pedido, "pedido_id" | "fecha_creacion">): Promise<Pedido | null> {
     this.checkConfiguration()
 
     try {
-      // Crear el pedido
+      console.log("Creating pedido with data:", pedido)
+
+      // Extraer cliente_id del objeto cliente
+      const cliente_id =
+        typeof pedido.cliente === "object" && pedido.cliente ? pedido.cliente.cliente_id : pedido.cliente_id
+
+      if (!cliente_id) {
+        console.error("No cliente_id found in pedido data")
+        return null
+      }
+
+      // Crear el pedido básico
       const { data: nuevoPedido, error: pedidoError } = await supabase
         .from("pedidos")
         .insert([
           {
-            cliente_id: pedido.cliente_id,
+            cliente_id: cliente_id,
             fecha_pedido: pedido.fecha_pedido,
           },
         ])
-        .select("pedido_id")
+        .select("pedido_id, cliente_id, fecha_pedido, created_at, updated_at")
         .single()
 
-      if (pedidoError) throw pedidoError
+      if (pedidoError) {
+        console.error("Error creating pedido:", pedidoError)
+        throw pedidoError
+      }
 
-      // Crear los productos del pedido
-      const productosData = pedido.productos.map((producto) => ({
-        pedido_id: nuevoPedido.pedido_id,
-        articulo_numero: producto.articulo_numero,
-        cantidad: producto.cantidad,
-      }))
+      console.log("Pedido created:", nuevoPedido)
 
-      const { error: productosError } = await supabase.from("pedido_productos").insert(productosData)
+      // Preparar productos para insertar
+      const productosData =
+        pedido.productos?.map((producto) => ({
+          pedido_id: nuevoPedido.pedido_id,
+          articulo_numero: producto.articulo_numero,
+          cantidad: producto.cantidad,
+        })) || []
 
-      if (productosError) throw productosError
+      if (productosData.length > 0) {
+        const { error: productosError } = await supabase.from("pedido_productos").insert(productosData)
 
-      return nuevoPedido.pedido_id
+        if (productosError) {
+          console.error("Error creating pedido productos:", productosError)
+          // Intentar eliminar el pedido creado si falló la inserción de productos
+          await supabase.from("pedidos").delete().eq("pedido_id", nuevoPedido.pedido_id)
+          throw productosError
+        }
+
+        console.log(`Created ${productosData.length} pedido productos`)
+      }
+
+      // Obtener el pedido completo usando el método separado
+      const pedidoCompleto = await this.getPedidoById(nuevoPedido.pedido_id)
+      console.log("Final pedido completo:", pedidoCompleto)
+
+      return pedidoCompleto
     } catch (error) {
-      console.error("Error creating pedido:", error)
+      console.error("Error in createPedido:", error)
       return null
     }
   }

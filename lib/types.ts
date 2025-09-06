@@ -36,6 +36,10 @@ export interface PedidoProducto {
   producto?: Producto
 }
 
+export interface ProductoPedido extends Producto {
+  cantidad: number
+}
+
 export interface Pedido {
   pedido_id: number
   cliente_id: number
