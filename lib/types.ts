@@ -4,7 +4,7 @@ export interface Cliente {
   nombre: string
   domicilio: string
   telefono: string
-  cuil: string
+  CUIL: string // Changed from 'cuil' to 'CUIL' to match database
   created_at: string
   updated_at: string
 }

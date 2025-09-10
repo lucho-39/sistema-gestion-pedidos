@@ -49,10 +49,10 @@ export default function ClientesPage() {
   useEffect(() => {
     const filtered = clientes.filter(
       (cliente) =>
-        cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cliente.CUIL.includes(searchTerm) ||
-        cliente.telefono.includes(searchTerm) ||
-        cliente.cliente_codigo.toString().includes(searchTerm),
+        (cliente.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cliente.CUIL || "").includes(searchTerm) ||
+        (cliente.telefono || "").includes(searchTerm) ||
+        (cliente.cliente_codigo || "").toString().includes(searchTerm),
     )
     setFilteredClientes(filtered)
   }, [searchTerm, clientes])
