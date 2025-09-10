@@ -63,13 +63,16 @@ export default function ImportarProductosPage() {
     setParseErrors([])
 
     try {
+      console.log("Starting import process...")
+
       // Cargar proveedores desde la base de datos
       const proveedores = await Database.getProveedores()
+      console.log(`Loaded ${proveedores.length} proveedores`)
 
       if (proveedores.length === 0) {
         toast({
           title: "Error",
-          description: "No se pudieron cargar los proveedores. Verifica la conexión a la base de datos.",
+          description: "No se encontraron proveedores. Debe crear al menos un proveedor antes de importar productos.",
           variant: "destructive",
         })
         setIsLoading(false)
@@ -100,16 +103,20 @@ export default function ImportarProductosPage() {
           const headers = jsonData[0] as string[]
           const rows = jsonData.slice(1) as any[][]
 
+          console.log("Headers found:", headers)
+          console.log(`Data rows: ${rows.length}`)
+
           // Convertir filas a objetos
           const excelRows = rows
             .filter((row) => row.some((cell) => cell !== null && cell !== undefined && cell !== ""))
-            .map((row) => {
+            .map((row, rowIndex) => {
               const obj: any = {}
               headers.forEach((header, index) => {
                 if (header && row[index] !== undefined) {
                   obj[header.toString().trim()] = row[index]
                 }
               })
+              console.log(`Row ${rowIndex + 1}:`, obj)
               return obj
             })
 
@@ -117,8 +124,12 @@ export default function ImportarProductosPage() {
             throw new Error("No se encontraron filas de datos válidas en el archivo")
           }
 
+          console.log(`Processing ${excelRows.length} rows...`)
+
           // Parsear productos usando la función actualizada (ahora asíncrona)
           const { productos, errores } = await parseExcelToProductos(excelRows, proveedores)
+
+          console.log(`Parsing completed: ${productos.length} products, ${errores.length} errors`)
 
           setImportedProducts(productos)
           setParseErrors(errores)
@@ -181,8 +192,25 @@ export default function ImportarProductosPage() {
     setIsLoading(true)
 
     try {
+      console.log("Starting save process...")
+      console.log("Products to save:", importedProducts)
+
+      // Validar que todos los productos tengan proveedor_id válido
+      const invalidProducts = importedProducts.filter((p) => !p.proveedor_id || p.proveedor_id <= 0)
+      if (invalidProducts.length > 0) {
+        console.error("Invalid products found:", invalidProducts)
+        toast({
+          title: "Error de validación",
+          description: `${invalidProducts.length} productos tienen proveedor_id inválido`,
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+
       // Obtener productos existentes
       const existingProducts = await Database.getProductos()
+      console.log(`Found ${existingProducts.length} existing products`)
 
       // Verificar duplicados por número de artículo
       const existingNumbers = new Set(existingProducts.map((p) => p.articulo_numero))
@@ -210,8 +238,22 @@ export default function ImportarProductosPage() {
         return
       }
 
+      console.log(`Saving ${newProducts.length} new products...`)
+
+      // Preparar datos para inserción (sin campos de relación)
+      const productosParaInsertar = newProducts.map((p) => ({
+        articulo_numero: p.articulo_numero,
+        producto_codigo: p.producto_codigo || "",
+        descripcion: p.descripcion,
+        unidad_medida: p.unidad_medida,
+        proveedor_id: p.proveedor_id, // Asegurar que sea un número válido
+      }))
+
+      console.log("Data to insert:", productosParaInsertar)
+
       // Crear productos en la base de datos
-      const createdProducts = await Database.createProductos(newProducts)
+      const createdProducts = await Database.createProductos(productosParaInsertar)
+      console.log(`Created ${createdProducts.length} products`)
 
       if (createdProducts.length > 0) {
         toast({
@@ -222,6 +264,12 @@ export default function ImportarProductosPage() {
         setImportedProducts([])
         setFile(null)
         setParseErrors([])
+
+        // Reset file input
+        const fileInput = document.getElementById("excel-file") as HTMLInputElement
+        if (fileInput) {
+          fileInput.value = ""
+        }
       } else {
         toast({
           title: "Error",
@@ -233,7 +281,7 @@ export default function ImportarProductosPage() {
       console.error("Error saving products:", error)
       toast({
         title: "Error",
-        description: "Error al guardar los productos en la base de datos",
+        description: error instanceof Error ? error.message : "Error al guardar los productos en la base de datos",
         variant: "destructive",
       })
     }
@@ -364,10 +412,13 @@ export default function ImportarProductosPage() {
             </p>
             <ul className="list-disc list-inside space-y-1">
               <li>Productos con "CABLE" o "cable" en descripción → unidad en metros</li>
-              <li>Si no se encuentra proveedor → se asigna "Proveedor General"</li>
-              <li>Campos faltantes se completan con espacios en blanco</li>
+              <li>Si no se encuentra proveedor → se asigna el primer proveedor disponible</li>
+              <li>Campos faltantes se completan con valores por defecto</li>
               <li>Otros campos del Excel se ignoran automáticamente</li>
             </ul>
+            <p className="text-red-600 font-medium">
+              <strong>Importante:</strong> Debe existir al menos un proveedor en el sistema antes de importar productos.
+            </p>
           </CardContent>
         </Card>
       </div>

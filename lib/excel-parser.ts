@@ -13,6 +13,22 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
   const productos: Producto[] = []
   const errores: string[] = []
 
+  // Ensure we have a default provider
+  if (proveedores.length === 0) {
+    errores.push(
+      "No hay proveedores disponibles en el sistema. Debe crear al menos un proveedor antes de importar productos.",
+    )
+    return { productos: [], errores }
+  }
+
+  // Find or create default provider
+  let proveedorGeneral = proveedores.find((p) => p.proveedor_nombre.toLowerCase().includes("general"))
+  if (!proveedorGeneral) {
+    proveedorGeneral = proveedores[0] // Use first available provider as default
+  }
+
+  console.log(`Using default provider: ${proveedorGeneral.proveedor_nombre} (ID: ${proveedorGeneral.proveedor_id})`)
+
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index]
 
@@ -28,6 +44,8 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
         "articulo",
         "numero articulo",
         "numero_articulo",
+        "Número de Artículo",
+        "No. Artículo",
       ])
 
       const descripcion = getFieldValue(row, [
@@ -40,6 +58,8 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
         "description",
         "producto",
         "nombre",
+        "Producto",
+        "Nombre",
       ])
 
       const productoCodigo = getFieldValue(row, [
@@ -52,6 +72,8 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
         "codigo",
         "code",
         "sku",
+        "SKU",
+        "Código de Producto",
       ])
 
       const proveedorValue = getFieldValue(row, [
@@ -62,6 +84,8 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
         "ProveedorID",
         "Supplier",
         "supplier",
+        "Proveedor ID",
+        "ID Proveedor",
       ])
 
       // Validaciones obligatorias
@@ -88,11 +112,8 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
         numeroArticulo = parsed
       }
 
-      // Determinar proveedor
-      let proveedor: Proveedor = {
-        proveedor_id: 1,
-        proveedor_nombre: "Proveedor General",
-      }
+      // Determinar proveedor - SIEMPRE asignar un proveedor válido
+      let proveedor: Proveedor = proveedorGeneral
 
       if (proveedorValue) {
         // Buscar proveedor por ID
@@ -103,19 +124,19 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
             proveedor = proveedorEncontrado
           } else {
             errores.push(
-              `Fila ${index + 2}: Proveedor con ID ${proveedorId} no encontrado. Se asignará "Proveedor General"`,
+              `Fila ${index + 2}: Proveedor con ID ${proveedorId} no encontrado. Se asignará "${proveedorGeneral.proveedor_nombre}"`,
             )
           }
         } else {
           // Buscar proveedor por nombre
-          const proveedorEncontrado = proveedores.find(
-            (p) => p.proveedor_nombre.toLowerCase() === proveedorValue.toString().toLowerCase(),
+          const proveedorEncontrado = proveedores.find((p) =>
+            p.proveedor_nombre.toLowerCase().includes(proveedorValue.toString().toLowerCase()),
           )
           if (proveedorEncontrado) {
             proveedor = proveedorEncontrado
           } else {
             errores.push(
-              `Fila ${index + 2}: Proveedor "${proveedorValue}" no encontrado. Se asignará "Proveedor General"`,
+              `Fila ${index + 2}: Proveedor "${proveedorValue}" no encontrado. Se asignará "${proveedorGeneral.proveedor_nombre}"`,
             )
           }
         }
@@ -126,18 +147,34 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
       const descripcionStr = descripcion.toString().toLowerCase()
       if (descripcionStr.includes("cable")) {
         unidadMedida = "metros"
+      } else if (descripcionStr.includes("metro") || descripcionStr.includes("mts")) {
+        unidadMedida = "metros"
+      } else if (descripcionStr.includes("litro") || descripcionStr.includes("lts")) {
+        unidadMedida = "litros"
+      } else if (descripcionStr.includes("kilo") || descripcionStr.includes("kg")) {
+        unidadMedida = "kilogramos"
       }
 
-      // Crear producto
+      // Crear producto - GARANTIZAR que proveedor_id nunca sea null
       const producto: Producto = {
         articulo_numero: numeroArticulo,
         producto_codigo: productoCodigo ? productoCodigo.toString().trim() : "",
         descripcion: descripcion.toString().trim(),
         unidad_medida: unidadMedida,
+        proveedor_id: proveedor.proveedor_id, // SIEMPRE un número válido
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         proveedor: proveedor,
       }
 
+      // Validación final antes de agregar
+      if (!producto.proveedor_id || producto.proveedor_id <= 0) {
+        errores.push(`Fila ${index + 2}: Error interno - proveedor_id inválido`)
+        continue
+      }
+
       productos.push(producto)
+      console.log(`Producto ${index + 1} procesado: ${producto.descripcion} (Proveedor: ${proveedor.proveedor_nombre})`)
     } catch (error) {
       errores.push(
         `Fila ${index + 2}: Error procesando datos - ${error instanceof Error ? error.message : "Error desconocido"}`,
@@ -145,6 +182,7 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
     }
   }
 
+  console.log(`Procesamiento completado: ${productos.length} productos válidos, ${errores.length} errores`)
   return { productos, errores }
 }
 

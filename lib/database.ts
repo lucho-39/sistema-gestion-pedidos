@@ -386,24 +386,38 @@ export class Database {
     }
   }
 
-  static async createProductos(productos: Omit<Producto, "created_at" | "updated_at">[]): Promise<Producto[]> {
+  static async createProductos(productos: any[]): Promise<Producto[]> {
     this.checkConfiguration()
 
     try {
+      console.log("Creating productos with data:", productos)
+
+      // Validar que todos los productos tengan proveedor_id válido
+      const invalidProducts = productos.filter((p) => !p.proveedor_id || p.proveedor_id <= 0)
+      if (invalidProducts.length > 0) {
+        console.error("Invalid products found:", invalidProducts)
+        throw new Error(`${invalidProducts.length} productos tienen proveedor_id inválido`)
+      }
+
+      // Preparar datos para inserción
       const insertData = productos.map((p) => ({
         articulo_numero: p.articulo_numero,
-        producto_codigo: p.producto_codigo,
+        producto_codigo: p.producto_codigo || "",
         descripcion: p.descripcion,
         unidad_medida: p.unidad_medida,
-        proveedor_id: p.proveedor_id,
+        proveedor_id: p.proveedor_id, // Debe ser un número válido
       }))
+
+      console.log("Insert data:", insertData)
 
       const { data, error } = await supabase.from("productos").insert(insertData).select()
 
       if (error) {
         console.error("Error creating productos:", error)
-        return []
+        throw error
       }
+
+      console.log("Products created successfully:", data)
 
       // Fetch all proveedores for mapping
       const { data: proveedoresData, error: proveedoresError } = await supabase
@@ -434,7 +448,7 @@ export class Database {
       }))
     } catch (error) {
       console.error("Error in createProductos:", error)
-      return []
+      throw error
     }
   }
 
