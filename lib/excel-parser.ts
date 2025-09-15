@@ -1,10 +1,10 @@
 import type { Producto, Proveedor } from "./types"
 
-export interface ExcelRow {
+interface ExcelRow {
   [key: string]: any
 }
 
-export interface ParseResult {
+interface ParseResult {
   productos: Producto[]
   errores: string[]
 }
@@ -13,7 +13,8 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
   const productos: Producto[] = []
   const errores: string[] = []
 
-  // Ensure we have a default provider
+  console.log("Starting parseExcelToProductos with:", { rowsCount: rows.length, proveedoresCount: proveedores.length })
+
   if (proveedores.length === 0) {
     errores.push(
       "No hay proveedores disponibles en el sistema. Debe crear al menos un proveedor antes de importar productos.",
@@ -21,198 +22,140 @@ export async function parseExcelToProductos(rows: ExcelRow[], proveedores: Prove
     return { productos: [], errores }
   }
 
-  // Find or create default provider
-  let proveedorGeneral = proveedores.find((p) => p.proveedor_nombre.toLowerCase().includes("general"))
-  if (!proveedorGeneral) {
-    proveedorGeneral = proveedores[0] // Use first available provider as default
+  // Buscar proveedor "General" o usar el primero disponible
+  const proveedorGeneral =
+    proveedores.find((p) => p.proveedor_nombre.toLowerCase().includes("general")) || proveedores[0]
+
+  console.log("Using default provider:", proveedorGeneral)
+
+  // Mapear posibles nombres de columnas
+  const columnMappings = {
+    articulo_numero: ["nº artículo", "no artículo", "art.", "articulo", "numero articulo", "art", "número artículo"],
+    descripcion: ["desc", "descripcion", "descripciom", "description", "producto", "nombre"],
+    codigo: ["cod", "codigo", "código", "code", "producto_codigo"],
+    proveedor: ["proveedor", "provider", "prov", "proveedor_id", "supplier"],
   }
 
-  console.log(`Using default provider: ${proveedorGeneral.proveedor_nombre} (ID: ${proveedorGeneral.proveedor_id})`)
-
-  for (let index = 0; index < rows.length; index++) {
-    const row = rows[index]
-
+  rows.forEach((row, index) => {
     try {
-      // Mapeo de campos del Excel (case-insensitive)
-      const articuloNumero = getFieldValue(row, [
-        "Nº Artículo",
-        "Art.",
-        "Articulo",
-        "articulo_numero",
-        "nº articulo",
-        "art",
-        "articulo",
-        "numero articulo",
-        "numero_articulo",
-        "Número de Artículo",
-        "No. Artículo",
-      ])
+      console.log(`Processing row ${index + 1}:`, row)
 
-      const descripcion = getFieldValue(row, [
-        "Desc",
-        "Descripcion",
-        "Descripciom",
-        "Descripción",
-        "descripcion",
-        "desc",
-        "description",
-        "producto",
-        "nombre",
-        "Producto",
-        "Nombre",
-      ])
+      // Buscar número de artículo
+      let articuloNumero: number | null = null
+      for (const key of Object.keys(row)) {
+        const keyLower = key.toLowerCase().trim()
+        if (columnMappings.articulo_numero.some((mapping) => keyLower.includes(mapping))) {
+          const value = row[key]
+          if (value !== null && value !== undefined && value !== "") {
+            articuloNumero = Number(value)
+            break
+          }
+        }
+      }
 
-      const productoCodigo = getFieldValue(row, [
-        "Cod",
-        "Codigo",
-        "Código",
-        "producto_codigo",
-        "codigo_producto",
-        "cod",
-        "codigo",
-        "code",
-        "sku",
-        "SKU",
-        "Código de Producto",
-      ])
+      if (!articuloNumero || isNaN(articuloNumero)) {
+        errores.push(`Fila ${index + 2}: Número de artículo faltante o inválido`)
+        return
+      }
 
-      const proveedorValue = getFieldValue(row, [
-        "Proveedor",
-        "proveedor",
-        "Proveedor_ID",
-        "proveedor_id",
-        "ProveedorID",
-        "Supplier",
-        "supplier",
-        "Proveedor ID",
-        "ID Proveedor",
-      ])
-
-      // Validaciones obligatorias
-      if (!articuloNumero && articuloNumero !== 0) {
-        errores.push(`Fila ${index + 2}: Falta número de artículo`)
-        continue
+      // Buscar descripción
+      let descripcion = ""
+      for (const key of Object.keys(row)) {
+        const keyLower = key.toLowerCase().trim()
+        if (columnMappings.descripcion.some((mapping) => keyLower.includes(mapping))) {
+          const value = row[key]
+          if (value !== null && value !== undefined && value !== "") {
+            descripcion = String(value).trim()
+            break
+          }
+        }
       }
 
       if (!descripcion) {
-        errores.push(`Fila ${index + 2}: Falta descripción del producto`)
-        continue
+        errores.push(`Fila ${index + 2}: Descripción faltante`)
+        return
       }
 
-      // Convertir número de artículo
-      let numeroArticulo: number
-      if (typeof articuloNumero === "number") {
-        numeroArticulo = articuloNumero
-      } else {
-        const parsed = Number.parseInt(articuloNumero.toString())
-        if (isNaN(parsed)) {
-          errores.push(`Fila ${index + 2}: Número de artículo inválido: ${articuloNumero}`)
-          continue
-        }
-        numeroArticulo = parsed
-      }
-
-      // Determinar proveedor - SIEMPRE asignar un proveedor válido
-      let proveedor: Proveedor = proveedorGeneral
-
-      if (proveedorValue) {
-        // Buscar proveedor por ID
-        const proveedorId = Number.parseInt(proveedorValue.toString())
-        if (!isNaN(proveedorId)) {
-          const proveedorEncontrado = proveedores.find((p) => p.proveedor_id === proveedorId)
-          if (proveedorEncontrado) {
-            proveedor = proveedorEncontrado
-          } else {
-            errores.push(
-              `Fila ${index + 2}: Proveedor con ID ${proveedorId} no encontrado. Se asignará "${proveedorGeneral.proveedor_nombre}"`,
-            )
-          }
-        } else {
-          // Buscar proveedor por nombre
-          const proveedorEncontrado = proveedores.find((p) =>
-            p.proveedor_nombre.toLowerCase().includes(proveedorValue.toString().toLowerCase()),
-          )
-          if (proveedorEncontrado) {
-            proveedor = proveedorEncontrado
-          } else {
-            errores.push(
-              `Fila ${index + 2}: Proveedor "${proveedorValue}" no encontrado. Se asignará "${proveedorGeneral.proveedor_nombre}"`,
-            )
+      // Buscar código de producto (opcional)
+      let productoCodigo = ""
+      for (const key of Object.keys(row)) {
+        const keyLower = key.toLowerCase().trim()
+        if (columnMappings.codigo.some((mapping) => keyLower.includes(mapping))) {
+          const value = row[key]
+          if (value !== null && value !== undefined && value !== "") {
+            productoCodigo = String(value).trim()
+            break
           }
         }
       }
 
-      // Determinar unidad de medida basada en la descripción
+      // Determinar unidad de medida
       let unidadMedida = "unidad"
-      const descripcionStr = descripcion.toString().toLowerCase()
-      if (descripcionStr.includes("cable")) {
+      if (descripcion.toLowerCase().includes("cable")) {
         unidadMedida = "metros"
-      } else if (descripcionStr.includes("metro") || descripcionStr.includes("mts")) {
-        unidadMedida = "metros"
-      } else if (descripcionStr.includes("litro") || descripcionStr.includes("lts")) {
+      } else if (descripcion.toLowerCase().includes("litro")) {
         unidadMedida = "litros"
-      } else if (descripcionStr.includes("kilo") || descripcionStr.includes("kg")) {
+      } else if (descripcion.toLowerCase().includes("kilo") || descripcion.toLowerCase().includes("kg")) {
         unidadMedida = "kilogramos"
       }
 
-      // Crear producto - GARANTIZAR que proveedor_id nunca sea null
+      // Buscar proveedor
+      let proveedor: Proveedor = proveedorGeneral // Default
+      for (const key of Object.keys(row)) {
+        const keyLower = key.toLowerCase().trim()
+        if (columnMappings.proveedor.some((mapping) => keyLower.includes(mapping))) {
+          const value = row[key]
+          if (value !== null && value !== undefined && value !== "") {
+            const proveedorValue = String(value).trim()
+
+            // Buscar por ID numérico
+            const proveedorId = Number(proveedorValue)
+            if (!isNaN(proveedorId)) {
+              const foundById = proveedores.find((p) => p.proveedor_id === proveedorId)
+              if (foundById) {
+                proveedor = foundById
+                break
+              }
+            }
+
+            // Buscar por nombre (coincidencia parcial)
+            const foundByName = proveedores.find((p) =>
+              p.proveedor_nombre.toLowerCase().includes(proveedorValue.toLowerCase()),
+            )
+            if (foundByName) {
+              proveedor = foundByName
+              break
+            }
+          }
+        }
+      }
+
+      // Crear producto
       const producto: Producto = {
-        articulo_numero: numeroArticulo,
-        producto_codigo: productoCodigo ? productoCodigo.toString().trim() : "",
-        descripcion: descripcion.toString().trim(),
+        articulo_numero: articuloNumero,
+        producto_codigo: productoCodigo,
+        descripcion: descripcion,
         unidad_medida: unidadMedida,
-        proveedor_id: proveedor.proveedor_id, // SIEMPRE un número válido
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        proveedor_id: proveedor.proveedor_id,
         proveedor: proveedor,
       }
 
-      // Validación final antes de agregar
+      // Validación final
       if (!producto.proveedor_id || producto.proveedor_id <= 0) {
         errores.push(`Fila ${index + 2}: Error interno - proveedor_id inválido`)
-        continue
+        return
       }
 
       productos.push(producto)
-      console.log(`Producto ${index + 1} procesado: ${producto.descripcion} (Proveedor: ${proveedor.proveedor_nombre})`)
+      console.log(`Successfully processed product:`, producto)
     } catch (error) {
+      console.error(`Error processing row ${index + 1}:`, error)
       errores.push(
-        `Fila ${index + 2}: Error procesando datos - ${error instanceof Error ? error.message : "Error desconocido"}`,
+        `Fila ${index + 2}: Error al procesar - ${error instanceof Error ? error.message : "Error desconocido"}`,
       )
     }
-  }
+  })
 
-  console.log(`Procesamiento completado: ${productos.length} productos válidos, ${errores.length} errores`)
+  console.log(`Parsing completed: ${productos.length} products, ${errores.length} errors`)
   return { productos, errores }
-}
-
-function getFieldValue(row: ExcelRow, possibleKeys: string[]): any {
-  // Buscar coincidencia exacta primero
-  for (const key of possibleKeys) {
-    if (row[key] !== undefined && row[key] !== null && row[key] !== "") {
-      return row[key]
-    }
-  }
-
-  // Buscar coincidencia case-insensitive
-  const rowKeys = Object.keys(row)
-  for (const possibleKey of possibleKeys) {
-    const matchingKey = rowKeys.find((key) => key.toLowerCase().trim() === possibleKey.toLowerCase().trim())
-    if (matchingKey && row[matchingKey] !== undefined && row[matchingKey] !== null && row[matchingKey] !== "") {
-      return row[matchingKey]
-    }
-  }
-
-  // Buscar coincidencia parcial (contiene)
-  for (const possibleKey of possibleKeys) {
-    const matchingKey = rowKeys.find(
-      (key) =>
-        key.toLowerCase().includes(possibleKey.toLowerCase()) || possibleKey.toLowerCase().includes(key.toLowerCase()),
-    )
-    if (matchingKey && row[matchingKey] !== undefined && row[matchingKey] !== null && row[matchingKey] !== "") {
-      return row[matchingKey]
-    }
-  }
-
-  return null
 }

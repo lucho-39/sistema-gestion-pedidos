@@ -2,54 +2,82 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, Plus, Search, Edit, Trash2 } from "lucide-react"
+import { ArrowLeft, Plus, Search, Edit, Trash2, Phone, MapPin, Database, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Database } from "@/lib/database"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Database as DB } from "@/lib/database"
 import type { Cliente } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [needsSetup, setNeedsSetup] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
-    loadClientes()
-  }, [])
-
-  const loadClientes = async () => {
-    try {
-      setIsLoading(true)
-      const data = await Database.getClientes()
-      setClientes(data)
-    } catch (error) {
-      console.error("Error loading clientes:", error)
-      toast({
-        title: "Error",
-        description: "Error al cargar los clientes",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
+    const loadClientes = async () => {
+      try {
+        setIsLoading(true)
+        setNeedsSetup(false)
+        const loadedClientes = await DB.getClientes()
+        setClientes(loadedClientes)
+        setFilteredClientes(loadedClientes)
+      } catch (error) {
+        console.error("Error loading clientes:", error)
+        if (error instanceof Error && error.message.includes("Database tables not found")) {
+          setNeedsSetup(true)
+        } else {
+          toast({
+            title: "Error",
+            description: "Error al cargar los clientes",
+            variant: "destructive",
+          })
+        }
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }
 
-  const deleteCliente = async (id: number) => {
+    loadClientes()
+  }, [toast])
+
+  useEffect(() => {
+    const filtered = clientes.filter(
+      (cliente) =>
+        (cliente.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cliente.CUIL || "").includes(searchTerm) ||
+        (cliente.telefono || "").includes(searchTerm) ||
+        (cliente.cliente_codigo || "").toString().includes(searchTerm),
+    )
+    setFilteredClientes(filtered)
+  }, [searchTerm, clientes])
+
+  const handleDelete = async (clienteId: number) => {
     if (!confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
       return
     }
 
     try {
-      await Database.deleteCliente(id)
-      await loadClientes()
-      toast({
-        title: "Cliente eliminado",
-        description: "El cliente ha sido eliminado exitosamente",
-      })
+      const success = await DB.deleteCliente(clienteId)
+      if (success) {
+        const updatedClientes = clientes.filter((c) => c.cliente_id !== clienteId)
+        setClientes(updatedClientes)
+        toast({
+          title: "Cliente eliminado",
+          description: "El cliente se ha eliminado exitosamente",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar el cliente",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       console.error("Error deleting cliente:", error)
       toast({
@@ -60,18 +88,10 @@ export default function ClientesPage() {
     }
   }
 
-  const filtered = clientes.filter(
-    (cliente) =>
-      (cliente.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (cliente.CUIL || "").includes(searchTerm) ||
-      (cliente.telefono || "").includes(searchTerm) ||
-      (cliente.cliente_codigo || "").toString().includes(searchTerm),
-  )
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-4xl mx-auto space-y-4">
+        <div className="max-w-md mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
             <Link href="/">
               <Button variant="ghost" size="sm">
@@ -88,114 +108,143 @@ export default function ClientesPage() {
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+  if (needsSetup) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-md mx-auto space-y-4">
+          <div className="flex items-center gap-3 py-2">
             <Link href="/">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
             <h1 className="text-xl font-bold">Clientes</h1>
-            <Badge variant="secondary">{clientes.length} total</Badge>
+          </div>
+
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Base de datos no configurada</strong>
+              <p className="mt-2">
+                Las tablas de la base de datos no existen. Necesitas ejecutar los scripts de configuración primero.
+              </p>
+            </AlertDescription>
+          </Alert>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-blue-600" />
+                Configuración Requerida
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Para gestionar clientes, primero debes configurar la base de datos ejecutando los scripts SQL en tu
+                proyecto Supabase.
+              </p>
+
+              <div className="space-y-2">
+                <Link href="/setup" className="block">
+                  <Button className="w-full">
+                    <Database className="h-4 w-4 mr-2" />
+                    Ir a Configuración
+                  </Button>
+                </Link>
+
+                <Link href="/" className="block">
+                  <Button variant="outline" className="w-full bg-transparent">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Volver al Inicio
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-md mx-auto space-y-4">
+        <div className="flex items-center gap-3 py-2">
+          <Link href="/">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="text-xl font-bold">Clientes</h1>
+        </div>
+
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar clientes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
           <Link href="/clientes/nuevo">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Cliente
+            <Button size="sm">
+              <Plus className="h-4 w-4" />
             </Button>
           </Link>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Buscar por nombre, CUIL, teléfono o código..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        {filtered.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-gray-500">
-                {searchTerm
-                  ? "No se encontraron clientes que coincidan con la búsqueda"
-                  : "No hay clientes registrados"}
-              </p>
-              {!searchTerm && (
-                <Link href="/clientes/nuevo">
-                  <Button className="mt-2">
+        <div className="space-y-3">
+          {filteredClientes.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-gray-500">
+                  {searchTerm ? "No se encontraron clientes" : "No hay clientes registrados"}
+                </p>
+                <Link href="/clientes/nuevo" className="inline-block mt-2">
+                  <Button variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
-                    Crear Primer Cliente
+                    Agregar Cliente
                   </Button>
                 </Link>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {filtered.map((cliente) => (
+              </CardContent>
+            </Card>
+          ) : (
+            filteredClientes.map((cliente) => (
               <Card key={cliente.cliente_id}>
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">{cliente.nombre}</CardTitle>
-                      <p className="text-sm text-gray-500">Código: {cliente.cliente_codigo}</p>
-                    </div>
-                    <div className="flex gap-2">
+                    <CardTitle className="text-base font-medium">
+                      #{cliente.cliente_codigo} - {cliente.nombre}
+                    </CardTitle>
+                    <div className="flex gap-1">
                       <Link href={`/clientes/editar/${cliente.cliente_id}`}>
-                        <Button variant="outline" size="sm">
+                        <Button variant="ghost" size="sm">
                           <Edit className="h-3 w-3" />
                         </Button>
                       </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteCliente(cliente.cliente_id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(cliente.cliente_id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">CUIL</p>
-                      <p className="font-medium">{cliente.CUIL || "No especificado"}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Teléfono</p>
-                      <p className="font-medium">{cliente.telefono || "No especificado"}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Dirección</p>
-                      <p className="font-medium">{cliente.direccion || "No especificada"}</p>
-                    </div>
+                <CardContent className="pt-0 space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="h-3 w-3" />
+                    <span>{cliente.domicilio}</span>
                   </div>
-                  {cliente.observaciones && (
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="text-gray-500 text-xs">Observaciones</p>
-                      <p className="text-sm">{cliente.observaciones}</p>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Phone className="h-3 w-3" />
+                    <span>{cliente.telefono}</span>
+                  </div>
+                  <p className="text-xs text-gray-500">CUIL: {cliente.CUIL}</p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
-
-        {searchTerm && (
-          <div className="text-center text-sm text-gray-500">
-            Mostrando {filtered.length} de {clientes.length} clientes
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
     </div>
   )

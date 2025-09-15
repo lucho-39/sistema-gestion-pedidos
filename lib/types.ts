@@ -1,19 +1,10 @@
-export interface Cliente {
-  cliente_id: number
-  cliente_codigo: number
-  nombre: string
-  domicilio: string
-  telefono: string
-  CUIL: string // Changed from 'cuil' to 'CUIL' to match database
-  created_at: string
-  updated_at: string
-}
+// Tipos base para el sistema de gestión de inventario
 
 export interface Proveedor {
   proveedor_id: number
   proveedor_nombre: string
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface Producto {
@@ -22,12 +13,23 @@ export interface Producto {
   descripcion: string
   unidad_medida: string
   proveedor_id: number
-  created_at: string
-  updated_at: string
   proveedor: Proveedor
+  created_at?: string
+  updated_at?: string
 }
 
-export interface PedidoProducto {
+export interface Cliente {
+  cliente_id: number
+  cliente_codigo: number
+  nombre: string
+  domicilio: string
+  telefono: string
+  CUIL: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ProductoPedido {
   id: number
   pedido_id: number
   articulo_numero: number
@@ -36,23 +38,20 @@ export interface PedidoProducto {
   producto?: Producto
 }
 
-export interface ProductoPedido extends Producto {
-  cantidad: number
-}
-
 export interface Pedido {
   pedido_id: number
   cliente_id: number
   fecha_pedido: string
   created_at: string
-  updated_at: string
-  incluido_en_reporte?: boolean
+  updated_at?: string
+  incluido_en_reporte: boolean
   fecha_inclusion_reporte?: string
   reporte_id?: string
-  cliente?: Cliente
-  productos?: PedidoProducto[]
+  cliente: Cliente
+  productos: ProductoPedido[]
 }
 
+// Tipos para reportes
 export interface ReporteSemanal {
   fecha_corte: string
   resumen: {
@@ -67,32 +66,32 @@ export interface ReporteSemanal {
 
 export interface ReporteProductosPorProveedor {
   fecha_corte: string
-  proveedores: {
+  proveedores: Array<{
     proveedor_id: number
     proveedor_nombre: string
-    productos: {
+    productos: Array<{
       articulo_numero: number
       descripcion: string
       unidad_medida: string
       cantidad_total: number
-    }[]
+    }>
     total_productos: number
-  }[]
+  }>
   total_proveedores: number
 }
 
 export interface ReportePedidos {
   fecha_corte: string
-  pedidos: {
+  pedidos: Array<{
     pedido_id: number
     cliente_nombre: string
     fecha_pedido: string
-    productos: {
+    productos: Array<{
       descripcion: string
       cantidad: number
       unidad_medida: string
-    }[]
-  }[]
+    }>
+  }>
   total_pedidos: number
 }
 
@@ -110,29 +109,4 @@ export interface ReporteAutomatico {
   }
   created_at: string
   updated_at: string
-}
-
-export interface ImportResult {
-  success: boolean
-  message: string
-  imported: number
-  errors: string[]
-  duplicates: number
-}
-
-export interface ExcelRow {
-  [key: string]: any
-}
-
-export interface ValidationError {
-  row: number
-  field: string
-  message: string
-  value: any
-}
-
-export interface ImportOptions {
-  skipDuplicates: boolean
-  validateProveedores: boolean
-  createMissingProveedores: boolean
 }
