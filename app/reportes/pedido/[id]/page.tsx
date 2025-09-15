@@ -40,16 +40,20 @@ export default function DetallePedidoPage() {
   }, [params.id, toast])
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-AR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
+    try {
+      return new Date(dateString).toLocaleDateString("es-AR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    } catch (error) {
+      return "Fecha no válida"
+    }
   }
 
   const calcularTotalProductos = () => {
-    if (!pedido) return 0
-    return pedido.productos.reduce((total, producto) => total + producto.cantidad, 0)
+    if (!pedido || !pedido.productos) return 0
+    return pedido.productos.reduce((total, producto) => total + (producto.cantidad || 0), 0)
   }
 
   if (isLoading) {
@@ -121,13 +125,13 @@ export default function DetallePedidoPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="font-medium">{pedido.cliente.nombre}</p>
-              <p className="text-sm text-gray-600">Código: #{pedido.cliente.cliente_codigo}</p>
+              <p className="font-medium">{pedido.cliente?.nombre || "Cliente no encontrado"}</p>
+              <p className="text-sm text-gray-600">Código: #{pedido.cliente?.cliente_codigo || "N/A"}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">📍 {pedido.cliente.domicilio}</p>
-              <p className="text-sm text-gray-600">📞 {pedido.cliente.telefono}</p>
-              <p className="text-sm text-gray-600">🆔 CUIL: {pedido.cliente.CUIL}</p>
+              <p className="text-sm text-gray-600">📍 {pedido.cliente?.domicilio || "Domicilio no disponible"}</p>
+              <p className="text-sm text-gray-600">📞 {pedido.cliente?.telefono || "Teléfono no disponible"}</p>
+              <p className="text-sm text-gray-600">🆔 CUIL: {pedido.cliente?.CUIL || "CUIL no disponible"}</p>
             </div>
           </CardContent>
         </Card>
@@ -150,7 +154,7 @@ export default function DetallePedidoPage() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Tipos de productos:</span>
-              <Badge variant="secondary">{pedido.productos.length}</Badge>
+              <Badge variant="secondary">{pedido.productos?.length || 0}</Badge>
             </div>
           </CardContent>
         </Card>
@@ -163,27 +167,36 @@ export default function DetallePedidoPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {pedido.productos.map((producto, index) => (
-              <div key={index} className="border rounded-lg p-3 space-y-2">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">
-                      #{producto.articulo_numero} - {producto.descripcion}
-                    </p>
-                    <p className="text-xs text-gray-500">Código: {producto.producto_codigo || "Sin código"}</p>
+            {pedido.productos && pedido.productos.length > 0 ? (
+              pedido.productos.map((producto, index) => (
+                <div key={index} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">
+                        #{producto.articulo_numero} - {producto.producto?.descripcion || "Descripción no disponible"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Código: {producto.producto?.producto_codigo || "Sin código"}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="ml-2">
+                      {producto.cantidad || 0} {producto.producto?.unidad_medida || "unidad"}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="ml-2">
-                    {producto.cantidad} {producto.unidad_medida}
-                  </Badge>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Truck className="h-3 w-3" />
+                    <span>
+                      {producto.producto?.proveedor?.proveedor_id || "N/A"} -{" "}
+                      {producto.producto?.proveedor?.proveedor_nombre || "Proveedor no disponible"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-600">
-                  <Truck className="h-3 w-3" />
-                  <span>
-                    {producto.proveedor.proveedor_id} - {producto.proveedor.proveedor_nombre}
-                  </span>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                <p>No hay productos en este pedido</p>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
       </div>

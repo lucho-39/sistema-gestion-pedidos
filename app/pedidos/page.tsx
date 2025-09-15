@@ -2,70 +2,95 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, Plus, Search, Edit, Trash2, User, Package, Database, AlertTriangle } from "lucide-react"
+import { Plus, Search, Eye, Edit, Trash2, Calendar, User, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Database as DB } from "@/lib/database"
-import type { Pedido } from "@/lib/types"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { Database } from "@/lib/database"
+import type { Pedido } from "@/lib/types"
 
 export default function PedidosPage() {
-  const [pedidos, setPedidos] = useState<Pedido[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filteredPedidos, setFilteredPedidos] = useState<Pedido[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [needsSetup, setNeedsSetup] = useState(false)
   const { toast } = useToast()
+  const [pedidos, setPedidos] = useState<Pedido[]>([])
+  const [filteredPedidos, setFilteredPedidos] = useState<Pedido[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const loadPedidos = async () => {
-      try {
-        setIsLoading(true)
-        setNeedsSetup(false)
-        const loadedPedidos = await DB.getPedidos()
-        setPedidos(loadedPedidos)
-        setFilteredPedidos(loadedPedidos)
-      } catch (error) {
-        console.error("Error loading pedidos:", error)
-        if (error instanceof Error && error.message.includes("Database tables not found")) {
-          setNeedsSetup(true)
-        } else {
-          toast({
-            title: "Error",
-            description: "Error al cargar los pedidos",
-            variant: "destructive",
-          })
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadPedidos()
-  }, [toast])
+  }, [])
 
   useEffect(() => {
-    const filtered = pedidos.filter(
-      (pedido) =>
-        pedido.cliente?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pedido.pedido_id.toString().includes(searchTerm) ||
-        pedido.productos?.some((p) => p.producto?.descripcion.toLowerCase().includes(searchTerm.toLowerCase())),
-    )
-    setFilteredPedidos(filtered)
+    filterPedidos()
   }, [searchTerm, pedidos])
 
-  const handleDelete = async (pedidoId: number) => {
+  const loadPedidos = async () => {
     try {
-      const success = await DB.deletePedido(pedidoId)
+      setIsLoading(true)
+      const data = await Database.getPedidos()
+      setPedidos(data)
+    } catch (error) {
+      console.error("Error loading pedidos:", error)
+      toast({
+        title: "Error",
+        description: "Error al cargar los pedidos",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const filterPedidos = () => {
+    if (!searchTerm.trim()) {
+      setFilteredPedidos(pedidos)
+      return
+    }
+
+    const filtered = pedidos.filter((pedido) => {
+      const searchLower = searchTerm.toLowerCase()
+
+      // Buscar por ID del pedido
+      if (pedido.pedido_id.toString().includes(searchLower)) {
+        return true
+      }
+
+      // Buscar por nombre del cliente
+      if (pedido.cliente?.nombre?.toLowerCase().includes(searchLower)) {
+        return true
+      }
+
+      // Buscar por código del cliente
+      if (pedido.cliente?.cliente_codigo?.toString().includes(searchLower)) {
+        return true
+      }
+
+      // Buscar por fecha
+      if (pedido.fecha_pedido?.includes(searchTerm)) {
+        return true
+      }
+
+      return false
+    })
+
+    setFilteredPedidos(filtered)
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar este pedido?")) {
+      return
+    }
+
+    try {
+      const success = await Database.deletePedido(id)
       if (success) {
-        const updatedPedidos = pedidos.filter((p) => p.pedido_id !== pedidoId)
-        setPedidos(updatedPedidos)
         toast({
           title: "Pedido eliminado",
-          description: "El pedido se ha eliminado exitosamente",
+          description: "El pedido se ha eliminado correctamente",
         })
+        loadPedidos()
       } else {
         toast({
           title: "Error",
@@ -83,22 +108,35 @@ export default function PedidosPage() {
     }
   }
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Sin fecha"
-    return new Date(dateString).toLocaleDateString("es-AR")
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString("es-AR", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    } catch (error) {
+      return "Fecha no válida"
+    }
+  }
+
+  const calcularTotalProductos = (pedido: Pedido) => {
+    if (!pedido.productos) return 0
+    return pedido.productos.reduce((total, producto) => total + (producto.cantidad || 0), 0)
   }
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-md mx-auto space-y-4">
-          <div className="flex items-center gap-3 py-2">
-            <Link href="/">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4" />
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Pedidos</h1>
+            <Link href="/pedidos/nuevo">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Pedido
               </Button>
             </Link>
-            <h1 className="text-xl font-bold">Pedidos</h1>
           </div>
           <div className="text-center py-8">
             <p className="text-gray-500">Cargando pedidos...</p>
@@ -108,166 +146,137 @@ export default function PedidosPage() {
     )
   }
 
-  if (needsSetup) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-md mx-auto space-y-4">
-          <div className="flex items-center gap-3 py-2">
-            <Link href="/">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <h1 className="text-xl font-bold">Pedidos</h1>
-          </div>
-
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Base de datos no configurada</strong>
-              <p className="mt-2">
-                Las tablas de la base de datos no existen. Necesitas ejecutar los scripts de configuración primero.
-              </p>
-            </AlertDescription>
-          </Alert>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-blue-600" />
-                Configuración Requerida
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Para usar la funcionalidad de pedidos, primero debes configurar la base de datos ejecutando los scripts
-                SQL en tu proyecto Supabase.
-              </p>
-
-              <div className="space-y-2">
-                <Link href="/setup" className="block">
-                  <Button className="w-full">
-                    <Database className="h-4 w-4 mr-2" />
-                    Ir a Configuración
-                  </Button>
-                </Link>
-
-                <Link href="/" className="block">
-                  <Button variant="outline" className="w-full bg-transparent">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Volver al Inicio
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="text-xs text-gray-500 space-y-1">
-                <p>
-                  <strong>¿Qué necesitas hacer?</strong>
-                </p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Ir a la página de configuración</li>
-                  <li>Copiar los scripts SQL</li>
-                  <li>Ejecutarlos en Supabase</li>
-                  <li>Volver a esta página</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-md mx-auto space-y-4">
-        <div className="flex items-center gap-3 py-2">
-          <Link href="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Pedidos</h1>
+          <Link href="/pedidos/nuevo">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Pedido
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">Pedidos</h1>
         </div>
 
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Buscar pedidos..."
+              placeholder="Buscar por ID, cliente, código o fecha..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
-          <Link href="/pedidos/nuevo">
-            <Button size="sm">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </Link>
         </div>
 
-        <div className="space-y-3">
-          {filteredPedidos.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-gray-500">No hay pedidos registrados</p>
-                <Link href="/pedidos/nuevo" className="inline-block mt-2">
-                  <Button variant="outline" size="sm">
+        {filteredPedidos.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 mb-4">
+                {searchTerm ? "No se encontraron pedidos que coincidan con la búsqueda" : "No hay pedidos registrados"}
+              </p>
+              {!searchTerm && (
+                <Link href="/pedidos/nuevo">
+                  <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Nuevo Pedido
+                    Crear primer pedido
                   </Button>
                 </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredPedidos.map((pedido) => (
-              <Card key={pedido.pedido_id}>
-                <CardHeader className="pb-2">
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredPedidos.map((pedido) => (
+              <Card key={pedido.pedido_id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-base font-medium">Pedido #{pedido.pedido_id}</CardTitle>
-                      <p className="text-xs text-gray-500">{formatDate(pedido.fecha_pedido || pedido.created_at)}</p>
-                    </div>
+                    <CardTitle className="text-lg">Pedido #{pedido.pedido_id}</CardTitle>
                     <div className="flex gap-1">
+                      <Link href={`/reportes/pedido/${pedido.pedido_id}`}>
+                        <Button variant="ghost" size="sm" title="Ver pedido">
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      </Link>
                       <Link href={`/pedidos/editar/${pedido.pedido_id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" title="Editar pedido">
                           <Edit className="h-3 w-3" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(pedido.pedido_id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(pedido.pedido_id)}
+                        className="text-red-600 hover:text-red-700"
+                        title="Eliminar pedido"
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0 space-y-3">
+                <CardContent className="space-y-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <User className="h-3 w-3 text-gray-500" />
-                    <span>{pedido.cliente?.nombre || "Cliente no encontrado"}</span>
+                    <User className="h-4 w-4 text-green-600" />
+                    <div>
+                      <p className="font-medium">{pedido.cliente?.nombre || "Cliente no encontrado"}</p>
+                      <p className="text-xs text-gray-500">Código: #{pedido.cliente?.cliente_codigo || "N/A"}</p>
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Package className="h-3 w-3 text-gray-500" />
-                      <span>{pedido.productos?.length || 0} producto(s)</span>
-                    </div>
-                    <div className="pl-5 space-y-1">
-                      {pedido.productos?.slice(0, 2).map((producto, index) => (
-                        <p key={index} className="text-xs text-gray-600">
-                          {producto.cantidad}x {producto.producto?.descripcion || "Producto no encontrado"}
-                        </p>
-                      ))}
-                      {(pedido.productos?.length || 0) > 2 && (
-                        <p className="text-xs text-gray-500">+{(pedido.productos?.length || 0) - 2} más...</p>
-                      )}
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                    <span>{formatDate(pedido.fecha_pedido)}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <Package className="h-4 w-4 text-orange-600" />
+                    <div className="flex gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {pedido.productos?.length || 0} tipos
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {calcularTotalProductos(pedido)} unidades
+                      </Badge>
                     </div>
                   </div>
+
+                  {pedido.productos && pedido.productos.length > 0 && (
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-xs text-gray-500 mb-2">Productos principales:</p>
+                      <div className="space-y-1">
+                        {pedido.productos.slice(0, 2).map((producto, index) => (
+                          <div key={index} className="text-xs text-gray-600 flex justify-between">
+                            <span className="truncate flex-1 mr-2">
+                              {producto.producto?.descripcion || "Producto no encontrado"}
+                            </span>
+                            <span className="text-gray-400">
+                              {producto.cantidad || 0} {producto.producto?.unidad_medida || "unidad"}
+                            </span>
+                          </div>
+                        ))}
+                        {pedido.productos.length > 2 && (
+                          <p className="text-xs text-gray-400">+{pedido.productos.length - 2} productos más</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {searchTerm && filteredPedidos.length > 0 && (
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500">
+              Mostrando {filteredPedidos.length} de {pedidos.length} pedidos
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

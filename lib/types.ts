@@ -24,7 +24,7 @@ export interface Cliente {
   nombre: string
   domicilio: string
   telefono: string
-  CUIL: string
+  cuil?: string
   created_at?: string
   updated_at?: string
 }

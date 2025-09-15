@@ -38,10 +38,17 @@ export class Database {
 
   // Clientes
   static async getClientes(): Promise<Cliente[]> {
-    this.checkConfiguration()
-
     try {
-      const { data, error } = await supabase.from("clientes").select("*").order("nombre")
+      if (!isSupabaseConfigured()) {
+        console.log("Supabase not configured, returning empty array")
+        return []
+      }
+
+      // Usar solo las columnas que sabemos que existen según el schema
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at")
+        .order("nombre")
 
       if (error) {
         console.error("Error fetching clientes:", error)
@@ -59,10 +66,16 @@ export class Database {
   }
 
   static async getClienteById(id: number): Promise<Cliente | null> {
-    this.checkConfiguration()
-
     try {
-      const { data, error } = await supabase.from("clientes").select("*").eq("cliente_id", id).single()
+      if (!isSupabaseConfigured()) {
+        return null
+      }
+
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at")
+        .eq("cliente_id", id)
+        .single()
 
       if (error) throw error
       return data
@@ -75,9 +88,11 @@ export class Database {
   static async createCliente(
     cliente: Omit<Cliente, "cliente_id" | "created_at" | "updated_at">,
   ): Promise<Cliente | null> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        throw new Error("Database not configured")
+      }
+
       const { data, error } = await supabase.from("clientes").insert([cliente]).select().single()
 
       if (error) throw error
@@ -89,9 +104,11 @@ export class Database {
   }
 
   static async updateCliente(id: number, cliente: Partial<Cliente>): Promise<boolean> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
       const { error } = await supabase
         .from("clientes")
         .update({ ...cliente, updated_at: new Date().toISOString() })
@@ -106,9 +123,11 @@ export class Database {
   }
 
   static async deleteCliente(id: number): Promise<boolean> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
       const { error } = await supabase.from("clientes").delete().eq("cliente_id", id)
 
       if (error) throw error
@@ -121,9 +140,12 @@ export class Database {
 
   // Proveedores
   static async getProveedores(): Promise<Proveedor[]> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        console.log("Supabase not configured, returning empty array")
+        return []
+      }
+
       const { data, error } = await supabase.from("proveedores").select("*").order("proveedor_nombre")
 
       if (error) {
@@ -142,9 +164,11 @@ export class Database {
   }
 
   static async getProveedorById(id: number): Promise<Proveedor | null> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return null
+      }
+
       const { data, error } = await supabase.from("proveedores").select("*").eq("proveedor_id", id).single()
 
       if (error) throw error
@@ -158,9 +182,11 @@ export class Database {
   static async createProveedor(
     proveedor: Omit<Proveedor, "proveedor_id" | "created_at" | "updated_at">,
   ): Promise<Proveedor | null> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        throw new Error("Database not configured")
+      }
+
       const { data, error } = await supabase.from("proveedores").insert([proveedor]).select().single()
 
       if (error) throw error
@@ -172,9 +198,11 @@ export class Database {
   }
 
   static async updateProveedor(id: number, proveedor: Partial<Proveedor>): Promise<boolean> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
       const { error } = await supabase
         .from("proveedores")
         .update({ ...proveedor, updated_at: new Date().toISOString() })
@@ -189,9 +217,11 @@ export class Database {
   }
 
   static async deleteProveedor(id: number): Promise<boolean> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
       const { error } = await supabase.from("proveedores").delete().eq("proveedor_id", id)
 
       if (error) throw error
@@ -204,9 +234,12 @@ export class Database {
 
   // Productos - Consultas completamente separadas
   static async getProductos(): Promise<Producto[]> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        console.log("Supabase not configured, returning empty array")
+        return []
+      }
+
       console.log("Fetching productos with separate queries...")
 
       // 1. Obtener productos básicos
@@ -271,9 +304,11 @@ export class Database {
   }
 
   static async getProductoById(articuloNumero: number): Promise<Producto | null> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return null
+      }
+
       // Obtener producto
       const { data: productoData, error: productoError } = await supabase
         .from("productos")
@@ -312,9 +347,11 @@ export class Database {
   }
 
   static async createProducto(producto: Omit<Producto, "created_at" | "updated_at">): Promise<Producto | null> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        throw new Error("Database not configured")
+      }
+
       const { data, error } = await supabase
         .from("productos")
         .insert([
@@ -350,9 +387,11 @@ export class Database {
   }
 
   static async updateProducto(articuloNumero: number, producto: Partial<Producto>): Promise<boolean> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
       const { error } = await supabase
         .from("productos")
         .update({
@@ -373,9 +412,11 @@ export class Database {
   }
 
   static async deleteProducto(articuloNumero: number): Promise<boolean> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
       const { error } = await supabase.from("productos").delete().eq("articulo_numero", articuloNumero)
 
       if (error) throw error
@@ -387,9 +428,11 @@ export class Database {
   }
 
   static async createProductos(productos: any[]): Promise<Producto[]> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        throw new Error("Database not configured")
+      }
+
       console.log("Creating productos with data:", productos)
 
       // Validar que todos los productos tengan proveedor_id válido
@@ -452,11 +495,14 @@ export class Database {
     }
   }
 
-  // Pedidos - Completamente reescrito con consultas independientes
+  // Pedidos - Completamente reescrito con consultas independientes y manejo de errores mejorado
   static async getPedidos(): Promise<Pedido[]> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        console.log("Supabase not configured, returning empty array")
+        return []
+      }
+
       console.log("Starting getPedidos with completely separate queries...")
 
       // 1. Obtener pedidos básicos solamente
@@ -480,10 +526,10 @@ export class Database {
 
       console.log(`Found ${pedidosData.length} pedidos`)
 
-      // 2. Obtener clientes por separado
+      // 2. Obtener clientes por separado - SOLO columnas que existen según el schema
       const { data: clientesData, error: clientesError } = await supabase
         .from("clientes")
-        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at")
 
       if (clientesError) {
         console.error("Error fetching clientes:", clientesError)
@@ -540,14 +586,13 @@ export class Database {
 
       // 8. Combinar todos los datos manualmente
       const pedidosCompletos = pedidosData.map((pedido) => {
-        // Obtener cliente
+        // Obtener cliente - sin cuil ya que no existe en el schema
         const cliente = clientesMap.get(pedido.cliente_id) || {
           cliente_id: pedido.cliente_id,
           cliente_codigo: 0,
           nombre: "Cliente no encontrado",
           domicilio: "",
           telefono: "",
-          cuil: "",
           created_at: "",
           updated_at: "",
         }
@@ -559,7 +604,7 @@ export class Database {
           const producto = productosMap.get(pp.articulo_numero)
           let proveedor = null
 
-          if (producto) {
+          if (producto && producto.proveedor_id) {
             proveedor = proveedoresMap.get(producto.proveedor_id) || {
               proveedor_id: producto.proveedor_id,
               proveedor_nombre: "Proveedor no encontrado",
@@ -572,18 +617,23 @@ export class Database {
             id: pp.id,
             pedido_id: pp.pedido_id,
             articulo_numero: pp.articulo_numero,
-            cantidad: pp.cantidad,
+            cantidad: pp.cantidad || 0,
             created_at: pp.created_at,
             producto: producto
               ? {
                   articulo_numero: producto.articulo_numero,
                   producto_codigo: producto.producto_codigo || "",
-                  descripcion: producto.descripcion,
-                  unidad_medida: producto.unidad_medida,
-                  proveedor_id: producto.proveedor_id,
-                  created_at: producto.created_at,
-                  updated_at: producto.updated_at,
-                  proveedor: proveedor!,
+                  descripcion: producto.descripcion || "Descripción no disponible",
+                  unidad_medida: producto.unidad_medida || "unidad",
+                  proveedor_id: producto.proveedor_id || 1,
+                  created_at: producto.created_at || "",
+                  updated_at: producto.updated_at || "",
+                  proveedor: proveedor || {
+                    proveedor_id: 1,
+                    proveedor_nombre: "Proveedor no encontrado",
+                    created_at: "",
+                    updated_at: "",
+                  },
                 }
               : {
                   articulo_numero: pp.articulo_numero,
@@ -621,14 +671,17 @@ export class Database {
       return pedidosCompletos
     } catch (error) {
       console.error("Error in getPedidos:", error)
+      // En lugar de lanzar el error, devolver array vacío para evitar crashes
       return []
     }
   }
 
   static async getPedidoById(id: number): Promise<Pedido | null> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return null
+      }
+
       console.log(`Getting pedido by ID: ${id}`)
 
       // 1. Obtener pedido básico
@@ -645,10 +698,10 @@ export class Database {
 
       console.log("Pedido data:", pedidoData)
 
-      // 2. Obtener cliente por separado
+      // 2. Obtener cliente por separado - SOLO columnas que existen
       const { data: clienteData, error: clienteError } = await supabase
         .from("clientes")
-        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at")
         .eq("cliente_id", pedidoData.cliente_id)
         .single()
 
@@ -689,7 +742,7 @@ export class Database {
 
         // Obtener proveedores si hay productos
         if (productosData && productosData.length > 0) {
-          const proveedorIds = [...new Set(productosData.map((p) => p.proveedor_id))]
+          const proveedorIds = [...new Set(productosData.map((p) => p.proveedor_id).filter(Boolean))]
 
           const { data: proveedoresData, error: proveedoresError } = await supabase
             .from("proveedores")
@@ -709,25 +762,25 @@ export class Database {
           // Combinar datos
           productosCompletos = pedidoProductosData.map((pp) => {
             const producto = productosMap.get(pp.articulo_numero)
-            const proveedor = producto ? proveedoresMap.get(producto.proveedor_id) : null
+            const proveedor = producto && producto.proveedor_id ? proveedoresMap.get(producto.proveedor_id) : null
 
             return {
               id: pp.id,
               pedido_id: pp.pedido_id,
               articulo_numero: pp.articulo_numero,
-              cantidad: pp.cantidad,
+              cantidad: pp.cantidad || 0,
               created_at: pp.created_at,
               producto: producto
                 ? {
                     articulo_numero: producto.articulo_numero,
                     producto_codigo: producto.producto_codigo || "",
-                    descripcion: producto.descripcion,
-                    unidad_medida: producto.unidad_medida,
-                    proveedor_id: producto.proveedor_id,
-                    created_at: producto.created_at,
-                    updated_at: producto.updated_at,
+                    descripcion: producto.descripcion || "Descripción no disponible",
+                    unidad_medida: producto.unidad_medida || "unidad",
+                    proveedor_id: producto.proveedor_id || 1,
+                    created_at: producto.created_at || "",
+                    updated_at: producto.updated_at || "",
                     proveedor: proveedor || {
-                      proveedor_id: producto.proveedor_id,
+                      proveedor_id: producto.proveedor_id || 1,
                       proveedor_nombre: "Proveedor no encontrado",
                       created_at: "",
                       updated_at: "",
@@ -768,7 +821,6 @@ export class Database {
           nombre: "Cliente no encontrado",
           domicilio: "",
           telefono: "",
-          cuil: "",
           created_at: "",
           updated_at: "",
         },
@@ -785,9 +837,11 @@ export class Database {
 
   // Método corregido para crear pedidos
   static async createPedido(pedido: Omit<Pedido, "pedido_id" | "fecha_creacion">): Promise<Pedido | null> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        throw new Error("Database not configured")
+      }
+
       console.log("Creating pedido with data:", pedido)
 
       // Extraer cliente_id del objeto cliente
@@ -858,9 +912,11 @@ export class Database {
       productos?: { articulo_numero: number; cantidad: number }[]
     },
   ): Promise<boolean> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
       // Actualizar el pedido
       const updateData: any = { updated_at: new Date().toISOString() }
       if (pedido.cliente_id) updateData.cliente_id = pedido.cliente_id
@@ -897,9 +953,11 @@ export class Database {
   }
 
   static async deletePedido(id: number): Promise<boolean> {
-    this.checkConfiguration()
-
     try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
       // Eliminar productos del pedido primero
       const { error: productosError } = await supabase.from("pedido_productos").delete().eq("pedido_id", id)
 

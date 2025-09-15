@@ -1,84 +1,156 @@
 "use client"
 
 import type React from "react"
+
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useRouter, useParams } from "next/navigation"
 import { ArrowLeft, Save, Trash2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
-import type { Cliente, Producto, ProductoPedido, Pedido } from "@/lib/types"
+import type { Pedido, Cliente, Producto } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
 
-export default function EditarPedidoPage() {
+interface PedidoProducto {
+  articulo_numero: number
+  cantidad: number
+  producto?: Producto
+}
+
+export default function EditarPedidoPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const params = useParams()
   const { toast } = useToast()
   const [pedido, setPedido] = useState<Pedido | null>(null)
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
-  const [clienteSeleccionado, setClienteSeleccionado] = useState<string>("")
-  const [fechaPedido, setFechaPedido] = useState<string>("")
-  const [productosSeleccionados, setProductosSeleccionados] = useState<ProductoPedido[]>([])
-  const [busquedaProducto, setBusquedaProducto] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
+  // Form state
+  const [clienteId, setClienteId] = useState<number>(0)
+  const [fechaPedido, setFechaPedido] = useState("")
+  const [pedidoProductos, setPedidoProductos] = useState<PedidoProducto[]>([])
+
+  // Search states
+  const [clienteSearch, setClienteSearch] = useState("")
+  const [productoSearch, setProductoSearch] = useState("")
+  const [showClienteDropdown, setShowClienteDropdown] = useState(false)
+  const [showProductoDropdown, setShowProductoDropdown] = useState(false)
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true)
-        const [loadedClientes, loadedProductos, pedidos] = await Promise.all([
-          Database.getClientes(),
-          Database.getProductos(),
-          Database.getPedidos(),
-        ])
+    loadData()
+  }, [params.id])
 
-        setClientes(loadedClientes)
-        setProductos(loadedProductos)
+  const loadData = async () => {
+    try {
+      setIsLoading(true)
 
-        const pedidoEncontrado = pedidos.find((p) => p.pedido_id === Number(params.id))
+      const [pedidoData, clientesData, productosData] = await Promise.all([
+        Database.getPedidoById(Number.parseInt(params.id)),
+        Database.getClientes(),
+        Database.getProductos(),
+      ])
 
-        if (pedidoEncontrado) {
-          setPedido(pedidoEncontrado)
-          setClienteSeleccionado(pedidoEncontrado.cliente.cliente_id.toString())
-          // Manejar fecha_pedido que puede ser undefined en pedidos existentes
-          const fechaPedidoValue =
-            pedidoEncontrado.fecha_pedido || pedidoEncontrado.fecha_creacion || new Date().toISOString()
-          setFechaPedido(fechaPedidoValue.split("T")[0]) // Solo la fecha, sin hora
-          setProductosSeleccionados(pedidoEncontrado.productos)
-        } else {
-          toast({
-            title: "Error",
-            description: "Pedido no encontrado",
-            variant: "destructive",
-          })
-          router.push("/pedidos")
-        }
-      } catch (error) {
-        console.error("Error loading data:", error)
+      if (!pedidoData) {
         toast({
           title: "Error",
-          description: "Error al cargar los datos",
+          description: "Pedido no encontrado",
           variant: "destructive",
         })
         router.push("/pedidos")
-      } finally {
-        setIsLoading(false)
+        return
       }
+
+      setPedido(pedidoData)
+      setClientes(clientesData)
+      setProductos(productosData)
+
+      // Set form data
+      setClienteId(pedidoData.cliente_id)
+      setClienteSearch(pedidoData.cliente?.nombre || "")
+      setFechaPedido(pedidoData.fecha_pedido.split("T")[0])
+      setPedidoProductos(
+        pedidoData.productos?.map((pp) => ({
+          articulo_numero: pp.articulo_numero,
+          cantidad: pp.cantidad,
+          producto: pp.producto,
+        })) || [],
+      )
+    } catch (error) {
+      console.error("Error loading data:", error)
+      toast({
+        title: "Error",
+        description: "Error al cargar los datos",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const filteredClientes = clientes.filter(
+    (cliente) =>
+      (cliente.nombre || "").toLowerCase().includes(clienteSearch.toLowerCase()) ||
+      (cliente.cliente_codigo || "").toString().includes(clienteSearch),
+  )
+
+  const filteredProductos = productos.filter(
+    (producto) =>
+      (producto.descripcion || "").toLowerCase().includes(productoSearch.toLowerCase()) ||
+      (producto.articulo_numero || "").toString().includes(productoSearch) ||
+      (producto.producto_codigo || "").toLowerCase().includes(productoSearch.toLowerCase()),
+  )
+
+  const selectCliente = (cliente: Cliente) => {
+    setClienteId(cliente.cliente_id)
+    setClienteSearch(cliente.nombre)
+    setShowClienteDropdown(false)
+  }
+
+  const agregarProducto = (producto: Producto) => {
+    const exists = pedidoProductos.find((pp) => pp.articulo_numero === producto.articulo_numero)
+    if (exists) {
+      toast({
+        title: "Producto ya agregado",
+        description: "Este producto ya está en el pedido",
+        variant: "destructive",
+      })
+      return
     }
 
-    loadData()
-  }, [params.id, router, toast])
+    setPedidoProductos([
+      ...pedidoProductos,
+      {
+        articulo_numero: producto.articulo_numero,
+        cantidad: 1,
+        producto: producto,
+      },
+    ])
+    setProductoSearch("")
+    setShowProductoDropdown(false)
+  }
+
+  const actualizarCantidad = (articuloNumero: number, cantidad: number) => {
+    if (cantidad < 0) {
+      return // No permitir cantidades negativas
+    }
+
+    setPedidoProductos(
+      pedidoProductos.map((pp) => (pp.articulo_numero === articuloNumero ? { ...pp, cantidad: cantidad } : pp)),
+    )
+  }
+
+  const eliminarProducto = (articuloNumero: number) => {
+    setPedidoProductos(pedidoProductos.filter((pp) => pp.articulo_numero !== articuloNumero))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!clienteSeleccionado) {
+    if (!clienteId) {
       toast({
         title: "Error",
         description: "Debe seleccionar un cliente",
@@ -87,58 +159,37 @@ export default function EditarPedidoPage() {
       return
     }
 
-    if (!fechaPedido) {
+    // Validar que al menos un producto tenga cantidad > 0
+    const productosConCantidad = pedidoProductos.filter((pp) => pp.cantidad > 0)
+    if (productosConCantidad.length === 0) {
       toast({
         title: "Error",
-        description: "Debe seleccionar una fecha de pedido",
+        description: "Debe tener al menos un producto con cantidad mayor a 0",
         variant: "destructive",
       })
       return
     }
-
-    if (productosSeleccionados.length === 0) {
-      toast({
-        title: "Error",
-        description: "Debe agregar al menos un producto",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsSaving(true)
 
     try {
-      const cliente = clientes.find((c) => c.cliente_id === Number(clienteSeleccionado))
-      if (!cliente) {
-        toast({
-          title: "Error",
-          description: "Cliente no encontrado",
-          variant: "destructive",
-        })
-        setIsSaving(false)
-        return
-      }
+      setIsSaving(true)
 
-      const updates: Partial<Pedido> = {
-        cliente,
-        productos: productosSeleccionados,
-        fecha_pedido: new Date(fechaPedido).toISOString(),
-      }
-
-      const success = await Database.updatePedido(Number(params.id), updates)
+      const success = await Database.updatePedido(Number.parseInt(params.id), {
+        cliente_id: clienteId,
+        fecha_pedido: fechaPedido,
+        productos: pedidoProductos.map((pp) => ({
+          articulo_numero: pp.articulo_numero,
+          cantidad: pp.cantidad,
+        })),
+      })
 
       if (success) {
         toast({
-          title: "Pedido actualizado",
-          description: "Los cambios se han guardado exitosamente",
+          title: "Éxito",
+          description: "Pedido actualizado correctamente",
         })
         router.push("/pedidos")
       } else {
-        toast({
-          title: "Error",
-          description: "No se pudieron guardar los cambios",
-          variant: "destructive",
-        })
+        throw new Error("Failed to update")
       }
     } catch (error) {
       console.error("Error updating pedido:", error)
@@ -152,54 +203,11 @@ export default function EditarPedidoPage() {
     }
   }
 
-  const agregarProducto = (producto: Producto) => {
-    const yaExiste = productosSeleccionados.find((p) => p.articulo_numero === producto.articulo_numero)
-
-    if (yaExiste) {
-      toast({
-        title: "Producto ya agregado",
-        description: "Este producto ya está en el pedido",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const productoConCantidad: ProductoPedido = {
-      ...producto,
-      cantidad: 1,
-    }
-
-    setProductosSeleccionados([...productosSeleccionados, productoConCantidad])
-    setBusquedaProducto("")
-  }
-
-  const actualizarCantidad = (articuloNumero: number, cantidad: number) => {
-    if (cantidad <= 0) {
-      eliminarProducto(articuloNumero)
-      return
-    }
-
-    setProductosSeleccionados((prev) =>
-      prev.map((p) => (p.articulo_numero === articuloNumero ? { ...p, cantidad } : p)),
-    )
-  }
-
-  const eliminarProducto = (articuloNumero: number) => {
-    setProductosSeleccionados((prev) => prev.filter((p) => p.articulo_numero !== articuloNumero))
-  }
-
-  const productosFiltrados = productos.filter(
-    (producto) =>
-      producto.descripcion.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
-      producto.producto_codigo.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
-      producto.articulo_numero.toString().includes(busquedaProducto),
-  )
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-md mx-auto space-y-4">
-          <div className="flex items-center gap-3 py-2">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-3 py-2 mb-6">
             <Link href="/pedidos">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4" />
@@ -208,18 +216,8 @@ export default function EditarPedidoPage() {
             <h1 className="text-xl font-bold">Editar Pedido</h1>
           </div>
           <div className="text-center py-8">
-            <p className="text-gray-500">Cargando datos...</p>
+            <p className="text-gray-500">Cargando pedido...</p>
           </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!pedido) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-md mx-auto">
-          <p className="text-center py-8">Pedido no encontrado</p>
         </div>
       </div>
     )
@@ -227,45 +225,66 @@ export default function EditarPedidoPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-md mx-auto space-y-4">
-        <div className="flex items-center gap-3 py-2">
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center gap-3 py-2 mb-6">
           <Link href="/pedidos">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">Editar Pedido #{pedido.pedido_id}</h1>
+          <h1 className="text-xl font-bold">Editar Pedido #{params.id}</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Información del Pedido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="cliente">Cliente</Label>
-                <Select value={clienteSeleccionado} onValueChange={setClienteSeleccionado}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((cliente) => (
-                      <SelectItem key={cliente.cliente_id} value={cliente.cliente_id.toString()}>
-                        #{cliente.cliente_codigo} - {cliente.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2">
+                <Label htmlFor="cliente">Cliente *</Label>
+                <div className="relative">
+                  <Input
+                    id="cliente"
+                    placeholder="Buscar cliente por nombre o código..."
+                    value={clienteSearch}
+                    onChange={(e) => {
+                      setClienteSearch(e.target.value)
+                      setShowClienteDropdown(true)
+                    }}
+                    onFocus={() => setShowClienteDropdown(true)}
+                  />
+                  {showClienteDropdown && clienteSearch && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {filteredClientes.length > 0 ? (
+                        filteredClientes.map((cliente) => (
+                          <div
+                            key={cliente.cliente_id}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => selectCliente(cliente)}
+                          >
+                            <div className="font-medium">{cliente.nombre}</div>
+                            <div className="text-sm text-gray-500">
+                              Código: {cliente.cliente_codigo} • CUIL: {cliente.CUIL}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-gray-500">No se encontraron clientes</div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="fecha_pedido">Fecha del Pedido</Label>
+              <div className="space-y-2">
+                <Label htmlFor="fecha">Fecha del Pedido *</Label>
                 <Input
-                  id="fecha_pedido"
+                  id="fecha"
                   type="date"
                   value={fechaPedido}
                   onChange={(e) => setFechaPedido(e.target.value)}
+                  required
                 />
               </div>
             </CardContent>
@@ -273,79 +292,119 @@ export default function EditarPedidoPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Agregar Productos</CardTitle>
+              <CardTitle>Productos en el Pedido</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar productos..."
-                  value={busquedaProducto}
-                  onChange={(e) => setBusquedaProducto(e.target.value)}
-                  className="pl-10"
-                />
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Agregar Producto</Label>
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Buscar producto por descripción, artículo o código..."
+                      value={productoSearch}
+                      onChange={(e) => {
+                        setProductoSearch(e.target.value)
+                        setShowProductoDropdown(true)
+                      }}
+                      onFocus={() => setShowProductoDropdown(true)}
+                      className="pl-10"
+                    />
+                  </div>
+                  {showProductoDropdown && productoSearch && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {filteredProductos.length > 0 ? (
+                        filteredProductos.map((producto) => (
+                          <div
+                            key={producto.articulo_numero}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => agregarProducto(producto)}
+                          >
+                            <div className="font-medium">{producto.descripcion}</div>
+                            <div className="text-sm text-gray-500">
+                              Art: {producto.articulo_numero} • Código: {producto.producto_codigo} •{" "}
+                              {producto.unidad_medida}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-gray-500">No se encontraron productos</div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {busquedaProducto && (
-                <div className="max-h-40 overflow-y-auto space-y-2">
-                  {productosFiltrados.slice(0, 5).map((producto) => (
-                    <div
-                      key={producto.articulo_numero}
-                      className="p-2 border rounded cursor-pointer hover:bg-gray-50"
-                      onClick={() => agregarProducto(producto)}
-                    >
-                      <p className="text-sm font-medium">
-                        #{producto.articulo_numero} - {producto.descripcion}
-                      </p>
-                      <p className="text-xs text-gray-500">{producto.producto_codigo}</p>
+              {pedidoProductos.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-medium">Productos seleccionados:</h4>
+                  {pedidoProductos.map((pp) => (
+                    <div key={pp.articulo_numero} className="flex items-center gap-3 p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">{pp.producto?.descripcion || "N/A"}</div>
+                        <div className="text-sm text-gray-500">
+                          Art: {pp.articulo_numero} • Código: {pp.producto?.producto_codigo || "N/A"} •{" "}
+                          {pp.producto?.unidad_medida || "unidad"}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          Proveedor: {pp.producto?.proveedor?.proveedor_nombre || "N/A"}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={pp.cantidad}
+                          onChange={(e) => actualizarCantidad(pp.articulo_numero, Number.parseInt(e.target.value) || 0)}
+                          className="w-20"
+                        />
+                        <span className="text-sm text-gray-500 min-w-[60px]">
+                          {pp.producto?.unidad_medida || "unidad"}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => eliminarProducto(pp.articulo_numero)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
+
+                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    <div className="flex justify-between">
+                      <span>Total productos:</span>
+                      <span>{pedidoProductos.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total unidades:</span>
+                      <span>{pedidoProductos.reduce((sum, pp) => sum + pp.cantidad, 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Productos con cantidad &gt; 0:</span>
+                      <span>{pedidoProductos.filter((pp) => pp.cantidad > 0).length}</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {productosSeleccionados.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Productos en el Pedido ({productosSeleccionados.length})</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {productosSeleccionados.map((producto) => (
-                  <div key={producto.articulo_numero} className="flex items-center gap-2 p-2 border rounded">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        #{producto.articulo_numero} - {producto.descripcion}
-                      </p>
-                      <p className="text-xs text-gray-500">{producto.unidad_medida}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        value={producto.cantidad}
-                        onChange={(e) => actualizarCantidad(producto.articulo_numero, Number(e.target.value))}
-                        className="w-16 h-8 text-center"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => eliminarProducto(producto.articulo_numero)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          <Button type="submit" disabled={isSaving} className="w-full">
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Guardando..." : "Guardar Cambios"}
-          </Button>
+          <div className="flex gap-3">
+            <Button type="submit" disabled={isSaving} className="flex-1">
+              <Save className="h-4 w-4 mr-2" />
+              {isSaving ? "Guardando..." : "Guardar Cambios"}
+            </Button>
+            <Link href="/pedidos">
+              <Button type="button" variant="outline">
+                Cancelar
+              </Button>
+            </Link>
+          </div>
         </form>
       </div>
     </div>
