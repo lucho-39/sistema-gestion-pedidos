@@ -44,7 +44,6 @@ export class Database {
         return []
       }
 
-      // Usar solo las columnas que sabemos que existen según el schema
       const { data, error } = await supabase
         .from("clientes")
         .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at")
@@ -146,11 +145,14 @@ export class Database {
         return []
       }
 
-      const { data, error } = await supabase.from("proveedores").select("*").order("proveedor_nombre")
+      const { data, error } = await supabase
+        .from("proveedores")
+        .select("proveedor_id, proveedor_nombre, created_at, updated_at")
+        .order("proveedor_nombre")
 
       if (error) {
         console.error("Error fetching proveedores:", error)
-        if (error.message.includes("does not exist")) {
+        if (error.message.includes("does not exist") || error.message.includes("schema cache")) {
           throw new Error("Database tables not found. Please run the setup scripts first.")
         }
         return []
@@ -169,7 +171,11 @@ export class Database {
         return null
       }
 
-      const { data, error } = await supabase.from("proveedores").select("*").eq("proveedor_id", id).single()
+      const { data, error } = await supabase
+        .from("proveedores")
+        .select("proveedor_id, proveedor_nombre, created_at, updated_at")
+        .eq("proveedor_id", id)
+        .single()
 
       if (error) throw error
       return data
@@ -448,7 +454,7 @@ export class Database {
         producto_codigo: p.producto_codigo || "",
         descripcion: p.descripcion,
         unidad_medida: p.unidad_medida,
-        proveedor_id: p.proveedor_id, // Debe ser un número válido
+        proveedor_id: p.proveedor_id,
       }))
 
       console.log("Insert data:", insertData)
@@ -526,7 +532,7 @@ export class Database {
 
       console.log(`Found ${pedidosData.length} pedidos`)
 
-      // 2. Obtener clientes por separado - SOLO columnas que existen según el schema
+      // 2. Obtener clientes por separado
       const { data: clientesData, error: clientesError } = await supabase
         .from("clientes")
         .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at")
@@ -586,7 +592,6 @@ export class Database {
 
       // 8. Combinar todos los datos manualmente
       const pedidosCompletos = pedidosData.map((pedido) => {
-        // Obtener cliente - sin cuil ya que no existe en el schema
         const cliente = clientesMap.get(pedido.cliente_id) || {
           cliente_id: pedido.cliente_id,
           cliente_codigo: 0,
@@ -597,7 +602,6 @@ export class Database {
           updated_at: "",
         }
 
-        // Obtener productos del pedido
         const pedidoProductos = pedidoProductosMap.get(pedido.pedido_id) || []
 
         const productos = pedidoProductos.map((pp) => {
@@ -659,7 +663,7 @@ export class Database {
           fecha_pedido: pedido.fecha_pedido,
           created_at: pedido.created_at,
           updated_at: pedido.updated_at,
-          incluido_en_reporte: false, // Default value
+          incluido_en_reporte: false,
           fecha_inclusion_reporte: undefined,
           reporte_id: undefined,
           cliente: cliente,
@@ -671,7 +675,6 @@ export class Database {
       return pedidosCompletos
     } catch (error) {
       console.error("Error in getPedidos:", error)
-      // En lugar de lanzar el error, devolver array vacío para evitar crashes
       return []
     }
   }
@@ -684,7 +687,6 @@ export class Database {
 
       console.log(`Getting pedido by ID: ${id}`)
 
-      // 1. Obtener pedido básico
       const { data: pedidoData, error: pedidoError } = await supabase
         .from("pedidos")
         .select("pedido_id, cliente_id, fecha_pedido, created_at, updated_at")
@@ -698,7 +700,6 @@ export class Database {
 
       console.log("Pedido data:", pedidoData)
 
-      // 2. Obtener cliente por separado - SOLO columnas que existen
       const { data: clienteData, error: clienteError } = await supabase
         .from("clientes")
         .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at")
@@ -711,7 +712,6 @@ export class Database {
 
       console.log("Cliente data:", clienteData)
 
-      // 3. Obtener productos del pedido por separado
       const { data: pedidoProductosData, error: pedidoProductosError } = await supabase
         .from("pedido_productos")
         .select("id, pedido_id, articulo_numero, cantidad, created_at")
@@ -723,12 +723,10 @@ export class Database {
 
       console.log("Pedido productos data:", pedidoProductosData)
 
-      // 4. Si hay productos, obtener sus detalles
       let productosCompletos: any[] = []
       if (pedidoProductosData && pedidoProductosData.length > 0) {
         const articuloNumeros = pedidoProductosData.map((pp) => pp.articulo_numero)
 
-        // Obtener productos
         const { data: productosData, error: productosError } = await supabase
           .from("productos")
           .select("articulo_numero, producto_codigo, descripcion, unidad_medida, proveedor_id, created_at, updated_at")
@@ -740,7 +738,6 @@ export class Database {
 
         console.log("Productos data:", productosData)
 
-        // Obtener proveedores si hay productos
         if (productosData && productosData.length > 0) {
           const proveedorIds = [...new Set(productosData.map((p) => p.proveedor_id).filter(Boolean))]
 
@@ -755,11 +752,9 @@ export class Database {
 
           console.log("Proveedores data:", proveedoresData)
 
-          // Crear mapas
           const productosMap = new Map((productosData || []).map((p) => [p.articulo_numero, p]))
           const proveedoresMap = new Map((proveedoresData || []).map((p) => [p.proveedor_id, p]))
 
-          // Combinar datos
           productosCompletos = pedidoProductosData.map((pp) => {
             const producto = productosMap.get(pp.articulo_numero)
             const proveedor = producto && producto.proveedor_id ? proveedoresMap.get(producto.proveedor_id) : null
@@ -835,7 +830,6 @@ export class Database {
     }
   }
 
-  // Método corregido para crear pedidos
   static async createPedido(pedido: Omit<Pedido, "pedido_id" | "fecha_creacion">): Promise<Pedido | null> {
     try {
       if (!isSupabaseConfigured()) {
@@ -844,7 +838,6 @@ export class Database {
 
       console.log("Creating pedido with data:", pedido)
 
-      // Extraer cliente_id del objeto cliente
       const cliente_id =
         typeof pedido.cliente === "object" && pedido.cliente ? pedido.cliente.cliente_id : pedido.cliente_id
 
@@ -853,7 +846,6 @@ export class Database {
         return null
       }
 
-      // Crear el pedido básico
       const { data: nuevoPedido, error: pedidoError } = await supabase
         .from("pedidos")
         .insert([
@@ -872,7 +864,6 @@ export class Database {
 
       console.log("Pedido created:", nuevoPedido)
 
-      // Preparar productos para insertar
       const productosData =
         pedido.productos?.map((producto) => ({
           pedido_id: nuevoPedido.pedido_id,
@@ -885,7 +876,6 @@ export class Database {
 
         if (productosError) {
           console.error("Error creating pedido productos:", productosError)
-          // Intentar eliminar el pedido creado si falló la inserción de productos
           await supabase.from("pedidos").delete().eq("pedido_id", nuevoPedido.pedido_id)
           throw productosError
         }
@@ -893,7 +883,6 @@ export class Database {
         console.log(`Created ${productosData.length} pedido productos`)
       }
 
-      // Obtener el pedido completo usando el método separado
       const pedidoCompleto = await this.getPedidoById(nuevoPedido.pedido_id)
       console.log("Final pedido completo:", pedidoCompleto)
 
@@ -917,7 +906,6 @@ export class Database {
         return false
       }
 
-      // Actualizar el pedido
       const updateData: any = { updated_at: new Date().toISOString() }
       if (pedido.cliente_id) updateData.cliente_id = pedido.cliente_id
       if (pedido.fecha_pedido) updateData.fecha_pedido = pedido.fecha_pedido
@@ -926,14 +914,11 @@ export class Database {
 
       if (pedidoError) throw pedidoError
 
-      // Actualizar productos si se proporcionan
       if (pedido.productos) {
-        // Eliminar productos existentes
         const { error: deleteError } = await supabase.from("pedido_productos").delete().eq("pedido_id", id)
 
         if (deleteError) throw deleteError
 
-        // Insertar nuevos productos
         const productosData = pedido.productos.map((producto) => ({
           pedido_id: id,
           articulo_numero: producto.articulo_numero,
@@ -958,12 +943,10 @@ export class Database {
         return false
       }
 
-      // Eliminar productos del pedido primero
       const { error: productosError } = await supabase.from("pedido_productos").delete().eq("pedido_id", id)
 
       if (productosError) throw productosError
 
-      // Eliminar el pedido
       const { error: pedidoError } = await supabase.from("pedidos").delete().eq("pedido_id", id)
 
       if (pedidoError) throw pedidoError
@@ -975,7 +958,6 @@ export class Database {
     }
   }
 
-  // Reportes Automáticos - Solo usar localStorage para evitar problemas con la tabla
   static async getReportesAutomaticos(): Promise<ReporteAutomatico[]> {
     try {
       console.log("Getting reportes from localStorage...")
@@ -989,18 +971,14 @@ export class Database {
     }
   }
 
-  // Método que usa solo localStorage para evitar problemas con la tabla
   static async createReporteAutomatico(reporte: ReporteAutomatico): Promise<ReporteAutomatico | null> {
     try {
       console.log("Saving reporte to localStorage only...")
 
-      // Obtener reportes existentes
       const existing = await this.getReportesAutomaticos()
 
-      // Agregar el nuevo reporte al inicio
       const updated = [reporte, ...existing]
 
-      // Guardar en localStorage
       localStorage.setItem("reportes_automaticos", JSON.stringify(updated))
 
       console.log(`Reporte saved to localStorage with ID: ${reporte.id}`)
@@ -1011,26 +989,21 @@ export class Database {
     }
   }
 
-  // Método legacy para compatibilidad
   static async saveReporteAutomatico(reporte: ReporteAutomatico): Promise<boolean> {
     const result = await this.createReporteAutomatico(reporte)
     return result !== null
   }
 
-  // Método para obtener pedidos sin reportar usando localStorage
   static async getPedidosSinReportar(): Promise<Pedido[]> {
     try {
       console.log("Getting unreported pedidos...")
 
-      // Obtener todos los pedidos
       const todosPedidos = await this.getPedidos()
       console.log(`Total pedidos: ${todosPedidos.length}`)
 
-      // Obtener reportes automáticos para saber qué pedidos ya fueron reportados
       const reportesAutomaticos = await this.getReportesAutomaticos()
       console.log(`Total reportes: ${reportesAutomaticos.length}`)
 
-      // Crear set de pedidos ya reportados
       const pedidosReportados = new Set<number>()
       reportesAutomaticos.forEach((reporte) => {
         reporte.pedidos_incluidos.forEach((pedidoId) => {
@@ -1040,7 +1013,6 @@ export class Database {
 
       console.log(`Pedidos reportados: ${pedidosReportados.size}`)
 
-      // Filtrar pedidos no reportados
       const pedidosSinReportar = todosPedidos.filter((pedido) => !pedidosReportados.has(pedido.pedido_id))
       console.log(`Pedidos sin reportar: ${pedidosSinReportar.length}`)
 
@@ -1055,7 +1027,6 @@ export class Database {
     try {
       console.log(`Marking pedido ${pedidoId} as reported in localStorage...`)
 
-      // Usar localStorage para marcar pedidos como reportados
       const reportedOrders = JSON.parse(localStorage.getItem("reported_orders") || "{}")
       reportedOrders[pedidoId] = {
         reporte_id: reporteId,
@@ -1073,7 +1044,6 @@ export class Database {
 
   static async isPedidoReported(pedidoId: number): Promise<boolean> {
     try {
-      // Verificar en localStorage
       const reportedOrders = JSON.parse(localStorage.getItem("reported_orders") || "{}")
       return !!reportedOrders[pedidoId]
     } catch (error) {
