@@ -1,162 +1,126 @@
 import Link from "next/link"
-import { Package, Users, ShoppingCart, BarChart3, Upload, Plus, Truck, Database } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Package, Users, Truck, ShoppingCart, BarChart3, FileSpreadsheet } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 
-export default function HomePage() {
+const modules = [
+  {
+    title: "Productos",
+    description: "Gestiona tu inventario de productos",
+    icon: Package,
+    href: "/productos",
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
+  },
+  {
+    title: "Clientes",
+    description: "Administra la información de tus clientes",
+    icon: Users,
+    href: "/clientes",
+    color: "text-green-600",
+    bgColor: "bg-green-50",
+  },
+  {
+    title: "Proveedores",
+    description: "Mantén un registro de tus proveedores",
+    icon: Truck,
+    href: "/proveedores",
+    color: "text-purple-600",
+    bgColor: "bg-purple-50",
+  },
+  {
+    title: "Pedidos",
+    description: "Crea y gestiona pedidos de clientes",
+    icon: ShoppingCart,
+    href: "/pedidos",
+    color: "text-orange-600",
+    bgColor: "bg-orange-50",
+  },
+  {
+    title: "Reportes",
+    description: "Genera reportes automáticos y manuales",
+    icon: BarChart3,
+    href: "/reportes",
+    color: "text-red-600",
+    bgColor: "bg-red-50",
+  },
+  {
+    title: "Importar Productos",
+    description: "Importa productos desde Excel",
+    icon: FileSpreadsheet,
+    href: "/productos/importar",
+    color: "text-teal-600",
+    bgColor: "bg-teal-50",
+  },
+]
+
+export default function Home() {
   return (
-    <div className="p-4 pb-20 md:pb-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center py-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenido</h1>
-          <p className="text-gray-600">Administra productos, clientes y pedidos</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pb-20 md:pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* Header */}
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4">Sistema de Gestión</h1>
+          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-4">
+            Administra productos, clientes, proveedores, pedidos y reportes desde un solo lugar
+          </p>
         </div>
-         {/*
-        <Alert>
-          <Database className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Primera vez usando la aplicación?</strong> Necesitas configurar la base de datos primero.{" "}
-            <Link href="/setup" className="text-blue-600 hover:underline font-medium">
-              Ir a Configuración →
-            </Link>
-          </AlertDescription>
-        </Alert>
-        */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Package className="h-5 w-5 text-blue-600" />
-                Productos
-              </CardTitle>
-              <CardDescription>Gestiona tu productos</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Link href="/productos" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline">
-                  <Package className="h-4 w-4 mr-2" />
-                  Ver Productos
-                </Button>
-              </Link>
-              <Link href="/productos/importar" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Importar Excel
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Truck className="h-5 w-5 text-indigo-600" />
-                Proveedores
-              </CardTitle>
-              <CardDescription>Administra tu base de proveedores</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/proveedores" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline">
-                  <Truck className="h-4 w-4 mr-2" />
-                  Gestionar Proveedores
-                </Button>
+        {/* Modules Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {modules.map((module) => {
+            const Icon = module.icon
+            return (
+              <Link key={module.href} href={module.href} className="group">
+                <Card className="h-full transition-all duration-200 hover:shadow-xl hover:-translate-y-1 active:scale-95 touch-manipulation">
+                  <CardHeader className="pb-3 md:pb-4">
+                    <div
+                      className={`w-12 h-12 md:w-14 md:h-14 ${module.bgColor} rounded-xl flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 transition-transform`}
+                    >
+                      <Icon className={`w-6 h-6 md:w-7 md:h-7 ${module.color}`} />
+                    </div>
+                    <CardTitle className="text-lg md:text-xl">{module.title}</CardTitle>
+                    <CardDescription className="text-sm md:text-base">{module.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      variant="ghost"
+                      className="w-full group-hover:bg-gray-100 text-sm md:text-base h-10 md:h-11"
+                    >
+                      Abrir módulo →
+                    </Button>
+                  </CardContent>
+                </Card>
               </Link>
-            </CardContent>
-          </Card>
+            )
+          })}
+        </div>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="h-5 w-5 text-green-600" />
-                Clientes
-              </CardTitle>
-              <CardDescription>Administra tus clientes</CardDescription>
+        {/* Quick Stats */}
+        <div className="mt-8 md:mt-12 grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          <Card className="bg-white/80 backdrop-blur">
+            <CardHeader className="pb-2 md:pb-3">
+              <CardDescription className="text-xs md:text-sm">Total Productos</CardDescription>
+              <CardTitle className="text-2xl md:text-3xl">--</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Link href="/clientes" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline">
-                  <Users className="h-4 w-4 mr-2" />
-                  Gestionar Clientes
-                </Button>
-              </Link>
-            </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <ShoppingCart className="h-5 w-5 text-orange-600" />
-                Pedidos
-              </CardTitle>
-              <CardDescription>Registra y modifica pedidos</CardDescription>
+          <Card className="bg-white/80 backdrop-blur">
+            <CardHeader className="pb-2 md:pb-3">
+              <CardDescription className="text-xs md:text-sm">Total Clientes</CardDescription>
+              <CardTitle className="text-2xl md:text-3xl">--</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <Link href="/pedidos" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Ver Pedidos
-                </Button>
-              </Link>
-              <Link href="/pedidos/nuevo" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Pedido
-                </Button>
-              </Link>
-            </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <BarChart3 className="h-5 w-5 text-purple-600" />
-                Reportes
-              </CardTitle>
-              <CardDescription>Consulta reportes semanales</CardDescription>
+          <Card className="bg-white/80 backdrop-blur">
+            <CardHeader className="pb-2 md:pb-3">
+              <CardDescription className="text-xs md:text-sm">Pedidos Activos</CardDescription>
+              <CardTitle className="text-2xl md:text-3xl">--</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Link href="/reportes" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Ver Reportes
-                </Button>
-              </Link>
-            </CardContent>
           </Card>
-
-          <Card className="md:col-span-2 lg:col-span-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Accesos Rápidos</CardTitle>
-              <CardDescription>Funciones más utilizadas</CardDescription>
+          <Card className="bg-white/80 backdrop-blur">
+            <CardHeader className="pb-2 md:pb-3">
+              <CardDescription className="text-xs md:text-sm">Proveedores</CardDescription>
+              <CardTitle className="text-2xl md:text-3xl">--</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <Link href="/setup" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline" size="sm">
-                  <Database className="h-4 w-4 mr-2" />
-                  Configurar BD
-                </Button>
-              </Link>
-              <Link href="/pedidos/nuevo" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Pedido
-                </Button>
-              </Link>
-              <Link href="/productos/nuevo" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline" size="sm">
-                  <Package className="h-4 w-4 mr-2" />
-                  Nuevo Producto
-                </Button>
-              </Link>
-              <Link href="/clientes/nuevo" className="block">
-                <Button className="w-full justify-start bg-transparent" variant="outline" size="sm">
-                  <Users className="h-4 w-4 mr-2" />
-                  Nuevo Cliente
-                </Button>
-              </Link>
-            </CardContent>
           </Card>
         </div>
       </div>

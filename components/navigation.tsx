@@ -51,7 +51,7 @@ export function Navigation() {
   return (
     <>
       {/* Desktop Navigation - Top Bar */}
-      <nav className="hidden md:block bg-white border-b border-gray-200 sticky top-0 z-50">
+      <nav className="hidden md:block bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -85,8 +85,8 @@ export function Navigation() {
       </nav>
 
       {/* Mobile Navigation - Bottom Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className="grid grid-cols-6 h-16">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-inset-bottom shadow-lg">
+        <div className="grid grid-cols-6 h-20">
           {navigationItems.map((item) => {
             const Icon = item.icon
             return (
@@ -94,22 +94,22 @@ export function Navigation() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center space-y-1 transition-colors",
+                  "flex flex-col items-center justify-center space-y-1 transition-colors active:scale-95 touch-manipulation",
                   isActive(item.href)
                     ? "text-blue-600 bg-blue-50"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
                 )}
               >
-                <Icon className="h-5 w-5" />
-                <span className="text-xs font-medium">{item.name}</span>
+                <Icon className="h-6 w-6" />
+                <span className="text-[10px] font-medium leading-tight">{item.name}</span>
               </Link>
             )
           })}
         </div>
       </nav>
 
-      {/* Mobile Bottom Padding */}
-      <div className="md:hidden h-16" />
+      {/* Mobile Bottom Padding - Updated height to match navigation */}
+      <div className="md:hidden h-20" />
     </>
   )
 }

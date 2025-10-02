@@ -9,6 +9,7 @@ export class ReportAutoScheduler {
   private lastCheck: Date | null = null
   private nextReportTime: Date | null = null
   private pendingOrdersCount = 0
+  private lastReportGeneration: Date | null = null
 
   static getInstance(): ReportAutoScheduler {
     if (!this.instance) {
@@ -26,15 +27,18 @@ export class ReportAutoScheduler {
     this.isRunning = true
     this.nextReportTime = ReportScheduler.getNextWednesday()
 
-    // Verificar cada minuto
+    console.log("=== INICIANDO PROGRAMADOR AUTOMÁTICO ===")
+    console.log(`Próximo reporte programado para: ${this.nextReportTime.toLocaleString("es-AR")}`)
+
+    // Verificar cada minuto (60 segundos)
     this.intervalId = setInterval(() => {
       this.checkAndGenerateReport()
-    }, 60000) // 60 segundos
+    }, 60000)
 
-    // Verificación inicial
+    // Verificación inicial inmediata
     this.checkAndGenerateReport()
 
-    console.log("Programador automático iniciado")
+    console.log("Programador automático iniciado - Verificando cada 60 segundos")
     this.dispatchStatusUpdate()
   }
 
@@ -52,49 +56,88 @@ export class ReportAutoScheduler {
     try {
       this.lastCheck = new Date()
 
+      console.log(`\n=== VERIFICACIÓN AUTOMÁTICA: ${this.lastCheck.toLocaleTimeString("es-AR")} ===`)
+
       // Actualizar contador de pedidos pendientes
       this.pendingOrdersCount = await ReportScheduler.getPendingOrdersCount()
+      console.log(`Pedidos sin reportar: ${this.pendingOrdersCount}`)
 
       // Verificar si es momento de generar reporte
-      if (ReportScheduler.shouldGenerateReport()) {
-        console.log("Generando reporte automático...")
+      const shouldGenerate = ReportScheduler.shouldGenerateReport()
 
+      if (shouldGenerate) {
+        console.log("✓ ES MOMENTO DE GENERAR REPORTE AUTOMÁTICO")
+
+        // Verificar si ya se generó un reporte en los últimos 2 minutos
+        // (para evitar duplicados si la verificación se ejecuta múltiples veces)
+        if (this.lastReportGeneration) {
+          const timeSinceLastReport = Date.now() - this.lastReportGeneration.getTime()
+          const twoMinutesInMs = 2 * 60 * 1000
+
+          if (timeSinceLastReport < twoMinutesInMs) {
+            console.log("⚠ Ya se generó un reporte hace menos de 2 minutos, omitiendo...")
+            this.dispatchStatusUpdate()
+            return
+          }
+        }
+
+        console.log("Generando reporte automático...")
         const reporte = await ReportScheduler.generateAutomaticReport()
 
         if (reporte) {
+          this.lastReportGeneration = new Date()
+
+          console.log(`✓ REPORTE GENERADO EXITOSAMENTE`)
+          console.log(`  - ID: ${reporte.id}`)
+          console.log(`  - Pedidos incluidos: ${reporte.pedidos_incluidos.length}`)
+          console.log(
+            `  - Período: ${new Date(reporte.fecha_inicio_periodo).toLocaleDateString("es-AR")} - ${new Date(reporte.fecha_fin_periodo).toLocaleDateString("es-AR")}`,
+          )
+
           // Mostrar notificación
           this.showNotification(
             "Reporte Automático Generado",
-            `Se ha generado un reporte automático con ${reporte.pedidos_incluidos.length} pedidos.`,
+            `Se generó un reporte con ${reporte.pedidos_incluidos.length} pedidos del período semanal.`,
           )
 
           // Actualizar próximo reporte
           this.nextReportTime = ReportScheduler.getNextWednesday()
+          console.log(`Próximo reporte: ${this.nextReportTime.toLocaleString("es-AR")}`)
 
           // Disparar evento personalizado
           this.dispatchReportGenerated(reporte)
         } else {
-          console.log("No se generó reporte automático (sin pedidos nuevos)")
+          console.log("⚠ No se generó reporte (sin pedidos nuevos en el período)")
         }
+      } else {
+        console.log("○ No es momento de generar reporte")
+
+        // Mostrar tiempo hasta el próximo reporte
+        const timeUntil = ReportScheduler.getTimeUntilNextReport()
+        console.log(`Próximo reporte en: ${timeUntil.days}d ${timeUntil.hours}h ${timeUntil.minutes}m`)
       }
 
       this.dispatchStatusUpdate()
     } catch (error) {
-      console.error("Error en verificación automática:", error)
+      console.error("❌ Error en verificación automática:", error)
     }
   }
 
   async generateManualReport(): Promise<ReporteAutomatico | null> {
     try {
-      console.log("Generando reporte manual...")
+      console.log("\n=== GENERANDO REPORTE MANUAL ===")
 
       const reporte = await ReportScheduler.generateManualReport()
 
       if (reporte) {
+        console.log(`✓ REPORTE MANUAL GENERADO`)
+        console.log(`  - ID: ${reporte.id}`)
+        console.log(`  - Pedidos incluidos: ${reporte.pedidos_incluidos.length}`)
+
         // Mostrar notificación
         this.showNotification(
           "Reporte Manual Generado",
-          `Se ha generado un reporte manual con ${reporte.pedidos_incluidos.length} pedidos.`,
+          `Se generó un reporte manual con ${reporte.pedidos_incluidos.length} pedidos.`,
         )
 
         // Actualizar contador
@@ -106,11 +149,12 @@ export class ReportAutoScheduler {
 
         return reporte
       } else {
+        console.log("⚠ No hay pedidos pendientes para incluir en el reporte")
         this.showNotification("Sin Pedidos Pendientes", "No hay pedidos pendientes para incluir en el reporte.")
         return null
       }
     } catch (error) {
-      console.error("Error generando reporte manual:", error)
+      console.error("❌ Error generando reporte manual:", error)
       this.showNotification("Error", "Error al generar el reporte manual.")
       return null
     }
@@ -138,16 +182,6 @@ export class ReportAutoScheduler {
         icon: "/favicon.ico",
         badge: "/favicon.ico",
       })
-    } else if ("Notification" in window && Notification.permission !== "denied") {
-      Notification.requestPermission().then((permission) => {
-        if (permission === "granted") {
-          new Notification(title, {
-            body,
-            icon: "/favicon.ico",
-            badge: "/favicon.ico",
-          })
-        }
-      })
     }
   }
 
@@ -173,7 +207,6 @@ export class ReportAutoScheduler {
     window.dispatchEvent(event)
   }
 
-  // Getters para el estado actual
   getStatus() {
     return {
       isRunning: this.isRunning,
