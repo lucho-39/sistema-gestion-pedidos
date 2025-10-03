@@ -127,19 +127,20 @@ export default function PedidosPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Pedidos</h1>
+      <div className="min-h-screen bg-gray-50 p-4 pb-24 md:pb-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold">Pedidos</h1>
             <Link href="/pedidos/nuevo">
-              <Button>
+              <Button className="w-full sm:w-auto h-11">
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Pedido
               </Button>
             </Link>
           </div>
           <div className="text-center py-8">
-            <p className="text-gray-500">Cargando pedidos...</p>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+            <p className="text-gray-500 mt-4">Cargando pedidos...</p>
           </div>
         </div>
       </div>
@@ -147,18 +148,25 @@ export default function PedidosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Pedidos</h1>
-          <Link href="/pedidos/nuevo">
-            <Button>
+    <div className="min-h-screen bg-gray-50 p-4 pb-24 md:pb-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Pedidos</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
+            </p>
+          </div>
+          <Link href="/pedidos/nuevo" className="w-full sm:w-auto">
+            <Button className="w-full h-11">
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Pedido
             </Button>
           </Link>
         </div>
 
+        {/* Search */}
         <div className="mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -166,11 +174,12 @@ export default function PedidosPage() {
               placeholder="Buscar por ID, cliente, código o fecha..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-11"
             />
           </div>
         </div>
 
+        {/* Empty State */}
         {filteredPedidos.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
@@ -179,8 +188,8 @@ export default function PedidosPage() {
                 {searchTerm ? "No se encontraron pedidos que coincidan con la búsqueda" : "No hay pedidos registrados"}
               </p>
               {!searchTerm && (
-                <Link href="/pedidos/nuevo">
-                  <Button>
+                <Link href="/pedidos/nuevo" className="inline-block">
+                  <Button className="h-11">
                     <Plus className="h-4 w-4 mr-2" />
                     Crear primer pedido
                   </Button>
@@ -189,93 +198,103 @@ export default function PedidosPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredPedidos.map((pedido) => (
-              <Card key={pedido.pedido_id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">Pedido #{pedido.pedido_id}</CardTitle>
-                    <div className="flex gap-1">
-                      <Link href={`/reportes/pedido/${pedido.pedido_id}`}>
-                        <Button variant="ghost" size="sm" title="Ver pedido">
-                          <Eye className="h-3 w-3" />
+          <>
+            {/* Pedidos Grid */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredPedidos.map((pedido) => (
+                <Card key={pedido.pedido_id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <CardTitle className="text-base md:text-lg">Pedido #{pedido.pedido_id}</CardTitle>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Link href={`/reportes/pedido/${pedido.pedido_id}`}>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Ver pedido">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Link href={`/pedidos/editar/${pedido.pedido_id}`}>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Editar pedido">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(pedido.pedido_id)}
+                          className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                          title="Eliminar pedido"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      </Link>
-                      <Link href={`/pedidos/editar/${pedido.pedido_id}`}>
-                        <Button variant="ghost" size="sm" title="Editar pedido">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(pedido.pedido_id)}
-                        className="text-red-600 hover:text-red-700"
-                        title="Eliminar pedido"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="h-4 w-4 text-green-600" />
-                    <div>
-                      <p className="font-medium">{pedido.cliente?.nombre || "Cliente no encontrado"}</p>
-                      <p className="text-xs text-gray-500">Código: #{pedido.cliente?.cliente_codigo || "N/A"}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-blue-600" />
-                    <span>{formatDate(pedido.fecha_pedido)}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <Package className="h-4 w-4 text-orange-600" />
-                    <div className="flex gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {pedido.productos?.length || 0} tipos
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {calcularTotalProductos(pedido)} unidades
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {pedido.productos && pedido.productos.length > 0 && (
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="text-xs text-gray-500 mb-2">Productos principales:</p>
-                      <div className="space-y-1">
-                        {pedido.productos.slice(0, 2).map((producto, index) => (
-                          <div key={index} className="text-xs text-gray-600 flex justify-between">
-                            <span className="truncate flex-1 mr-2">
-                              {producto.producto?.descripcion || "Producto no encontrado"}
-                            </span>
-                            <span className="text-gray-400">
-                              {producto.cantidad || 0} {producto.producto?.unidad_medida || "unidad"}
-                            </span>
-                          </div>
-                        ))}
-                        {pedido.productos.length > 2 && (
-                          <p className="text-xs text-gray-400">+{pedido.productos.length - 2} productos más</p>
-                        )}
                       </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {/* Cliente */}
+                    <div className="flex items-start gap-2 text-sm">
+                      <User className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{pedido.cliente?.nombre || "Cliente no encontrado"}</p>
+                        <p className="text-xs text-gray-500">Código: #{pedido.cliente?.cliente_codigo || "N/A"}</p>
+                      </div>
+                    </div>
 
-        {searchTerm && filteredPedidos.length > 0 && (
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
-              Mostrando {filteredPedidos.length} de {pedidos.length} pedidos
-            </p>
-          </div>
+                    {/* Fecha */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                      <span className="text-gray-700">{formatDate(pedido.fecha_pedido)}</span>
+                    </div>
+
+                    {/* Productos */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Package className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {pedido.productos?.length || 0} tipos
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {calcularTotalProductos(pedido)} unidades
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Productos principales */}
+                    {pedido.productos && pedido.productos.length > 0 && (
+                      <div className="mt-3 pt-3 border-t">
+                        <p className="text-xs text-gray-500 mb-2 font-medium">Productos principales:</p>
+                        <div className="space-y-1.5">
+                          {pedido.productos.slice(0, 3).map((producto, index) => (
+                            <div key={index} className="text-xs flex justify-between gap-2">
+                              <span className="text-gray-600 truncate flex-1">
+                                {producto.producto?.descripcion || "Producto no encontrado"}
+                              </span>
+                              <span className="text-gray-400 flex-shrink-0">
+                                {producto.cantidad || 0} {producto.producto?.unidad_medida || "u"}
+                              </span>
+                            </div>
+                          ))}
+                          {pedido.productos.length > 3 && (
+                            <p className="text-xs text-gray-400 italic">
+                              +{pedido.productos.length - 3} producto{pedido.productos.length - 3 !== 1 ? "s" : ""} más
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Results Summary */}
+            {searchTerm && filteredPedidos.length > 0 && (
+              <div className="mt-6 text-center">
+                <p className="text-sm text-gray-500">
+                  Mostrando {filteredPedidos.length} de {pedidos.length} pedidos
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
