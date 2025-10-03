@@ -52,22 +52,18 @@ export default function PedidosPage() {
     const filtered = pedidos.filter((pedido) => {
       const searchLower = searchTerm.toLowerCase()
 
-      // Buscar por ID del pedido
       if (pedido.pedido_id.toString().includes(searchLower)) {
         return true
       }
 
-      // Buscar por nombre del cliente
       if (pedido.cliente?.nombre?.toLowerCase().includes(searchLower)) {
         return true
       }
 
-      // Buscar por código del cliente
       if (pedido.cliente?.cliente_codigo?.toString().includes(searchLower)) {
         return true
       }
 
-      // Buscar por fecha
       if (pedido.fecha_pedido?.includes(searchTerm)) {
         return true
       }
@@ -127,11 +123,11 @@ export default function PedidosPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 pb-24 md:pb-8">
-        <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 p-4 pb-24 md:pb-8">
+        <div className="max-w-6xl mx-auto w-full">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h1 className="text-2xl md:text-3xl font-bold">Pedidos</h1>
-            <Link href="/pedidos/nuevo">
+            <Link href="/pedidos/nuevo" className="w-full sm:w-auto">
               <Button className="w-full sm:w-auto h-11">
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Pedido
@@ -148,44 +144,41 @@ export default function PedidosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 pb-24 md:pb-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 p-4 pb-24 md:pb-8">
+      <div className="max-w-6xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Pedidos</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold truncate">Pedidos</h1>
             <p className="text-sm text-gray-500 mt-1">
               {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
             </p>
           </div>
-          <Link href="/pedidos/nuevo" className="w-full sm:w-auto">
-            <Button className="w-full h-11">
+          <Link href="/pedidos/nuevo" className="w-full sm:w-auto flex-shrink-0">
+            <Button className="w-full h-11 whitespace-nowrap">
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Pedido
             </Button>
           </Link>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
+        <div className="mb-6 w-full">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Buscar por ID, cliente, código o fecha..."
+              placeholder="Buscar por ID, cliente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11"
+              className="pl-10 h-11 w-full"
             />
           </div>
         </div>
 
-        {/* Empty State */}
         {filteredPedidos.length === 0 ? (
-          <Card>
+          <Card className="w-full">
             <CardContent className="p-8 text-center">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">
-                {searchTerm ? "No se encontraron pedidos que coincidan con la búsqueda" : "No hay pedidos registrados"}
+              <p className="text-gray-500 mb-4 px-4">
+                {searchTerm ? "No se encontraron pedidos" : "No hay pedidos registrados"}
               </p>
               {!searchTerm && (
                 <Link href="/pedidos/nuevo" className="inline-block">
@@ -199,21 +192,22 @@ export default function PedidosPage() {
           </Card>
         ) : (
           <>
-            {/* Pedidos Grid */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full">
               {filteredPedidos.map((pedido) => (
-                <Card key={pedido.pedido_id} className="hover:shadow-lg transition-shadow">
+                <Card key={pedido.pedido_id} className="hover:shadow-lg transition-shadow w-full overflow-hidden">
                   <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start gap-2">
-                      <CardTitle className="text-base md:text-lg">Pedido #{pedido.pedido_id}</CardTitle>
+                    <div className="flex justify-between items-start gap-2 min-w-0">
+                      <CardTitle className="text-base md:text-lg truncate min-w-0 flex-1">
+                        Pedido #{pedido.pedido_id}
+                      </CardTitle>
                       <div className="flex gap-1 flex-shrink-0">
                         <Link href={`/reportes/pedido/${pedido.pedido_id}`}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Ver pedido">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Ver">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link href={`/pedidos/editar/${pedido.pedido_id}`}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Editar pedido">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Editar">
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -222,7 +216,7 @@ export default function PedidosPage() {
                           size="sm"
                           onClick={() => handleDelete(pedido.pedido_id)}
                           className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
-                          title="Eliminar pedido"
+                          title="Eliminar"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -230,53 +224,47 @@ export default function PedidosPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {/* Cliente */}
-                    <div className="flex items-start gap-2 text-sm">
+                    <div className="flex items-start gap-2 text-sm min-w-0">
                       <User className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate">{pedido.cliente?.nombre || "Cliente no encontrado"}</p>
-                        <p className="text-xs text-gray-500">Código: #{pedido.cliente?.cliente_codigo || "N/A"}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          Código: #{pedido.cliente?.cliente_codigo || "N/A"}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Fecha */}
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-sm min-w-0">
                       <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                      <span className="text-gray-700">{formatDate(pedido.fecha_pedido)}</span>
+                      <span className="text-gray-700 truncate">{formatDate(pedido.fecha_pedido)}</span>
                     </div>
 
-                    {/* Productos */}
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-sm flex-wrap">
                       <Package className="h-4 w-4 text-orange-600 flex-shrink-0" />
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {pedido.productos?.length || 0} tipos
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {calcularTotalProductos(pedido)} unidades
-                        </Badge>
-                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {pedido.productos?.length || 0} tipos
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {calcularTotalProductos(pedido)} u
+                      </Badge>
                     </div>
 
-                    {/* Productos principales */}
                     {pedido.productos && pedido.productos.length > 0 && (
                       <div className="mt-3 pt-3 border-t">
-                        <p className="text-xs text-gray-500 mb-2 font-medium">Productos principales:</p>
+                        <p className="text-xs text-gray-500 mb-2 font-medium">Productos:</p>
                         <div className="space-y-1.5">
                           {pedido.productos.slice(0, 3).map((producto, index) => (
-                            <div key={index} className="text-xs flex justify-between gap-2">
-                              <span className="text-gray-600 truncate flex-1">
-                                {producto.producto?.descripcion || "Producto no encontrado"}
+                            <div key={index} className="text-xs flex justify-between gap-2 min-w-0">
+                              <span className="text-gray-600 truncate flex-1 min-w-0">
+                                {producto.producto?.descripcion || "N/A"}
                               </span>
-                              <span className="text-gray-400 flex-shrink-0">
+                              <span className="text-gray-400 flex-shrink-0 whitespace-nowrap">
                                 {producto.cantidad || 0} {producto.producto?.unidad_medida || "u"}
                               </span>
                             </div>
                           ))}
                           {pedido.productos.length > 3 && (
-                            <p className="text-xs text-gray-400 italic">
-                              +{pedido.productos.length - 3} producto{pedido.productos.length - 3 !== 1 ? "s" : ""} más
-                            </p>
+                            <p className="text-xs text-gray-400 italic">+{pedido.productos.length - 3} más</p>
                           )}
                         </div>
                       </div>
@@ -286,11 +274,10 @@ export default function PedidosPage() {
               ))}
             </div>
 
-            {/* Results Summary */}
             {searchTerm && filteredPedidos.length > 0 && (
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-500">
-                  Mostrando {filteredPedidos.length} de {pedidos.length} pedidos
+                  {filteredPedidos.length} de {pedidos.length} pedidos
                 </p>
               </div>
             )}
