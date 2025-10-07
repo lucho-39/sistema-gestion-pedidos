@@ -23,16 +23,16 @@ export default function NuevoClientePage() {
     nombre: "",
     domicilio: "",
     telefono: "",
-    CUIL: "",
+    cuil: "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.cliente_codigo || !formData.nombre || !formData.domicilio || !formData.telefono || !formData.CUIL) {
+    if (!formData.cliente_codigo || !formData.nombre || !formData.domicilio || !formData.telefono) {
       toast({
         title: "Error",
-        description: "Todos los campos son obligatorios",
+        description: "Los campos Código, Nombre, Domicilio y Teléfono son obligatorios",
         variant: "destructive",
       })
       return
@@ -43,7 +43,6 @@ export default function NuevoClientePage() {
     try {
       const clientes = await Database.getClientes()
 
-      // Verificar si el código de cliente ya existe
       const codigoExiste = clientes.some((c) => c.cliente_codigo === Number(formData.cliente_codigo))
 
       if (codigoExiste) {
@@ -61,7 +60,7 @@ export default function NuevoClientePage() {
         nombre: formData.nombre,
         domicilio: formData.domicilio,
         telefono: formData.telefono,
-        CUIL: formData.CUIL,
+        cuil: formData.cuil || undefined,
       }
 
       const createdCliente = await Database.createCliente(nuevoCliente)
@@ -96,7 +95,7 @@ export default function NuevoClientePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 p-4 pb-24">
       <div className="max-w-md mx-auto space-y-4">
         <div className="flex items-center gap-3 py-2">
           <Link href="/clientes">
@@ -155,11 +154,11 @@ export default function NuevoClientePage() {
               </div>
 
               <div>
-                <Label htmlFor="cuil">CUIL *</Label>
+                <Label htmlFor="cuil">CUIL (opcional)</Label>
                 <Input
                   id="cuil"
-                  value={formData.CUIL}
-                  onChange={(e) => handleChange("CUIL", e.target.value)}
+                  value={formData.cuil}
+                  onChange={(e) => handleChange("cuil", e.target.value)}
                   placeholder="XX-XXXXXXXX-X"
                 />
               </div>

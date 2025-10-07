@@ -24,7 +24,7 @@ export interface Cliente {
   nombre: string
   domicilio: string
   telefono: string
-  cuil?: string
+  cuil?: string // Opcional porque puede no existir en la base de datos
   created_at?: string
   updated_at?: string
 }
