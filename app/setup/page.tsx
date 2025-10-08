@@ -1,384 +1,385 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
+import { ArrowLeft, Copy, Check, Database, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Copy, Check, Database, Settings, ExternalLink, AlertTriangle } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { Database as DB } from "@/lib/database"
-import { isSupabaseConfigured } from "@/lib/supabase"
 
-export default function SetupPage() {
-  const { toast } = useToast()
-  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
-  const [verificationResult, setVerificationResult] = useState<{
-    configured: boolean
-    tablesExist: boolean
-    checking: boolean
-  }>({
-    configured: false,
-    tablesExist: false,
-    checking: false,
-  })
+const SQL_SCRIPTS = {
+  "01-create-tables": `-- Crear tablas para el sistema de gestión de inventario
 
-  const copyToClipboard = async (text: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedStates((prev) => ({ ...prev, [key]: true }))
-      toast({
-        title: "Copiado",
-        description: "Script copiado al portapapeles",
-      })
-      setTimeout(() => {
-        setCopiedStates((prev) => ({ ...prev, [key]: false }))
-      }, 2000)
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "No se pudo copiar al portapapeles",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const verifySetup = async () => {
-    setVerificationResult((prev) => ({ ...prev, checking: true }))
-
-    try {
-      const configured = isSupabaseConfigured()
-      let tablesExist = false
-
-      if (configured) {
-        tablesExist = await DB.checkTablesExist()
-      }
-
-      setVerificationResult({
-        configured,
-        tablesExist,
-        checking: false,
-      })
-
-      if (configured && tablesExist) {
-        toast({
-          title: "✅ Configuración completa",
-          description: "La base de datos está configurada correctamente",
-        })
-      } else if (!configured) {
-        toast({
-          title: "⚠️ Variables de entorno faltantes",
-          description: "Configure las variables de entorno de Supabase",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "⚠️ Tablas faltantes",
-          description: "Ejecute los scripts SQL en Supabase",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("Error verifying setup:", error)
-      setVerificationResult({
-        configured: false,
-        tablesExist: false,
-        checking: false,
-      })
-      toast({
-        title: "Error",
-        description: "Error al verificar la configuración",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const createTablesScript = `-- Crear tabla de proveedores
+-- Tabla de proveedores
 CREATE TABLE IF NOT EXISTS proveedores (
-    proveedor_id SERIAL PRIMARY KEY,
-    proveedor_nombre VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  proveedor_id INTEGER PRIMARY KEY,
+  proveedor_nombre TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Crear tabla de productos
+-- Tabla de productos
 CREATE TABLE IF NOT EXISTS productos (
-    articulo_numero SERIAL PRIMARY KEY,
-    producto_codigo VARCHAR(100) NOT NULL UNIQUE,
-    descripcion TEXT NOT NULL,
-    unidad_medida VARCHAR(50) NOT NULL,
-    proveedor_id INTEGER REFERENCES proveedores(proveedor_id) ON DELETE SET NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  articulo_numero INTEGER PRIMARY KEY,
+  producto_codigo TEXT,
+  descripcion TEXT NOT NULL,
+  unidad_medida TEXT NOT NULL,
+  proveedor_id INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (proveedor_id) REFERENCES proveedores(proveedor_id) ON DELETE RESTRICT
 );
 
--- Crear tabla de clientes
+-- Tabla de clientes
 CREATE TABLE IF NOT EXISTS clientes (
-    cliente_id SERIAL PRIMARY KEY,
-    cliente_codigo INTEGER NOT NULL UNIQUE,
-    nombre VARCHAR(255) NOT NULL,
-    domicilio TEXT NOT NULL,
-    telefono VARCHAR(50) NOT NULL,
-    cuil VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  cliente_id SERIAL PRIMARY KEY,
+  cliente_codigo INTEGER UNIQUE NOT NULL,
+  nombre TEXT NOT NULL,
+  domicilio TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Crear tabla de pedidos
+-- Tabla de pedidos
 CREATE TABLE IF NOT EXISTS pedidos (
-    pedido_id SERIAL PRIMARY KEY,
-    cliente_id INTEGER REFERENCES clientes(cliente_id) ON DELETE CASCADE,
-    fecha_pedido DATE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  pedido_id SERIAL PRIMARY KEY,
+  cliente_id INTEGER NOT NULL,
+  fecha_pedido TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (cliente_id) REFERENCES clientes(cliente_id) ON DELETE RESTRICT
 );
 
--- Crear tabla de productos en pedidos
+-- Tabla de productos en pedidos
 CREATE TABLE IF NOT EXISTS pedido_productos (
-    id SERIAL PRIMARY KEY,
-    pedido_id INTEGER REFERENCES pedidos(pedido_id) ON DELETE CASCADE,
-    articulo_numero INTEGER REFERENCES productos(articulo_numero) ON DELETE CASCADE,
-    cantidad INTEGER NOT NULL CHECK (cantidad > 0),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id SERIAL PRIMARY KEY,
+  pedido_id INTEGER NOT NULL,
+  articulo_numero INTEGER NOT NULL,
+  cantidad NUMERIC NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (pedido_id) REFERENCES pedidos(pedido_id) ON DELETE CASCADE,
+  FOREIGN KEY (articulo_numero) REFERENCES productos(articulo_numero) ON DELETE RESTRICT
 );
 
--- Crear tabla de reportes semanales
-CREATE TABLE IF NOT EXISTS reportes_semanales (
-    id SERIAL PRIMARY KEY,
-    tipo_reporte VARCHAR(100) NOT NULL,
-    fecha_corte DATE NOT NULL,
-    datos JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Crear índices para mejorar el rendimiento
+-- Índices para mejorar el rendimiento
 CREATE INDEX IF NOT EXISTS idx_productos_proveedor ON productos(proveedor_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_cliente ON pedidos(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_fecha ON pedidos(fecha_pedido);
 CREATE INDEX IF NOT EXISTS idx_pedido_productos_pedido ON pedido_productos(pedido_id);
 CREATE INDEX IF NOT EXISTS idx_pedido_productos_articulo ON pedido_productos(articulo_numero);
-CREATE INDEX IF NOT EXISTS idx_reportes_fecha ON reportes_semanales(fecha_corte);
-CREATE INDEX IF NOT EXISTS idx_reportes_tipo ON reportes_semanales(tipo_reporte);`
+CREATE INDEX IF NOT EXISTS idx_clientes_codigo ON clientes(cliente_codigo);`,
 
-  const seedDataScript = `-- Insertar proveedores de ejemplo
-INSERT INTO proveedores (proveedor_nombre) VALUES 
-('Proveedor A'),
-('Proveedor B'),
-('Proveedor C')
-ON CONFLICT (proveedor_nombre) DO NOTHING;
+  "02-seed-data": `-- Insertar proveedores iniciales
+INSERT INTO proveedores (proveedor_id, proveedor_nombre) VALUES
+(300, 'CAELBI'),
+(400, 'DABOR'),
+(500, 'EMANAL'),
+(1000, 'JELUZ'),
+(1100, 'KALOPS'),
+(1200, 'LORD'),
+(1800, 'SERRA'),
+(2300, 'WERKE'),
+(1, 'Proveedor General')
+ON CONFLICT (proveedor_id) DO NOTHING;
 
--- Insertar productos de ejemplo
-INSERT INTO productos (producto_codigo, descripcion, unidad_medida, proveedor_id) VALUES 
-('PROD001', 'Producto de ejemplo 1', 'Unidad', 1),
-('PROD002', 'Producto de ejemplo 2', 'Kilogramo', 2),
-('PROD003', 'Producto de ejemplo 3', 'Litro', 3)
-ON CONFLICT (producto_codigo) DO NOTHING;
+-- Insertar algunos productos de ejemplo
+INSERT INTO productos (articulo_numero, producto_codigo, descripcion, unidad_medida, proveedor_id) VALUES
+(1001, 'CAB-001', 'Cable de alimentación 3x2.5mm', 'metros', 300),
+(1002, 'INT-001', 'Interruptor simple', 'unidad', 1000),
+(1003, 'TOM-001', 'Tomacorriente doble', 'unidad', 1000),
+(2001, 'CAB-002', 'Cable telefónico 2 pares', 'metros', 400),
+(2002, 'LUZ-001', 'Lámpara LED 9W', 'unidad', 1200),
+(2003, 'INT-002', 'Interruptor conmutador', 'unidad', 1200),
+(2004, 'TOM-002', 'Tomacorriente triple con protección', 'unidad', 1200)
+ON CONFLICT (articulo_numero) DO NOTHING;
 
--- Insertar clientes de ejemplo
-INSERT INTO clientes (cliente_codigo, nombre, domicilio, telefono, cuil) VALUES 
-(1001, 'Cliente Ejemplo 1', 'Dirección 123', '123-456-7890', '20-12345678-9'),
-(1002, 'Cliente Ejemplo 2', 'Dirección 456', '098-765-4321', '20-87654321-0')
-ON CONFLICT (cliente_codigo) DO NOTHING;`
+-- Insertar algunos clientes de ejemplo
+INSERT INTO clientes (cliente_codigo, nombre, domicilio, telefono, cuil) VALUES
+(101, 'Juan Pérez', 'Av. Corrientes 1234, CABA', '11-4567-8901', '20-12345678-9'),
+(102, 'María González', 'San Martín 567, La Plata', '221-456-7890', '27-87654321-3'),
+(103, 'Carlos López', 'Belgrano 890, Rosario', '341-234-5678', '20-11223344-5')
+ON CONFLICT (cliente_codigo) DO NOTHING;`,
+
+  "03-update-for-auto-reports": `-- Script para agregar soporte de reportes automáticos
+-- Este script agrega columnas necesarias para el sistema de reportes automáticos
+
+-- Agregar columnas a la tabla pedidos para tracking de reportes
+ALTER TABLE pedidos 
+ADD COLUMN IF NOT EXISTS incluido_en_reporte BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS fecha_inclusion_reporte TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS reporte_id TEXT;
+
+-- Crear índice para búsquedas rápidas de pedidos no reportados
+CREATE INDEX IF NOT EXISTS idx_pedidos_incluido_reporte ON pedidos(incluido_en_reporte);
+CREATE INDEX IF NOT EXISTS idx_pedidos_reporte_id ON pedidos(reporte_id);
+
+-- Comentarios para documentación
+COMMENT ON COLUMN pedidos.incluido_en_reporte IS 'Indica si el pedido ya fue incluido en un reporte automático';
+COMMENT ON COLUMN pedidos.fecha_inclusion_reporte IS 'Fecha en que el pedido fue incluido en un reporte';
+COMMENT ON COLUMN pedidos.reporte_id IS 'ID del reporte automático que incluye este pedido';`,
+
+  "04-add-cuil-column": `-- Script para agregar la columna CUIL a la tabla clientes
+-- Solo agrega la columna si no existe
+
+-- Agregar columna CUIL si no existe
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 
+    FROM information_schema.columns 
+    WHERE table_name = 'clientes' 
+    AND column_name = 'cuil'
+  ) THEN
+    ALTER TABLE clientes ADD COLUMN cuil TEXT;
+  END IF;
+END $$;
+
+-- Crear índice para búsquedas rápidas por CUIL
+CREATE INDEX IF NOT EXISTS idx_clientes_cuil ON clientes(cuil);
+
+-- Comentario para documentación
+COMMENT ON COLUMN clientes.cuil IS 'CUIL del cliente (opcional)';`,
+
+  "05-verify-and-fix-proveedores": `-- Script para verificar y corregir proveedores
+-- Este script asegura que todos los proveedores estén correctamente insertados
+
+-- Primero, verificar qué proveedores existen
+SELECT proveedor_id, proveedor_nombre 
+FROM proveedores 
+ORDER BY proveedor_id;
+
+-- Insertar o actualizar proveedores (usando UPSERT)
+INSERT INTO proveedores (proveedor_id, proveedor_nombre) VALUES
+(1, 'Proveedor General'),
+(300, 'CAELBI'),
+(400, 'DABOR'),
+(500, 'EMANAL'),
+(1000, 'JELUZ'),
+(1100, 'KALOPS'),
+(1200, 'LORD'),
+(1800, 'SERRA'),
+(2300, 'WERKE')
+ON CONFLICT (proveedor_id) 
+DO UPDATE SET 
+  proveedor_nombre = EXCLUDED.proveedor_nombre,
+  updated_at = CURRENT_TIMESTAMP;
+
+-- Verificar que todos los proveedores fueron insertados correctamente
+SELECT 
+  proveedor_id, 
+  proveedor_nombre,
+  created_at,
+  updated_at
+FROM proveedores 
+ORDER BY proveedor_id;
+
+-- Contar productos por proveedor
+SELECT 
+  p.proveedor_id,
+  p.proveedor_nombre,
+  COUNT(pr.articulo_numero) as total_productos
+FROM proveedores p
+LEFT JOIN productos pr ON p.proveedor_id = pr.proveedor_id
+GROUP BY p.proveedor_id, p.proveedor_nombre
+ORDER BY p.proveedor_id;`,
+}
+
+export default function SetupPage() {
+  const [copiedScript, setCopiedScript] = useState<string | null>(null)
+
+  const copyToClipboard = (scriptName: string, content: string) => {
+    navigator.clipboard.writeText(content)
+    setCopiedScript(scriptName)
+    setTimeout(() => setCopiedScript(null), 2000)
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 p-4 pb-24">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Configuración de Base de Datos</h1>
-          <p className="text-gray-600">Configure su base de datos Supabase para usar el sistema</p>
+        <div className="flex items-center gap-3 py-2">
+          <Link href="/">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">Configuración de Base de Datos</h1>
         </div>
 
         <Alert>
-          <AlertTriangle className="h-4 w-4" />
+          <Database className="h-4 w-4" />
           <AlertDescription>
-            <strong>Importante:</strong> Debe completar todos los pasos para que el sistema funcione correctamente.
+            <strong>Importante:</strong> Ejecuta estos scripts en orden en tu proyecto de Supabase para configurar la
+            base de datos.
           </AlertDescription>
         </Alert>
 
-        <Tabs defaultValue="env" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="env">1. Variables</TabsTrigger>
-            <TabsTrigger value="tables">2. Tablas</TabsTrigger>
-            <TabsTrigger value="data">3. Datos</TabsTrigger>
-            <TabsTrigger value="verify">4. Verificar</TabsTrigger>
-          </TabsList>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>¡Nuevo!</strong> Si tienes problemas con el proveedor LORD u otros proveedores, ejecuta el script 05
+            para verificar y corregir los datos.
+          </AlertDescription>
+        </Alert>
 
-          <TabsContent value="env" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Paso 1: Configurar Variables de Entorno
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Instrucciones:</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-sm">
-                    <li>
-                      Vaya a su proyecto en{" "}
-                      <a
-                        href="https://supabase.com/dashboard"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline inline-flex items-center gap-1"
-                      >
-                        Supabase Dashboard <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </li>
-                    <li>Navegue a Settings → API</li>
-                    <li>Copie la URL del proyecto y la clave anónima</li>
-                    <li>Configure las variables de entorno en Vercel:</li>
-                  </ol>
-                </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-blue-600" />
+              Scripts SQL
+            </CardTitle>
+            <CardDescription>
+              Copia y ejecuta estos scripts en el SQL Editor de Supabase en orden numérico
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="01-create-tables" className="w-full">
+              <TabsList className="grid grid-cols-2 lg:grid-cols-5 w-full">
+                <TabsTrigger value="01-create-tables" className="text-xs">
+                  01 Tablas
+                </TabsTrigger>
+                <TabsTrigger value="02-seed-data" className="text-xs">
+                  02 Datos
+                </TabsTrigger>
+                <TabsTrigger value="03-update-for-auto-reports" className="text-xs">
+                  03 Reportes
+                </TabsTrigger>
+                <TabsTrigger value="04-add-cuil-column" className="text-xs">
+                  04 CUIL
+                </TabsTrigger>
+                <TabsTrigger value="05-verify-and-fix-proveedores" className="text-xs">
+                  05 Verificar
+                </TabsTrigger>
+              </TabsList>
 
-                <div className="bg-gray-100 p-4 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-sm">Variables de Entorno</span>
+              {Object.entries(SQL_SCRIPTS).map(([name, content]) => (
+                <TabsContent key={name} value={name} className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium">Script: {name}.sql</h3>
                     <Button
-                      variant="outline"
                       size="sm"
-                      onClick={() =>
-                        copyToClipboard(
-                          `NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key`,
-                          "env",
-                        )
-                      }
+                      variant="outline"
+                      onClick={() => copyToClipboard(name, content)}
+                      className="gap-2"
                     >
-                      {copiedStates.env ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {copiedScript === name ? (
+                        <>
+                          <Check className="h-4 w-4 text-green-600" />
+                          Copiado
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4" />
+                          Copiar
+                        </>
+                      )}
                     </Button>
                   </div>
-                  <pre className="text-xs overflow-x-auto">
-                    {`NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key`}
+
+                  <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
+                    <code>{content}</code>
                   </pre>
-                </div>
 
-                <Alert>
-                  <AlertDescription>
-                    <strong>En Vercel:</strong> Vaya a Project Settings → Environment Variables y agregue estas
-                    variables.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="tables" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  Paso 2: Crear Tablas de Base de Datos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Instrucciones:</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-sm">
-                    <li>Vaya a su proyecto en Supabase Dashboard</li>
-                    <li>Navegue a SQL Editor</li>
-                    <li>Copie y pegue el siguiente script</li>
-                    <li>Haga clic en "Run" para ejecutar</li>
-                  </ol>
-                </div>
-
-                <div className="bg-gray-100 p-4 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-sm">Script de Creación de Tablas</span>
-                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(createTablesScript, "tables")}>
-                      {copiedStates.tables ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-medium text-blue-900 mb-2">Descripción:</h4>
+                    <p className="text-sm text-blue-800">
+                      {name === "01-create-tables" &&
+                        "Crea las tablas principales: proveedores, productos, clientes, pedidos y pedido_productos con sus relaciones e índices."}
+                      {name === "02-seed-data" &&
+                        "Inserta datos iniciales: proveedores (CAELBI, DABOR, EMANAL, JELUZ, KALOPS, LORD, SERRA, WERKE), productos de ejemplo y clientes de prueba."}
+                      {name === "03-update-for-auto-reports" &&
+                        "Agrega columnas para el sistema de reportes automáticos: incluido_en_reporte, fecha_inclusion_reporte y reporte_id."}
+                      {name === "04-add-cuil-column" &&
+                        "Agrega la columna CUIL a la tabla clientes de forma segura (solo si no existe)."}
+                      {name === "05-verify-and-fix-proveedores" &&
+                        "Verifica y corrige los proveedores en la base de datos. Usa UPSERT para asegurar que todos los proveedores estén correctamente insertados, incluyendo LORD."}
+                    </p>
                   </div>
-                  <pre className="text-xs overflow-x-auto max-h-64">{createTablesScript}</pre>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Instrucciones</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+                  1
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="data" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  Paso 3: Insertar Datos de Ejemplo (Opcional)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Instrucciones:</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-sm">
-                    <li>En el SQL Editor de Supabase</li>
-                    <li>Copie y pegue el siguiente script</li>
-                    <li>Haga clic en "Run" para ejecutar</li>
-                  </ol>
+                <div>
+                  <p className="font-medium">Abre Supabase</p>
+                  <p className="text-sm text-gray-600">Ve a tu proyecto en Supabase y abre el SQL Editor</p>
                 </div>
+              </div>
 
-                <div className="bg-gray-100 p-4 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-sm">Script de Datos de Ejemplo</span>
-                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(seedDataScript, "seed")}>
-                      {copiedStates.seed ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <pre className="text-xs overflow-x-auto max-h-64">{seedDataScript}</pre>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+                  2
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="verify" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Check className="h-5 w-5" />
-                  Paso 4: Verificar Configuración
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <Button onClick={verifySetup} disabled={verificationResult.checking} className="w-full">
-                    {verificationResult.checking ? "Verificando..." : "Verificar Configuración"}
-                  </Button>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <span className="text-sm font-medium">Variables de Entorno</span>
-                      <Badge variant={verificationResult.configured ? "default" : "destructive"}>
-                        {verificationResult.configured ? "✅ Configuradas" : "❌ Faltantes"}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <span className="text-sm font-medium">Tablas de Base de Datos</span>
-                      <Badge variant={verificationResult.tablesExist ? "default" : "destructive"}>
-                        {verificationResult.tablesExist ? "✅ Creadas" : "❌ Faltantes"}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {verificationResult.configured && verificationResult.tablesExist && (
-                    <Alert>
-                      <Check className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>¡Configuración completa!</strong> Su sistema está listo para usar. Puede navegar a
-                        cualquier sección de la aplicación.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                <div>
+                  <p className="font-medium">Ejecuta los scripts en orden</p>
+                  <p className="text-sm text-gray-600">
+                    Copia y ejecuta cada script en el orden numérico (01, 02, 03, 04, 05)
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </div>
 
-        <div className="text-center">
-          <Button asChild>
-            <a href="/">Volver al Inicio</a>
-          </Button>
-        </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+                  3
+                </div>
+                <div>
+                  <p className="font-medium">Verifica los datos</p>
+                  <p className="text-sm text-gray-600">
+                    Después de ejecutar el script 05, verifica que todos los proveedores estén insertados correctamente
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold">
+                  ✓
+                </div>
+                <div>
+                  <p className="font-medium">¡Listo!</p>
+                  <p className="text-sm text-gray-600">
+                    Tu base de datos está configurada. Vuelve a la página principal para empezar a usar el sistema.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Alert className="bg-yellow-50 border-yellow-200">
+              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                <strong>Nota sobre proveedores:</strong> El script 05 usa UPSERT para asegurar que todos los proveedores
+                estén correctamente insertados. Si ya tienes datos, este script actualizará los nombres sin eliminar
+                productos existentes.
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex gap-2 pt-4">
+              <Link href="/" className="flex-1">
+                <Button variant="outline" className="w-full bg-transparent">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Volver al Inicio
+                </Button>
+              </Link>
+              <Link href="/productos" className="flex-1">
+                <Button className="w-full">
+                  <Database className="h-4 w-4 mr-2" />
+                  Ir a Productos
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

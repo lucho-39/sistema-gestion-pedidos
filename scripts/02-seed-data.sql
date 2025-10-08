@@ -17,7 +17,9 @@ INSERT INTO productos (articulo_numero, producto_codigo, descripcion, unidad_med
 (1002, 'INT-001', 'Interruptor simple', 'unidad', 1000),
 (1003, 'TOM-001', 'Tomacorriente doble', 'unidad', 1000),
 (2001, 'CAB-002', 'Cable telefónico 2 pares', 'metros', 400),
-(2002, 'LUZ-001', 'Lámpara LED 9W', 'unidad', 1200)
+(2002, 'LUZ-001', 'Lámpara LED 9W', 'unidad', 1200),
+(2003, 'INT-002', 'Interruptor conmutador', 'unidad', 1200),
+(2004, 'TOM-002', 'Tomacorriente triple con protección', 'unidad', 1200)
 ON CONFLICT (articulo_numero) DO NOTHING;
 
 -- Insertar algunos clientes de ejemplo
