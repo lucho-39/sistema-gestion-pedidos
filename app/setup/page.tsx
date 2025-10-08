@@ -1,189 +1,251 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { ArrowLeft, Copy, Check, Database, AlertCircle } from "lucide-react"
+import { Copy, Check, Database, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const SQL_SCRIPTS = {
-  "01-create-tables": `-- Crear tablas para el sistema de gestión de inventario
-
--- Tabla de proveedores
+  "01-create-tables": `-- Crear tabla de proveedores
 CREATE TABLE IF NOT EXISTS proveedores (
   proveedor_id INTEGER PRIMARY KEY,
   proveedor_nombre TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Tabla de productos
+-- Crear tabla de productos
 CREATE TABLE IF NOT EXISTS productos (
   articulo_numero INTEGER PRIMARY KEY,
   producto_codigo TEXT,
   descripcion TEXT NOT NULL,
-  unidad_medida TEXT NOT NULL,
-  proveedor_id INTEGER NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (proveedor_id) REFERENCES proveedores(proveedor_id) ON DELETE RESTRICT
+  unidad_medida TEXT NOT NULL DEFAULT 'unidad',
+  proveedor_id INTEGER REFERENCES proveedores(proveedor_id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Tabla de clientes
+-- Crear tabla de clientes
 CREATE TABLE IF NOT EXISTS clientes (
   cliente_id SERIAL PRIMARY KEY,
-  cliente_codigo INTEGER UNIQUE NOT NULL,
+  cliente_codigo INTEGER NOT NULL,
   nombre TEXT NOT NULL,
-  domicilio TEXT NOT NULL,
-  telefono TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  domicilio TEXT,
+  telefono TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Tabla de pedidos
+-- Crear tabla de pedidos
 CREATE TABLE IF NOT EXISTS pedidos (
   pedido_id SERIAL PRIMARY KEY,
-  cliente_id INTEGER NOT NULL,
-  fecha_pedido TIMESTAMP WITH TIME ZONE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (cliente_id) REFERENCES clientes(cliente_id) ON DELETE RESTRICT
+  cliente_id INTEGER REFERENCES clientes(cliente_id),
+  fecha_pedido DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Tabla de productos en pedidos
+-- Crear tabla de productos en pedidos
 CREATE TABLE IF NOT EXISTS pedido_productos (
   id SERIAL PRIMARY KEY,
-  pedido_id INTEGER NOT NULL,
-  articulo_numero INTEGER NOT NULL,
-  cantidad NUMERIC NOT NULL DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (pedido_id) REFERENCES pedidos(pedido_id) ON DELETE CASCADE,
-  FOREIGN KEY (articulo_numero) REFERENCES productos(articulo_numero) ON DELETE RESTRICT
+  pedido_id INTEGER REFERENCES pedidos(pedido_id) ON DELETE CASCADE,
+  articulo_numero INTEGER REFERENCES productos(articulo_numero),
+  cantidad DECIMAL(10,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Índices para mejorar el rendimiento
+-- Crear índices para mejorar el rendimiento
 CREATE INDEX IF NOT EXISTS idx_productos_proveedor ON productos(proveedor_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_cliente ON pedidos(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_fecha ON pedidos(fecha_pedido);
 CREATE INDEX IF NOT EXISTS idx_pedido_productos_pedido ON pedido_productos(pedido_id);
-CREATE INDEX IF NOT EXISTS idx_pedido_productos_articulo ON pedido_productos(articulo_numero);
-CREATE INDEX IF NOT EXISTS idx_clientes_codigo ON clientes(cliente_codigo);`,
+CREATE INDEX IF NOT EXISTS idx_pedido_productos_articulo ON pedido_productos(articulo_numero);`,
 
-  "02-seed-data": `-- Insertar proveedores iniciales
+  "02-seed-data": `-- Insertar proveedores de ejemplo
 INSERT INTO proveedores (proveedor_id, proveedor_nombre) VALUES
-(300, 'CAELBI'),
-(400, 'DABOR'),
-(500, 'EMANAL'),
-(1000, 'JELUZ'),
-(1100, 'KALOPS'),
-(1200, 'LORD'),
-(1800, 'SERRA'),
-(2300, 'WERKE'),
-(1, 'Proveedor General')
+  (1, 'Proveedor General'),
+  (300, 'CAELBI'),
+  (400, 'DABOR'),
+  (500, 'EMANAL'),
+  (1000, 'JELUZ'),
+  (1100, 'KALOPS'),
+  (1200, 'LORD'),
+  (1800, 'SERRA'),
+  (2300, 'WERKE')
 ON CONFLICT (proveedor_id) DO NOTHING;
 
--- Insertar algunos productos de ejemplo
+-- Insertar productos de ejemplo usando LORD (1200)
 INSERT INTO productos (articulo_numero, producto_codigo, descripcion, unidad_medida, proveedor_id) VALUES
-(1001, 'CAB-001', 'Cable de alimentación 3x2.5mm', 'metros', 300),
-(1002, 'INT-001', 'Interruptor simple', 'unidad', 1000),
-(1003, 'TOM-001', 'Tomacorriente doble', 'unidad', 1000),
-(2001, 'CAB-002', 'Cable telefónico 2 pares', 'metros', 400),
-(2002, 'LUZ-001', 'Lámpara LED 9W', 'unidad', 1200),
-(2003, 'INT-002', 'Interruptor conmutador', 'unidad', 1200),
-(2004, 'TOM-002', 'Tomacorriente triple con protección', 'unidad', 1200)
+  (12345, 'INT10A', 'Interruptor simple 10A', 'unidad', 1200),
+  (12346, 'TOM2', 'Tomacorriente doble', 'unidad', 1200),
+  (12347, 'INT-CONM', 'Interruptor conmutador', 'unidad', 1200),
+  (12348, 'TOM3', 'Tomacorriente triple', 'unidad', 1200)
 ON CONFLICT (articulo_numero) DO NOTHING;
 
--- Insertar algunos clientes de ejemplo
-INSERT INTO clientes (cliente_codigo, nombre, domicilio, telefono, cuil) VALUES
-(101, 'Juan Pérez', 'Av. Corrientes 1234, CABA', '11-4567-8901', '20-12345678-9'),
-(102, 'María González', 'San Martín 567, La Plata', '221-456-7890', '27-87654321-3'),
-(103, 'Carlos López', 'Belgrano 890, Rosario', '341-234-5678', '20-11223344-5')
-ON CONFLICT (cliente_codigo) DO NOTHING;`,
+-- Insertar clientes de ejemplo
+INSERT INTO clientes (cliente_codigo, nombre, domicilio, telefono) VALUES
+  (1001, 'Cliente Ejemplo 1', 'Calle Falsa 123', '555-0001'),
+  (1002, 'Cliente Ejemplo 2', 'Av. Principal 456', '555-0002')
+ON CONFLICT DO NOTHING;`,
 
-  "03-update-for-auto-reports": `-- Script para agregar soporte de reportes automáticos
--- Este script agrega columnas necesarias para el sistema de reportes automáticos
+  "03-update-for-auto-reports": `-- Script para agregar soporte a reportes automáticos
+-- Este script es opcional y se puede ejecutar más adelante si se necesita
 
--- Agregar columnas a la tabla pedidos para tracking de reportes
+-- Agregar columnas para tracking de reportes (opcional)
 ALTER TABLE pedidos 
-ADD COLUMN IF NOT EXISTS incluido_en_reporte BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS fecha_inclusion_reporte TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS incluido_en_reporte BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE pedidos 
+ADD COLUMN IF NOT EXISTS fecha_inclusion_reporte TIMESTAMP;
+
+ALTER TABLE pedidos 
 ADD COLUMN IF NOT EXISTS reporte_id TEXT;
 
--- Crear índice para búsquedas rápidas de pedidos no reportados
-CREATE INDEX IF NOT EXISTS idx_pedidos_incluido_reporte ON pedidos(incluido_en_reporte);
-CREATE INDEX IF NOT EXISTS idx_pedidos_reporte_id ON pedidos(reporte_id);
-
--- Comentarios para documentación
-COMMENT ON COLUMN pedidos.incluido_en_reporte IS 'Indica si el pedido ya fue incluido en un reporte automático';
-COMMENT ON COLUMN pedidos.fecha_inclusion_reporte IS 'Fecha en que el pedido fue incluido en un reporte';
-COMMENT ON COLUMN pedidos.reporte_id IS 'ID del reporte automático que incluye este pedido';`,
+-- Crear índice para búsquedas rápidas de pedidos sin reportar
+CREATE INDEX IF NOT EXISTS idx_pedidos_reportados 
+ON pedidos(incluido_en_reporte, fecha_pedido);`,
 
   "04-add-cuil-column": `-- Script para agregar la columna CUIL a la tabla clientes
--- Solo agrega la columna si no existe
+-- Este campo es opcional y puede usarse para identificación fiscal
 
--- Agregar columna CUIL si no existe
+-- Verificar si la columna ya existe antes de agregarla
 DO $$ 
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 
-    FROM information_schema.columns 
+    SELECT FROM information_schema.columns 
     WHERE table_name = 'clientes' 
     AND column_name = 'cuil'
   ) THEN
     ALTER TABLE clientes ADD COLUMN cuil TEXT;
+    CREATE INDEX IF NOT EXISTS idx_clientes_cuil ON clientes(cuil);
   END IF;
 END $$;
 
--- Crear índice para búsquedas rápidas por CUIL
-CREATE INDEX IF NOT EXISTS idx_clientes_cuil ON clientes(cuil);
-
--- Comentario para documentación
-COMMENT ON COLUMN clientes.cuil IS 'CUIL del cliente (opcional)';`,
+-- Verificar resultado
+SELECT 
+  column_name, 
+  data_type, 
+  is_nullable
+FROM information_schema.columns
+WHERE table_name = 'clientes'
+ORDER BY ordinal_position;`,
 
   "05-verify-and-fix-proveedores": `-- Script para verificar y corregir proveedores
--- Este script asegura que todos los proveedores estén correctamente insertados
+-- Este script usa UPSERT para insertar o actualizar proveedores sin eliminar datos
 
--- Primero, verificar qué proveedores existen
-SELECT proveedor_id, proveedor_nombre 
-FROM proveedores 
+-- Paso 1: Mostrar proveedores actuales
+SELECT 
+  'PROVEEDORES ACTUALES' as info,
+  proveedor_id, 
+  proveedor_nombre,
+  (SELECT COUNT(*) FROM productos WHERE productos.proveedor_id = proveedores.proveedor_id) as cantidad_productos
+FROM proveedores
 ORDER BY proveedor_id;
 
--- Insertar o actualizar proveedores (usando UPSERT)
-INSERT INTO proveedores (proveedor_id, proveedor_nombre) VALUES
-(1, 'Proveedor General'),
-(300, 'CAELBI'),
-(400, 'DABOR'),
-(500, 'EMANAL'),
-(1000, 'JELUZ'),
-(1100, 'KALOPS'),
-(1200, 'LORD'),
-(1800, 'SERRA'),
-(2300, 'WERKE')
+-- Paso 2: Insertar o actualizar todos los proveedores (UPSERT)
+INSERT INTO proveedores (proveedor_id, proveedor_nombre, created_at, updated_at) VALUES
+  (1, 'Proveedor General', NOW(), NOW()),
+  (300, 'CAELBI', NOW(), NOW()),
+  (400, 'DABOR', NOW(), NOW()),
+  (500, 'EMANAL', NOW(), NOW()),
+  (1000, 'JELUZ', NOW(), NOW()),
+  (1100, 'KALOPS', NOW(), NOW()),
+  (1200, 'LORD', NOW(), NOW()),
+  (1800, 'SERRA', NOW(), NOW()),
+  (2300, 'WERKE', NOW(), NOW())
 ON CONFLICT (proveedor_id) 
 DO UPDATE SET 
   proveedor_nombre = EXCLUDED.proveedor_nombre,
-  updated_at = CURRENT_TIMESTAMP;
+  updated_at = NOW();
 
--- Verificar que todos los proveedores fueron insertados correctamente
+-- Paso 3: Verificar proveedores después de la actualización
 SELECT 
+  'PROVEEDORES ACTUALIZADOS' as info,
   proveedor_id, 
   proveedor_nombre,
-  created_at,
-  updated_at
-FROM proveedores 
+  (SELECT COUNT(*) FROM productos WHERE productos.proveedor_id = proveedores.proveedor_id) as cantidad_productos
+FROM proveedores
 ORDER BY proveedor_id;
 
--- Contar productos por proveedor
+-- Paso 4: Mostrar productos por proveedor
 SELECT 
+  'PRODUCTOS POR PROVEEDOR' as info,
   p.proveedor_id,
-  p.proveedor_nombre,
-  COUNT(pr.articulo_numero) as total_productos
-FROM proveedores p
-LEFT JOIN productos pr ON p.proveedor_id = pr.proveedor_id
-GROUP BY p.proveedor_id, p.proveedor_nombre
+  prov.proveedor_nombre,
+  COUNT(*) as cantidad_productos
+FROM productos p
+LEFT JOIN proveedores prov ON p.proveedor_id = prov.proveedor_id
+GROUP BY p.proveedor_id, prov.proveedor_nombre
 ORDER BY p.proveedor_id;`,
+
+  "06-migrate-productos-to-lord": `-- Script para migrar productos del Proveedor General (1) al Proveedor LORD (1200)
+
+-- Paso 1: Verificar estado actual
+SELECT 
+  'ANTES DE LA MIGRACIÓN' as estado,
+  proveedor_id,
+  COUNT(*) as cantidad_productos
+FROM productos
+GROUP BY proveedor_id
+ORDER BY proveedor_id;
+
+-- Paso 2: Mostrar productos que serán migrados
+SELECT 
+  'PRODUCTOS A MIGRAR' as info,
+  articulo_numero,
+  descripcion,
+  proveedor_id as proveedor_actual
+FROM productos
+WHERE proveedor_id = 1
+ORDER BY articulo_numero;
+
+-- Paso 3: Verificar que el proveedor LORD (1200) existe
+SELECT 
+  'VERIFICACIÓN PROVEEDOR LORD' as info,
+  proveedor_id,
+  proveedor_nombre
+FROM proveedores
+WHERE proveedor_id = 1200;
+
+-- Paso 4: Realizar la migración
+UPDATE productos
+SET 
+  proveedor_id = 1200,
+  updated_at = NOW()
+WHERE proveedor_id = 1;
+
+-- Paso 5: Verificar resultado
+SELECT 
+  'DESPUÉS DE LA MIGRACIÓN' as estado,
+  proveedor_id,
+  COUNT(*) as cantidad_productos
+FROM productos
+GROUP BY proveedor_id
+ORDER BY proveedor_id;
+
+-- Paso 6: Mostrar productos migrados
+SELECT 
+  'PRODUCTOS MIGRADOS A LORD' as info,
+  p.articulo_numero,
+  p.descripcion,
+  p.proveedor_id,
+  prov.proveedor_nombre
+FROM productos p
+LEFT JOIN proveedores prov ON p.proveedor_id = prov.proveedor_id
+WHERE p.proveedor_id = 1200
+ORDER BY p.articulo_numero;
+
+-- Paso 7: Verificar si quedan productos en proveedor 1
+SELECT 
+  CASE 
+    WHEN COUNT(*) = 0 THEN '✓ MIGRACIÓN EXITOSA - No quedan productos en Proveedor General (1)'
+    ELSE '⚠ ADVERTENCIA - Aún hay productos en Proveedor General (1)'
+  END as resultado,
+  COUNT(*) as productos_restantes
+FROM productos
+WHERE proveedor_id = 1;`,
 }
 
 export default function SetupPage() {
@@ -196,187 +258,150 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 pb-24">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-3 py-2">
-          <Link href="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">Configuración de Base de Datos</h1>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto space-y-6 pb-24 md:pb-8">
+        <div className="flex items-center gap-3">
+          <Database className="h-8 w-8 text-blue-600" />
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Configuración de Base de Datos</h1>
+            <p className="text-gray-600 text-sm md:text-base">Scripts SQL para configurar Supabase</p>
+          </div>
         </div>
 
         <Alert>
-          <Database className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Importante:</strong> Ejecuta estos scripts en orden en tu proyecto de Supabase para configurar la
-            base de datos.
-          </AlertDescription>
-        </Alert>
-
-        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            <strong>¡Nuevo!</strong> Si tienes problemas con el proveedor LORD u otros proveedores, ejecuta el script 05
-            para verificar y corregir los datos.
+            <strong>Instrucciones:</strong> Copia cada script SQL y ejecútalo en el SQL Editor de Supabase en orden.
+            Asegúrate de ejecutar los scripts en el orden numérico (01, 02, 03, etc.).
           </AlertDescription>
         </Alert>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-blue-600" />
-              Scripts SQL
-            </CardTitle>
-            <CardDescription>
-              Copia y ejecuta estos scripts en el SQL Editor de Supabase en orden numérico
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="01-create-tables" className="w-full">
-              <TabsList className="grid grid-cols-2 lg:grid-cols-5 w-full">
-                <TabsTrigger value="01-create-tables" className="text-xs">
-                  01 Tablas
-                </TabsTrigger>
-                <TabsTrigger value="02-seed-data" className="text-xs">
-                  02 Datos
-                </TabsTrigger>
-                <TabsTrigger value="03-update-for-auto-reports" className="text-xs">
-                  03 Reportes
-                </TabsTrigger>
-                <TabsTrigger value="04-add-cuil-column" className="text-xs">
-                  04 CUIL
-                </TabsTrigger>
-                <TabsTrigger value="05-verify-and-fix-proveedores" className="text-xs">
-                  05 Verificar
-                </TabsTrigger>
-              </TabsList>
+        <Tabs defaultValue="01-create-tables" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+            <TabsTrigger value="01-create-tables" className="text-xs">
+              01 Tablas
+            </TabsTrigger>
+            <TabsTrigger value="02-seed-data" className="text-xs">
+              02 Datos
+            </TabsTrigger>
+            <TabsTrigger value="03-update-for-auto-reports" className="text-xs">
+              03 Reportes
+            </TabsTrigger>
+            <TabsTrigger value="04-add-cuil-column" className="text-xs">
+              04 CUIL
+            </TabsTrigger>
+            <TabsTrigger value="05-verify-and-fix-proveedores" className="text-xs">
+              05 Verificar
+            </TabsTrigger>
+            <TabsTrigger value="06-migrate-productos-to-lord" className="text-xs">
+              06 Migrar
+            </TabsTrigger>
+          </TabsList>
 
-              {Object.entries(SQL_SCRIPTS).map(([name, content]) => (
-                <TabsContent key={name} value={name} className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Script: {name}.sql</h3>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copyToClipboard(name, content)}
-                      className="gap-2"
-                    >
-                      {copiedScript === name ? (
+          {Object.entries(SQL_SCRIPTS).map(([key, content]) => (
+            <TabsContent key={key} value={key} className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="text-base md:text-lg">{key.replace(/-/g, " ").toUpperCase()}</span>
+                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(key, content)} className="gap-2">
+                      {copiedScript === key ? (
                         <>
-                          <Check className="h-4 w-4 text-green-600" />
-                          Copiado
+                          <Check className="h-4 w-4" />
+                          <span className="hidden sm:inline">Copiado</span>
                         </>
                       ) : (
                         <>
                           <Copy className="h-4 w-4" />
-                          Copiar
+                          <span className="hidden sm:inline">Copiar</span>
                         </>
                       )}
                     </Button>
-                  </div>
-
-                  <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
+                  </CardTitle>
+                  <CardDescription className="text-xs md:text-sm">
+                    {key === "01-create-tables" && "Crea las tablas principales del sistema"}
+                    {key === "02-seed-data" && "Inserta datos de ejemplo y proveedores"}
+                    {key === "03-update-for-auto-reports" && "Agrega soporte para reportes automáticos (opcional)"}
+                    {key === "04-add-cuil-column" && "Agrega columna CUIL a clientes (opcional)"}
+                    {key === "05-verify-and-fix-proveedores" &&
+                      "Verifica y corrige todos los proveedores sin eliminar datos"}
+                    {key === "06-migrate-productos-to-lord" &&
+                      "Migra productos del Proveedor General (1) a LORD (1200)"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {key === "06-migrate-productos-to-lord" && (
+                    <Alert className="mb-4 bg-amber-50 border-amber-200">
+                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                      <AlertDescription className="text-amber-800 text-xs md:text-sm">
+                        <strong>⚠️ Script de Migración:</strong> Este script moverá TODOS los productos que actualmente
+                        tienen proveedor_id = 1 (Proveedor General) al proveedor_id = 1200 (LORD). Revisa los resultados
+                        antes de continuar.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-xs md:text-sm max-h-96 md:max-h-[500px]">
                     <code>{content}</code>
                   </pre>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-medium text-blue-900 mb-2">Descripción:</h4>
-                    <p className="text-sm text-blue-800">
-                      {name === "01-create-tables" &&
-                        "Crea las tablas principales: proveedores, productos, clientes, pedidos y pedido_productos con sus relaciones e índices."}
-                      {name === "02-seed-data" &&
-                        "Inserta datos iniciales: proveedores (CAELBI, DABOR, EMANAL, JELUZ, KALOPS, LORD, SERRA, WERKE), productos de ejemplo y clientes de prueba."}
-                      {name === "03-update-for-auto-reports" &&
-                        "Agrega columnas para el sistema de reportes automáticos: incluido_en_reporte, fecha_inclusion_reporte y reporte_id."}
-                      {name === "04-add-cuil-column" &&
-                        "Agrega la columna CUIL a la tabla clientes de forma segura (solo si no existe)."}
-                      {name === "05-verify-and-fix-proveedores" &&
-                        "Verifica y corrige los proveedores en la base de datos. Usa UPSERT para asegurar que todos los proveedores estén correctamente insertados, incluyendo LORD."}
-                    </p>
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
+        </Tabs>
 
         <Card>
           <CardHeader>
-            <CardTitle>Instrucciones</CardTitle>
+            <CardTitle className="text-base md:text-lg">Pasos de Configuración</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
-                  1
-                </div>
-                <div>
-                  <p className="font-medium">Abre Supabase</p>
-                  <p className="text-sm text-gray-600">Ve a tu proyecto en Supabase y abre el SQL Editor</p>
-                </div>
+          <CardContent className="space-y-3 text-xs md:text-sm">
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                1
               </div>
-
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
-                  2
-                </div>
-                <div>
-                  <p className="font-medium">Ejecuta los scripts en orden</p>
-                  <p className="text-sm text-gray-600">
-                    Copia y ejecuta cada script en el orden numérico (01, 02, 03, 04, 05)
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
-                  3
-                </div>
-                <div>
-                  <p className="font-medium">Verifica los datos</p>
-                  <p className="text-sm text-gray-600">
-                    Después de ejecutar el script 05, verifica que todos los proveedores estén insertados correctamente
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold">
-                  ✓
-                </div>
-                <div>
-                  <p className="font-medium">¡Listo!</p>
-                  <p className="text-sm text-gray-600">
-                    Tu base de datos está configurada. Vuelve a la página principal para empezar a usar el sistema.
-                  </p>
-                </div>
+              <div>
+                <p className="font-medium">Ejecuta el script "01 Tablas"</p>
+                <p className="text-gray-600 text-xs">Crea todas las tablas necesarias en Supabase</p>
               </div>
             </div>
-
-            <Alert className="bg-yellow-50 border-yellow-200">
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
-              <AlertDescription className="text-yellow-800">
-                <strong>Nota sobre proveedores:</strong> El script 05 usa UPSERT para asegurar que todos los proveedores
-                estén correctamente insertados. Si ya tienes datos, este script actualizará los nombres sin eliminar
-                productos existentes.
-              </AlertDescription>
-            </Alert>
-
-            <div className="flex gap-2 pt-4">
-              <Link href="/" className="flex-1">
-                <Button variant="outline" className="w-full bg-transparent">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Volver al Inicio
-                </Button>
-              </Link>
-              <Link href="/productos" className="flex-1">
-                <Button className="w-full">
-                  <Database className="h-4 w-4 mr-2" />
-                  Ir a Productos
-                </Button>
-              </Link>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                2
+              </div>
+              <div>
+                <p className="font-medium">Ejecuta el script "02 Datos"</p>
+                <p className="text-gray-600 text-xs">Inserta proveedores y datos de ejemplo</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                3
+              </div>
+              <div>
+                <p className="font-medium">Ejecuta el script "05 Verificar"</p>
+                <p className="text-gray-600 text-xs">Verifica que el proveedor LORD (1200) existe correctamente</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-xs">
+                4
+              </div>
+              <div>
+                <p className="font-medium">Ejecuta el script "06 Migrar" (IMPORTANTE)</p>
+                <p className="text-gray-600 text-xs">
+                  Migra todos los productos del Proveedor General (1) a LORD (1200)
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-xs">
+                5
+              </div>
+              <div>
+                <p className="font-medium">Scripts opcionales</p>
+                <p className="text-gray-600 text-xs">
+                  Ejecuta "03 Reportes" y "04 CUIL" según necesites estas funcionalidades
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
