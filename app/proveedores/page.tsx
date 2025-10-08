@@ -99,7 +99,7 @@ export default function ProveedoresPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-md mx-auto space-y-4">
+        <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
             <Link href="/">
               <Button variant="ghost" size="sm">
@@ -175,37 +175,37 @@ export default function ProveedoresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-md mx-auto space-y-4">
+    <div className="min-h-screen bg-gray-50 p-4 pb-24 md:pb-8">
+      <div className="max-w-7xl mx-auto space-y-4 w-full overflow-x-hidden">
         <div className="flex items-center gap-3 py-2">
           <Link href="/">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">Proveedores</h1>
+          <h1 className="text-xl font-bold truncate">Proveedores</h1>
         </div>
 
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className="flex gap-2 w-full">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 flex-shrink-0" />
             <Input
-              placeholder="Buscar proveedores..."
+              placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-11 w-full"
             />
           </div>
           <Link href="/proveedores/nuevo">
-            <Button size="sm">
+            <Button size="sm" className="h-11 whitespace-nowrap">
               <Plus className="h-4 w-4" />
             </Button>
           </Link>
         </div>
 
-        <div className="space-y-3">
+        <div className="flex flex-wrap gap-3">
           {filteredProveedores.length === 0 ? (
-            <Card>
+            <Card className="w-full">
               <CardContent className="p-6 text-center">
                 <p className="text-gray-500">No hay proveedores registrados</p>
                 <Link href="/proveedores/nuevo" className="inline-block mt-2">
@@ -218,13 +218,16 @@ export default function ProveedoresPage() {
             </Card>
           ) : (
             filteredProveedores.map((proveedor) => (
-              <Card key={proveedor.proveedor_id}>
+              <Card
+                key={proveedor.proveedor_id}
+                className="w-full sm:w-[calc(50%-0.375rem)] lg:w-[calc(33.333%-0.5rem)] overflow-hidden"
+              >
                 <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
                       <CardTitle className="text-base font-medium flex items-center gap-2">
-                        <Truck className="h-4 w-4 text-indigo-600" />
-                        {proveedor.proveedor_nombre}
+                        <Truck className="h-4 w-4 text-indigo-600 flex-shrink-0" />
+                        <span className="truncate">{proveedor.proveedor_nombre}</span>
                       </CardTitle>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="secondary" className="text-xs">
@@ -232,13 +235,18 @@ export default function ProveedoresPage() {
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex gap-1 ml-2">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Link href={`/proveedores/editar/${proveedor.proveedor_id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <Edit className="h-3 w-3" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(proveedor.proveedor_id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleDelete(proveedor.proveedor_id)}
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
