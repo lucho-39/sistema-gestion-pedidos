@@ -1,128 +1,171 @@
-import Link from "next/link"
-import { Package, Users, Truck, ShoppingCart, BarChart3, FileSpreadsheet } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+"use client"
+
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Package,
+  Users,
+  ShoppingCart,
+  FileText,
+  TrendingUp,
+  Building2,
+  PlusCircle,
+  Upload,
+  Calendar,
+} from "lucide-react"
 
-const modules = [
-  {
-    title: "Productos",
-    description: "Gestiona tu inventario de productos",
-    icon: Package,
-    href: "/productos",
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
-  },
-  {
-    title: "Clientes",
-    description: "Administra la información de tus clientes",
-    icon: Users,
-    href: "/clientes",
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-  },
-  {
-    title: "Proveedores",
-    description: "Mantén un registro de tus proveedores",
-    icon: Truck,
-    href: "/proveedores",
-    color: "text-purple-600",
-    bgColor: "bg-purple-50",
-  },
-  {
-    title: "Pedidos",
-    description: "Crea y gestiona pedidos de clientes",
-    icon: ShoppingCart,
-    href: "/pedidos",
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
-  },
-  {
-    title: "Reportes",
-    description: "Genera reportes automáticos y manuales",
-    icon: BarChart3,
-    href: "/reportes",
-    color: "text-red-600",
-    bgColor: "bg-red-50",
-  },
-  {
-    title: "Importar Productos",
-    description: "Importa productos desde Excel",
-    icon: FileSpreadsheet,
-    href: "/productos/importar",
-    color: "text-teal-600",
-    bgColor: "bg-teal-50",
-  },
-]
+export default function HomePage() {
+  const router = useRouter()
 
-export default function Home() {
+  const mainActions = [
+    {
+      title: "Productos",
+      description: "Gestionar catálogo de productos",
+      icon: Package,
+      href: "/productos",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      actions: [
+        { label: "Nuevo Producto", icon: PlusCircle, href: "/productos/nuevo" },
+        { label: "Importar Excel", icon: Upload, href: "/productos/importar" },
+      ],
+    },
+    {
+      title: "Clientes",
+      description: "Administrar base de clientes",
+      icon: Users,
+      href: "/clientes",
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      actions: [
+        { label: "Nuevo Cliente", icon: PlusCircle, href: "/clientes/nuevo" },
+        { label: "Importar Excel", icon: Upload, href: "/clientes/importar" },
+      ],
+    },
+    {
+      title: "Proveedores",
+      description: "Gestionar proveedores",
+      icon: Building2,
+      href: "/proveedores",
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+      actions: [{ label: "Nuevo Proveedor", icon: PlusCircle, href: "/proveedores/nuevo" }],
+    },
+    {
+      title: "Pedidos",
+      description: "Gestionar pedidos de clientes",
+      icon: ShoppingCart,
+      href: "/pedidos",
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+      actions: [{ label: "Nuevo Pedido", icon: PlusCircle, href: "/pedidos/nuevo" }],
+    },
+    {
+      title: "Reportes",
+      description: "Generar y ver reportes",
+      icon: FileText,
+      href: "/reportes",
+      color: "text-red-600",
+      bgColor: "bg-red-50",
+      actions: [{ label: "Ver Reportes", icon: Calendar, href: "/reportes" }],
+    },
+  ]
+
+  const stats = [
+    { label: "Productos", value: "0", icon: Package, color: "text-blue-600" },
+    { label: "Clientes", value: "0", icon: Users, color: "text-green-600" },
+    { label: "Pedidos", value: "0", icon: ShoppingCart, color: "text-orange-600" },
+    { label: "Reportes", value: "0", icon: FileText, color: "text-red-600" },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pb-20 md:pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <div className="w-full max-w-full min-h-screen overflow-x-hidden p-4 sm:p-6 lg:p-8 pb-24 sm:pb-8">
+      <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4">Sistema de Gestión</h1>
-          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-4">
-            Administra productos, clientes, proveedores, pedidos y reportes desde un solo lugar
-          </p>
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold truncate">Panel de Control</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Sistema de Gestión de Inventario y Pedidos</p>
         </div>
 
-        {/* Modules Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {modules.map((module) => {
-            const Icon = module.icon
-            return (
-              <Link key={module.href} href={module.href} className="group">
-                <Card className="h-full transition-all duration-200 hover:shadow-xl hover:-translate-y-1 active:scale-95 touch-manipulation">
-                  <CardHeader className="pb-3 md:pb-4">
-                    <div
-                      className={`w-12 h-12 md:w-14 md:h-14 ${module.bgColor} rounded-xl flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 transition-transform`}
-                    >
-                      <Icon className={`w-6 h-6 md:w-7 md:h-7 ${module.color}`} />
-                    </div>
-                    <CardTitle className="text-lg md:text-xl">{module.title}</CardTitle>
-                    <CardDescription className="text-sm md:text-base">{module.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {stats.map((stat, index) => (
+            <Card key={index} className="overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{stat.label}</p>
+                    <p className="text-xl sm:text-2xl font-bold">{stat.value}</p>
+                  </div>
+                  <stat.icon className={`w-8 h-8 sm:w-10 sm:h-10 ${stat.color} flex-shrink-0`} />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Main Actions */}
+        <div className="space-y-4">
+          <h2 className="text-lg sm:text-xl font-semibold">Acciones Rápidas</h2>
+          <div className="flex flex-wrap gap-3">
+            {mainActions.map((action, index) => (
+              <Card
+                key={index}
+                className="w-full sm:w-[calc(50%-0.375rem)] lg:w-[calc(33.333%-0.5rem)] overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => router.push(action.href)}
+              >
+                <CardHeader className="space-y-3">
+                  <div className={`w-12 h-12 rounded-lg ${action.bgColor} flex items-center justify-center`}>
+                    <action.icon className={`w-6 h-6 ${action.color}`} />
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <CardTitle className="text-base sm:text-lg truncate">{action.title}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm truncate">{action.description}</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {action.actions.map((subAction, subIndex) => (
                     <Button
-                      variant="ghost"
-                      className="w-full group-hover:bg-gray-100 text-sm md:text-base h-10 md:h-11"
+                      key={subIndex}
+                      variant="outline"
+                      className="w-full h-10 sm:h-11 justify-start bg-transparent"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(subAction.href)
+                      }}
                     >
-                      Abrir módulo →
+                      <subAction.icon className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">{subAction.label}</span>
                     </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-          })}
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="mt-8 md:mt-12 grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-          <Card className="bg-white/80 backdrop-blur">
-            <CardHeader className="pb-2 md:pb-3">
-              <CardDescription className="text-xs md:text-sm">Total Productos</CardDescription>
-              <CardTitle className="text-2xl md:text-3xl">--</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="bg-white/80 backdrop-blur">
-            <CardHeader className="pb-2 md:pb-3">
-              <CardDescription className="text-xs md:text-sm">Total Clientes</CardDescription>
-              <CardTitle className="text-2xl md:text-3xl">--</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="bg-white/80 backdrop-blur">
-            <CardHeader className="pb-2 md:pb-3">
-              <CardDescription className="text-xs md:text-sm">Pedidos Activos</CardDescription>
-              <CardTitle className="text-2xl md:text-3xl">--</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="bg-white/80 backdrop-blur">
-            <CardHeader className="pb-2 md:pb-3">
-              <CardDescription className="text-xs md:text-sm">Proveedores</CardDescription>
-              <CardTitle className="text-2xl md:text-3xl">--</CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
+        {/* Quick Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 flex-shrink-0" />
+              <span className="truncate">Información del Sistema</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Estado del Sistema</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Operativo</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Última Actualización</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">{new Date().toLocaleDateString("es-AR")}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

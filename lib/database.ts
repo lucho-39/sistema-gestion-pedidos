@@ -18,7 +18,6 @@ export class Database {
     }
 
     try {
-      // Intentar hacer una consulta simple que incluya CUIL
       const { error } = await supabase.from("clientes").select("cuil").limit(1)
       this.cuilColumnExists = !error
       return this.cuilColumnExists
@@ -63,7 +62,6 @@ export class Database {
         return []
       }
 
-      // Verificar si la columna CUIL existe
       const hasCuil = await this.checkCuilColumn()
       const selectColumns = hasCuil
         ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
@@ -115,10 +113,8 @@ export class Database {
         throw new Error("Database not configured")
       }
 
-      // Verificar si la columna CUIL existe
       const hasCuil = await this.checkCuilColumn()
 
-      // Preparar datos para insertar
       const insertData: any = {
         cliente_codigo: cliente.cliente_codigo,
         nombre: cliente.nombre,
@@ -126,7 +122,6 @@ export class Database {
         telefono: cliente.telefono,
       }
 
-      // Solo agregar CUIL si la columna existe
       if (hasCuil && cliente.cuil) {
         insertData.cuil = cliente.cuil
       }
@@ -154,12 +149,10 @@ export class Database {
         updated_at: new Date().toISOString(),
       }
 
-      // Remover CUIL si la columna no existe
       if (!hasCuil) {
         delete updateData.cuil
       }
 
-      // Remover campos que no deben actualizarse
       delete updateData.cliente_id
       delete updateData.created_at
 
