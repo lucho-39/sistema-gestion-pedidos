@@ -24,6 +24,7 @@ export default function ImportarProductosPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
+      // Validar que sea un archivo Excel
       const validTypes = [
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "application/vnd.ms-excel",
@@ -62,11 +63,11 @@ export default function ImportarProductosPage() {
     setParseErrors([])
 
     try {
-      console.log("=== Starting import process ===")
+      console.log("Starting import process...")
 
+      // Cargar proveedores desde la base de datos
       const proveedores = await Database.getProveedores()
-      console.log(`Loaded ${proveedores.length} proveedores:`)
-      proveedores.forEach((p) => console.log(`  - ${p.proveedor_id}: ${p.proveedor_nombre}`))
+      console.log(`Loaded ${proveedores.length} proveedores`)
 
       if (proveedores.length === 0) {
         toast({
@@ -78,6 +79,7 @@ export default function ImportarProductosPage() {
         return
       }
 
+      // Importar dinámicamente la librería xlsx
       const XLSX = await import("xlsx")
 
       const reader = new FileReader()
@@ -86,22 +88,25 @@ export default function ImportarProductosPage() {
           const data = new Uint8Array(e.target?.result as ArrayBuffer)
           const workbook = XLSX.read(data, { type: "array" })
 
+          // Tomar la primera hoja
           const firstSheetName = workbook.SheetNames[0]
           const worksheet = workbook.Sheets[firstSheetName]
 
+          // Convertir a JSON
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
 
           if (jsonData.length < 2) {
             throw new Error("El archivo debe contener al menos una fila de encabezados y una fila de datos")
           }
 
+          // La primera fila son los encabezados
           const headers = jsonData[0] as string[]
           const rows = jsonData.slice(1) as any[][]
 
-          console.log("\n=== Excel file structure ===")
           console.log("Headers found:", headers)
           console.log(`Data rows: ${rows.length}`)
 
+          // Convertir filas a objetos
           const excelRows = rows
             .filter((row) => row.some((cell) => cell !== null && cell !== undefined && cell !== ""))
             .map((row, rowIndex) => {
@@ -111,7 +116,7 @@ export default function ImportarProductosPage() {
                   obj[header.toString().trim()] = row[index]
                 }
               })
-              console.log(`\nRow ${rowIndex + 2}:`, obj)
+              console.log(`Row ${rowIndex + 1}:`, obj)
               return obj
             })
 
@@ -119,13 +124,12 @@ export default function ImportarProductosPage() {
             throw new Error("No se encontraron filas de datos válidas en el archivo")
           }
 
-          console.log(`\n=== Processing ${excelRows.length} rows ===`)
+          console.log(`Processing ${excelRows.length} rows...`)
 
+          // Parsear productos usando la función actualizada (ahora asíncrona)
           const { productos, errores } = await parseExcelToProductos(excelRows, proveedores)
 
-          console.log(`\n=== Parsing completed ===`)
-          console.log(`Valid products: ${productos.length}`)
-          console.log(`Errors: ${errores.length}`)
+          console.log(`Parsing completed: ${productos.length} products, ${errores.length} errors`)
 
           setImportedProducts(productos)
           setParseErrors(errores)
@@ -188,17 +192,10 @@ export default function ImportarProductosPage() {
     setIsLoading(true)
 
     try {
-      console.log("\n=== Starting save process ===")
-      console.log(
-        "Products to save:",
-        importedProducts.map((p) => ({
-          articulo: p.articulo_numero,
-          desc: p.descripcion,
-          prov_id: p.proveedor_id,
-          prov_name: p.proveedor.proveedor_nombre,
-        })),
-      )
+      console.log("Starting save process...")
+      console.log("Products to save:", importedProducts)
 
+      // Validar que todos los productos tengan proveedor_id válido
       const invalidProducts = importedProducts.filter((p) => !p.proveedor_id || p.proveedor_id <= 0)
       if (invalidProducts.length > 0) {
         console.error("Invalid products found:", invalidProducts)
@@ -211,9 +208,11 @@ export default function ImportarProductosPage() {
         return
       }
 
+      // Obtener productos existentes
       const existingProducts = await Database.getProductos()
       console.log(`Found ${existingProducts.length} existing products`)
 
+      // Verificar duplicados por número de artículo
       const existingNumbers = new Set(existingProducts.map((p) => p.articulo_numero))
       const duplicates = importedProducts.filter((p) => existingNumbers.has(p.articulo_numero))
 
@@ -226,6 +225,7 @@ export default function ImportarProductosPage() {
         })
       }
 
+      // Filtrar productos no duplicados
       const newProducts = importedProducts.filter((p) => !existingNumbers.has(p.articulo_numero))
 
       if (newProducts.length === 0) {
@@ -240,16 +240,18 @@ export default function ImportarProductosPage() {
 
       console.log(`Saving ${newProducts.length} new products...`)
 
+      // Preparar datos para inserción (sin campos de relación)
       const productosParaInsertar = newProducts.map((p) => ({
         articulo_numero: p.articulo_numero,
         producto_codigo: p.producto_codigo || "",
         descripcion: p.descripcion,
         unidad_medida: p.unidad_medida,
-        proveedor_id: p.proveedor_id,
+        proveedor_id: p.proveedor_id, // Asegurar que sea un número válido
       }))
 
       console.log("Data to insert:", productosParaInsertar)
 
+      // Crear productos en la base de datos
       const createdProducts = await Database.createProductos(productosParaInsertar)
       console.log(`Created ${createdProducts.length} products`)
 
@@ -263,6 +265,7 @@ export default function ImportarProductosPage() {
         setFile(null)
         setParseErrors([])
 
+        // Reset file input
         const fileInput = document.getElementById("excel-file") as HTMLInputElement
         if (fileInput) {
           fileInput.value = ""
@@ -288,7 +291,7 @@ export default function ImportarProductosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-md mx-auto space-y-4 pb-24">
+      <div className="max-w-md mx-auto space-y-4">
         <div className="flex items-center gap-3 py-2">
           <Link href="/productos">
             <Button variant="ghost" size="sm">
@@ -368,7 +371,7 @@ export default function ImportarProductosPage() {
                     <p className="text-gray-600">Código: {producto.producto_codigo || "Sin código"}</p>
                     <p className="text-gray-600">Unidad: {producto.unidad_medida}</p>
                     <p className="text-indigo-600 text-xs font-medium">
-                      Proveedor: {producto.proveedor_id} - {producto.proveedor.proveedor_nombre}
+                      Proveedor: {producto.proveedor.proveedor_id} - {producto.proveedor.proveedor_nombre}
                     </p>
                   </div>
                 ))}
@@ -394,36 +397,28 @@ export default function ImportarProductosPage() {
                 <strong>"Nº Artículo"</strong> o <strong>"Art."</strong> → Número de artículo (obligatorio)
               </li>
               <li>
-                <strong>"Desc"</strong>, <strong>"Descripcion"</strong> → Descripción (obligatorio)
+                <strong>"Desc"</strong>, <strong>"Descripcion"</strong>, <strong>"Descripciom"</strong> → Descripción
+                (obligatorio)
               </li>
               <li>
                 <strong>"Cod"</strong>, <strong>"Codigo"</strong> → Código del producto (opcional)
               </li>
               <li>
-                <strong>"Proveedor"</strong> o <strong>"Prov ID"</strong> → ID numérico del proveedor (1200 para LORD)
+                <strong>"Proveedor"</strong> → ID del proveedor (opcional, busca por ID o nombre)
               </li>
             </ul>
-            <p className="text-amber-600 font-medium mt-2">
-              <strong>⚠️ Importante para el Proveedor:</strong>
+            <p>
+              <strong>Reglas automáticas:</strong>
             </p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Debe ser el ID numérico exacto (ej: 1200 para LORD)</li>
-              <li>También puede ser el nombre (ej: "LORD" o "lord")</li>
-              <li>Si no se especifica o no se encuentra, se asigna "Proveedor General"</li>
+              <li>Productos con "CABLE" o "cable" en descripción → unidad en metros</li>
+              <li>Si no se encuentra proveedor → se asigna el primer proveedor disponible</li>
+              <li>Campos faltantes se completan con valores por defecto</li>
+              <li>Otros campos del Excel se ignoran automáticamente</li>
             </ul>
-            <p className="text-blue-600 font-medium mt-2">
-              <strong>Proveedores disponibles:</strong>
+            <p className="text-red-600 font-medium">
+              <strong>Importante:</strong> Debe existir al menos un proveedor en el sistema antes de importar productos.
             </p>
-            <ul className="list-disc list-inside space-y-1 text-xs">
-              <li>300 - CAELBI</li>
-              <li>400 - DABOR</li>
-              <li>500 - EMANAL</li>
-              <li>1000 - JELUZ</li>
-              <li>1100 - KALOPS</li>
-              <li>1200 - LORD</li>
-              <li>1800 - SERRA</li>
-              <li>2300 - WERKE</li>
-            </ul>
           </CardContent>
         </Card>
       </div>

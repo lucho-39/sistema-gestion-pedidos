@@ -50,7 +50,7 @@ export default function ClientesPage() {
     const filtered = clientes.filter(
       (cliente) =>
         (cliente.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (cliente.cuil || "").includes(searchTerm) ||
+        (cliente.CUIL || "").includes(searchTerm) ||
         (cliente.telefono || "").includes(searchTerm) ||
         (cliente.cliente_codigo || "").toString().includes(searchTerm),
     )
@@ -91,7 +91,7 @@ export default function ClientesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-7xl mx-auto space-y-4">
+        <div className="max-w-md mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
             <Link href="/">
               <Button variant="ghost" size="sm">
@@ -167,37 +167,37 @@ export default function ClientesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 pb-24 md:pb-8">
-      <div className="max-w-7xl mx-auto space-y-4 w-full overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-md mx-auto space-y-4">
         <div className="flex items-center gap-3 py-2">
           <Link href="/">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold truncate">Clientes</h1>
+          <h1 className="text-xl font-bold">Clientes</h1>
         </div>
 
-        <div className="flex gap-2 w-full">
-          <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 flex-shrink-0" />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Buscar..."
+              placeholder="Buscar clientes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 w-full"
+              className="pl-10"
             />
           </div>
           <Link href="/clientes/nuevo">
-            <Button size="sm" className="h-11 whitespace-nowrap">
+            <Button size="sm">
               <Plus className="h-4 w-4" />
             </Button>
           </Link>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="space-y-3">
           {filteredClientes.length === 0 ? (
-            <Card className="w-full">
+            <Card>
               <CardContent className="p-6 text-center">
                 <p className="text-gray-500">
                   {searchTerm ? "No se encontraron clientes" : "No hay clientes registrados"}
@@ -212,27 +212,19 @@ export default function ClientesPage() {
             </Card>
           ) : (
             filteredClientes.map((cliente) => (
-              <Card
-                key={cliente.cliente_id}
-                className="w-full sm:w-[calc(50%-0.375rem)] lg:w-[calc(33.333%-0.5rem)] overflow-hidden"
-              >
+              <Card key={cliente.cliente_id}>
                 <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-base font-medium truncate flex-1 min-w-0">
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-base font-medium">
                       #{cliente.cliente_codigo} - {cliente.nombre}
                     </CardTitle>
-                    <div className="flex gap-1 flex-shrink-0">
+                    <div className="flex gap-1">
                       <Link href={`/clientes/editar/${cliente.cliente_id}`}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="sm">
                           <Edit className="h-3 w-3" />
                         </Button>
                       </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleDelete(cliente.cliente_id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(cliente.cliente_id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -240,14 +232,14 @@ export default function ClientesPage() {
                 </CardHeader>
                 <CardContent className="pt-0 space-y-2">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{cliente.domicilio}</span>
+                    <MapPin className="h-3 w-3" />
+                    <span>{cliente.domicilio}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{cliente.telefono}</span>
+                    <Phone className="h-3 w-3" />
+                    <span>{cliente.telefono}</span>
                   </div>
-                  {cliente.cuil && <p className="text-xs text-gray-500 truncate">CUIL: {cliente.cuil}</p>}
+                  <p className="text-xs text-gray-500">CUIL: {cliente.CUIL}</p>
                 </CardContent>
               </Card>
             ))
