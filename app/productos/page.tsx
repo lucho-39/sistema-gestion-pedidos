@@ -87,7 +87,7 @@ export default function ProductosPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-md mx-auto space-y-4">
+        <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
             <Link href="/">
               <Button variant="ghost" size="sm">
@@ -176,7 +176,7 @@ export default function ProductosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-md mx-auto space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center gap-3 py-2">
           <Link href="/">
             <Button variant="ghost" size="sm">
@@ -203,54 +203,60 @@ export default function ProductosPage() {
           </Link>
         </div>
 
-        <div className="space-y-3">
-          {filteredProductos.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-gray-500">No hay productos registrados</p>
-                <Link href="/productos/nuevo" className="inline-block mt-2">
-                  <Button variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Producto
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredProductos.map((producto) => (
-              <Card key={producto.articulo_numero}>
+        {filteredProductos.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-gray-500">No hay productos registrados</p>
+              <Link href="/productos/nuevo" className="inline-block mt-2">
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar Producto
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredProductos.map((producto) => (
+              <Card key={producto.articulo_numero} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="text-sm font-medium">
-                        #{producto.articulo_numero} - {producto.descripcion}
-                      </CardTitle>
-                      <p className="text-xs text-gray-500 mt-1">Código: {producto.producto_codigo || "Sin código"}</p>
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-sm font-medium truncate">#{producto.articulo_numero}</CardTitle>
+                      <p className="text-xs text-gray-900 mt-1 line-clamp-2">{producto.descripcion}</p>
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        Código: {producto.producto_codigo || "Sin código"}
+                      </p>
                     </div>
-                    <div className="flex gap-1 ml-2">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Link href={`/productos/editar/${producto.articulo_numero}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <Edit className="h-3 w-3" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(producto.articulo_numero)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleDelete(producto.articulo_numero)}
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center gap-2">
                     <Badge variant="secondary" className="text-xs">
                       {producto.unidad_medida}
                     </Badge>
-                    <p className="text-xs text-gray-600">{producto.proveedor.proveedor_nombre}</p>
+                    <p className="text-xs text-gray-600 truncate">{producto.proveedor.proveedor_nombre}</p>
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

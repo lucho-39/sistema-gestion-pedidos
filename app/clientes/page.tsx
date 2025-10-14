@@ -91,7 +91,7 @@ export default function ClientesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-md mx-auto space-y-4">
+        <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
             <Link href="/">
               <Button variant="ghost" size="sm">
@@ -168,7 +168,7 @@ export default function ClientesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-md mx-auto space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center gap-3 py-2">
           <Link href="/">
             <Button variant="ghost" size="sm">
@@ -195,56 +195,61 @@ export default function ClientesPage() {
           </Link>
         </div>
 
-        <div className="space-y-3">
-          {filteredClientes.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-gray-500">
-                  {searchTerm ? "No se encontraron clientes" : "No hay clientes registrados"}
-                </p>
-                <Link href="/clientes/nuevo" className="inline-block mt-2">
-                  <Button variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Cliente
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredClientes.map((cliente) => (
-              <Card key={cliente.cliente_id}>
+        {filteredClientes.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-gray-500">
+                {searchTerm ? "No se encontraron clientes" : "No hay clientes registrados"}
+              </p>
+              <Link href="/clientes/nuevo" className="inline-block mt-2">
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar Cliente
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredClientes.map((cliente) => (
+              <Card key={cliente.cliente_id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-base font-medium">
+                  <div className="flex justify-between items-start gap-2">
+                    <CardTitle className="text-sm font-medium line-clamp-2">
                       #{cliente.cliente_codigo} - {cliente.nombre}
                     </CardTitle>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Link href={`/clientes/editar/${cliente.cliente_id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <Edit className="h-3 w-3" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(cliente.cliente_id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleDelete(cliente.cliente_id)}
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-3 w-3" />
-                    <span>{cliente.domicilio}</span>
+                  <div className="flex items-start gap-2 text-xs text-gray-600">
+                    <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                    <span className="line-clamp-2">{cliente.domicilio}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-3 w-3" />
-                    <span>{cliente.telefono}</span>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Phone className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{cliente.telefono}</span>
                   </div>
-                  <p className="text-xs text-gray-500">CUIL: {cliente.CUIL}</p>
+                  <p className="text-xs text-gray-500 truncate">CUIL: {cliente.CUIL}</p>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

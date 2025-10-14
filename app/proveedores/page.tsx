@@ -99,7 +99,7 @@ export default function ProveedoresPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-md mx-auto space-y-4">
+        <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
             <Link href="/">
               <Button variant="ghost" size="sm">
@@ -176,7 +176,7 @@ export default function ProveedoresPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-md mx-auto space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center gap-3 py-2">
           <Link href="/">
             <Button variant="ghost" size="sm">
@@ -203,28 +203,28 @@ export default function ProveedoresPage() {
           </Link>
         </div>
 
-        <div className="space-y-3">
-          {filteredProveedores.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-gray-500">No hay proveedores registrados</p>
-                <Link href="/proveedores/nuevo" className="inline-block mt-2">
-                  <Button variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Proveedor
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredProveedores.map((proveedor) => (
-              <Card key={proveedor.proveedor_id}>
+        {filteredProveedores.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-gray-500">No hay proveedores registrados</p>
+              <Link href="/proveedores/nuevo" className="inline-block mt-2">
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar Proveedor
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredProveedores.map((proveedor) => (
+              <Card key={proveedor.proveedor_id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
                       <CardTitle className="text-base font-medium flex items-center gap-2">
-                        <Truck className="h-4 w-4 text-indigo-600" />
-                        {proveedor.proveedor_nombre}
+                        <Truck className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                        <span className="truncate">{proveedor.proveedor_nombre}</span>
                       </CardTitle>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="secondary" className="text-xs">
@@ -232,22 +232,27 @@ export default function ProveedoresPage() {
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex gap-1 ml-2">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Link href={`/proveedores/editar/${proveedor.proveedor_id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <Edit className="h-3 w-3" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(proveedor.proveedor_id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleDelete(proveedor.proveedor_id)}
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
