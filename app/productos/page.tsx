@@ -18,24 +18,34 @@ export default function ProductosPage() {
   const [filteredProductos, setFilteredProductos] = useState<Producto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [needsSetup, setNeedsSetup] = useState(false)
+  const [error, setError] = useState<string>("")
   const { toast } = useToast()
 
   useEffect(() => {
     const loadProductos = async () => {
       try {
+        console.log("Iniciando carga de productos...")
         setIsLoading(true)
         setNeedsSetup(false)
+        setError("")
+
         const loadedProductos = await DB.getProductos()
+        console.log("Productos cargados:", loadedProductos.length)
+        console.log("Primera muestra:", loadedProductos[0])
+
         setProductos(loadedProductos)
         setFilteredProductos(loadedProductos)
       } catch (error) {
         console.error("Error loading productos:", error)
-        if (error instanceof Error && error.message.includes("Database tables not found")) {
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+        setError(errorMessage)
+
+        if (errorMessage.includes("Database tables not found")) {
           setNeedsSetup(true)
         } else {
           toast({
             title: "Error",
-            description: "Error al cargar los productos",
+            description: "Error al cargar los productos: " + errorMessage,
             variant: "destructive",
           })
         }
@@ -51,17 +61,21 @@ export default function ProductosPage() {
     const filtered = productos.filter(
       (producto) =>
         producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        producto.producto_codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        producto.articulo_numero.toString().includes(searchTerm),
+        (producto.producto_codigo && producto.producto_codigo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (producto.articulo_numero && producto.articulo_numero.toString().includes(searchTerm)),
     )
     setFilteredProductos(filtered)
   }, [searchTerm, productos])
 
-  const handleDelete = async (articuloNumero: number) => {
+  const handleDelete = async (productoId: number) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+      return
+    }
+
     try {
-      const success = await DB.deleteProducto(articuloNumero)
+      const success = await DB.deleteProducto(productoId)
       if (success) {
-        const updatedProductos = productos.filter((p) => p.articulo_numero !== articuloNumero)
+        const updatedProductos = productos.filter((p) => p.producto_id !== productoId)
         setProductos(updatedProductos)
         toast({
           title: "Producto eliminado",
@@ -174,6 +188,42 @@ export default function ProductosPage() {
     )
   }
 
+  if (error && !needsSetup) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-md mx-auto space-y-4">
+          <div className="flex items-center gap-3 py-2">
+            <Link href="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <h1 className="text-xl font-bold">Productos</h1>
+          </div>
+
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Error al cargar productos</strong>
+              <p className="mt-2 text-sm">{error}</p>
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex gap-2">
+            <Button onClick={() => window.location.reload()} className="flex-1">
+              Reintentar
+            </Button>
+            <Link href="/" className="flex-1">
+              <Button variant="outline" className="w-full bg-transparent">
+                Volver
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto space-y-4">
@@ -184,6 +234,9 @@ export default function ProductosPage() {
             </Button>
           </Link>
           <h1 className="text-xl font-bold">Productos</h1>
+          <Badge variant="secondary" className="ml-auto">
+            {productos.length} productos
+          </Badge>
         </div>
 
         <div className="flex gap-2">
@@ -198,7 +251,8 @@ export default function ProductosPage() {
           </div>
           <Link href="/productos/nuevo">
             <Button size="sm">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo
             </Button>
           </Link>
         </div>
@@ -206,30 +260,39 @@ export default function ProductosPage() {
         {filteredProductos.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
-              <p className="text-gray-500">No hay productos registrados</p>
-              <Link href="/productos/nuevo" className="inline-block mt-2">
-                <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar Producto
-                </Button>
-              </Link>
+              {productos.length === 0 ? (
+                <>
+                  <p className="text-gray-500 mb-4">No hay productos registrados</p>
+                  <Link href="/productos/nuevo" className="inline-block">
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Agregar Producto
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <p className="text-gray-500">No se encontraron productos con "{searchTerm}"</p>
+              )}
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredProductos.map((producto) => (
-              <Card key={producto.articulo_numero} className="hover:shadow-md transition-shadow">
+              <Card key={producto.producto_id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-sm font-medium truncate">#{producto.articulo_numero}</CardTitle>
+                      <CardTitle className="text-sm font-medium truncate">
+                        ID: {producto.producto_id}
+                        {producto.articulo_numero && ` | #${producto.articulo_numero}`}
+                      </CardTitle>
                       <p className="text-xs text-gray-900 mt-1 line-clamp-2">{producto.descripcion}</p>
                       <p className="text-xs text-gray-500 mt-1 truncate">
                         Código: {producto.producto_codigo || "Sin código"}
                       </p>
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
-                      <Link href={`/productos/editar/${producto.articulo_numero}`}>
+                      <Link href={`/productos/editar/${producto.producto_id}`}>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <Edit className="h-3 w-3" />
                         </Button>
@@ -238,7 +301,7 @@ export default function ProductosPage() {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => handleDelete(producto.articulo_numero)}
+                        onClick={() => handleDelete(producto.producto_id)}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -248,9 +311,11 @@ export default function ProductosPage() {
                 <CardContent className="pt-0">
                   <div className="flex justify-between items-center gap-2">
                     <Badge variant="secondary" className="text-xs">
-                      {producto.unidad_medida}
+                      {producto.categoria?.unidad || "N/A"}
                     </Badge>
-                    <p className="text-xs text-gray-600 truncate">{producto.proveedor.proveedor_nombre}</p>
+                    <p className="text-xs text-gray-600 truncate">
+                      {producto.proveedor?.proveedor_nombre || "Sin proveedor"}
+                    </p>
                   </div>
                 </CardContent>
               </Card>

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
-import type { Producto, Proveedor } from "@/lib/types"
+import type { Producto, Proveedor, Categoria, Imagen } from "@/lib/types"
 
 export default function EditarProductoPage() {
   const router = useRouter()
@@ -20,13 +20,17 @@ export default function EditarProductoPage() {
   const { toast } = useToast()
   const [producto, setProducto] = useState<Producto | null>(null)
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [imagenes, setImagenes] = useState<Imagen[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
     articulo_numero: "",
     producto_codigo: "",
+    titulo: "",
     descripcion: "",
-    unidad_medida: "unidad",
+    categoria_id: "",
+    img_id: "",
     proveedor_id: "",
   })
 
@@ -34,20 +38,34 @@ export default function EditarProductoPage() {
     const loadData = async () => {
       try {
         setIsLoading(true)
-        const [productos, loadedProveedores] = await Promise.all([Database.getProductos(), Database.getProveedores()])
+        console.log("Cargando datos para producto ID:", params.id)
+
+        const [loadedProducto, loadedProveedores, loadedCategorias, loadedImagenes] = await Promise.all([
+          Database.getProductoById(Number(params.id)),
+          Database.getProveedores(),
+          Database.getCategorias(),
+          Database.getImagenes(),
+        ])
+
+        console.log("Producto cargado:", loadedProducto)
+        console.log("Proveedores:", loadedProveedores.length)
+        console.log("Categorías:", loadedCategorias.length)
+        console.log("Imágenes:", loadedImagenes.length)
 
         setProveedores(loadedProveedores)
+        setCategorias(loadedCategorias)
+        setImagenes(loadedImagenes)
 
-        const productoEncontrado = productos.find((p) => p.articulo_numero === Number(params.id))
-
-        if (productoEncontrado) {
-          setProducto(productoEncontrado)
+        if (loadedProducto) {
+          setProducto(loadedProducto)
           setFormData({
-            articulo_numero: productoEncontrado.articulo_numero.toString(),
-            producto_codigo: productoEncontrado.producto_codigo,
-            descripcion: productoEncontrado.descripcion,
-            unidad_medida: productoEncontrado.unidad_medida,
-            proveedor_id: productoEncontrado.proveedor.proveedor_id.toString(),
+            articulo_numero: loadedProducto.articulo_numero || "",
+            producto_codigo: loadedProducto.producto_codigo || "",
+            titulo: loadedProducto.titulo || "",
+            descripcion: loadedProducto.descripcion,
+            categoria_id: loadedProducto.categoria_id.toString(),
+            img_id: loadedProducto.img_id.toString(),
+            proveedor_id: loadedProducto.proveedor_id.toString(),
           })
         } else {
           toast({
@@ -70,7 +88,9 @@ export default function EditarProductoPage() {
       }
     }
 
-    loadData()
+    if (params.id) {
+      loadData()
+    }
   }, [params.id, router, toast])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,28 +117,14 @@ export default function EditarProductoPage() {
     setIsSaving(true)
 
     try {
-      // Determinar unidad de medida automáticamente si contiene "cable"
-      let unidadMedida = formData.unidad_medida
-      if (formData.descripcion.toLowerCase().includes("cable")) {
-        unidadMedida = "metros"
-      }
-
-      const proveedor = proveedores.find((p) => p.proveedor_id === Number(formData.proveedor_id))
-      if (!proveedor) {
-        toast({
-          title: "Error",
-          description: "Proveedor no encontrado",
-          variant: "destructive",
-        })
-        setIsSaving(false)
-        return
-      }
-
       const updates: Partial<Producto> = {
+        articulo_numero: formData.articulo_numero || null,
         producto_codigo: formData.producto_codigo,
+        titulo: formData.titulo,
         descripcion: formData.descripcion,
-        unidad_medida: unidadMedida,
-        proveedor: proveedor,
+        categoria_id: Number(formData.categoria_id),
+        img_id: Number(formData.img_id),
+        proveedor_id: Number(formData.proveedor_id),
       }
 
       const success = await Database.updateProducto(Number(params.id), updates)
@@ -194,12 +200,10 @@ export default function EditarProductoPage() {
                 <Label htmlFor="articulo_numero">Número de Artículo</Label>
                 <Input
                   id="articulo_numero"
-                  type="number"
                   value={formData.articulo_numero}
-                  disabled
-                  className="bg-gray-100"
+                  onChange={(e) => handleChange("articulo_numero", e.target.value)}
+                  placeholder="Ej: 1001"
                 />
-                <p className="text-xs text-gray-500 mt-1">El número de artículo no se puede modificar</p>
               </div>
 
               <div>
@@ -213,33 +217,56 @@ export default function EditarProductoPage() {
               </div>
 
               <div>
+                <Label htmlFor="titulo">Título</Label>
+                <Input
+                  id="titulo"
+                  value={formData.titulo}
+                  onChange={(e) => handleChange("titulo", e.target.value)}
+                  placeholder="Título del producto"
+                />
+              </div>
+
+              <div>
                 <Label htmlFor="descripcion">Descripción *</Label>
                 <Input
                   id="descripcion"
                   value={formData.descripcion}
                   onChange={(e) => handleChange("descripcion", e.target.value)}
                   placeholder="Descripción del producto"
+                  required
                 />
               </div>
 
               <div>
-                <Label htmlFor="unidad_medida">Unidad de Medida</Label>
-                <Select value={formData.unidad_medida} onValueChange={(value) => handleChange("unidad_medida", value)}>
+                <Label htmlFor="categoria_id">Categoría *</Label>
+                <Select value={formData.categoria_id} onValueChange={(value) => handleChange("categoria_id", value)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecciona una categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unidad">Unidad</SelectItem>
-                    <SelectItem value="metros">Metros</SelectItem>
-                    <SelectItem value="kilogramos">Kilogramos</SelectItem>
-                    <SelectItem value="litros">Litros</SelectItem>
+                    {categorias.map((categoria) => (
+                      <SelectItem key={categoria.id} value={categoria.id.toString()}>
+                        {categoria.nombre} ({categoria.unidad})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                {formData.descripcion.toLowerCase().includes("cable") && (
-                  <p className="text-xs text-blue-600 mt-1">
-                    ℹ️ Se detectó "cable" en la descripción. Se asignará "metros" automáticamente.
-                  </p>
-                )}
+              </div>
+
+              <div>
+                <Label htmlFor="img_id">Imagen *</Label>
+                <Select value={formData.img_id} onValueChange={(value) => handleChange("img_id", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona una imagen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {imagenes.map((imagen) => (
+                      <SelectItem key={imagen.id} value={imagen.id.toString()}>
+                        {imagen.txt_alt || `Imagen ${imagen.id}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>

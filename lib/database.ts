@@ -1,15 +1,7 @@
 import { supabase, isSupabaseConfigured } from "./supabase"
-import type { Producto, Cliente, Pedido, Proveedor, ReporteAutomatico } from "./types"
+import type { Producto, Cliente, Pedido, Proveedor, Categoria, Imagen } from "./types"
 
 export class Database {
-  // Helper method to check if database is configured
-  private static checkConfiguration() {
-    if (!isSupabaseConfigured()) {
-      throw new Error("Database not configured. Please set up your Supabase environment variables.")
-    }
-  }
-
-  // Helper para verificar si la columna CUIL existe
   private static cuilColumnExists: boolean | null = null
 
   private static async checkCuilColumn(): Promise<boolean> {
@@ -18,7 +10,6 @@ export class Database {
     }
 
     try {
-      // Intentar hacer una consulta simple que incluya CUIL
       const { error } = await supabase.from("clientes").select("cuil").limit(1)
       this.cuilColumnExists = !error
       return this.cuilColumnExists
@@ -28,9 +19,16 @@ export class Database {
     }
   }
 
-  // Helper method to check if tables exist
   static async checkTablesExist(): Promise<{ exists: boolean; missingTables: string[] }> {
-    const requiredTables = ["proveedores", "productos", "clientes", "pedidos", "pedido_productos"]
+    const requiredTables = [
+      "proveedores",
+      "productos",
+      "clientes",
+      "pedidos",
+      "pedido_productos",
+      "categorias",
+      "imagenes",
+    ]
     const missingTables: string[] = []
 
     try {
@@ -55,145 +53,69 @@ export class Database {
     }
   }
 
-  // Clientes
-  static async getClientes(): Promise<Cliente[]> {
+  // ============================================
+  // CATEGORÍAS
+  // ============================================
+  static async getCategorias(): Promise<Categoria[]> {
     try {
       if (!isSupabaseConfigured()) {
-        console.log("Supabase not configured, returning empty array")
+        console.log("Supabase no está configurado")
         return []
       }
 
-      // Verificar si la columna CUIL existe
-      const hasCuil = await this.checkCuilColumn()
-      const selectColumns = hasCuil
-        ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
-        : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
-
-      const { data, error } = await supabase.from("clientes").select(selectColumns).order("nombre")
+      const { data, error } = await supabase
+        .from("categorias")
+        .select("id, nombre, unidad, created_at, updated_at")
+        .order("nombre")
 
       if (error) {
-        console.error("Error fetching clientes:", error)
-        if (error.message.includes("does not exist")) {
-          throw new Error("Database tables not found. Please run the setup scripts first.")
-        }
+        console.error("Error fetching categorias:", error)
         return []
       }
 
+      console.log(`Categorías cargadas: ${data?.length || 0}`)
       return data || []
     } catch (error) {
-      console.error("Error in getClientes:", error)
+      console.error("Error in getCategorias:", error)
       return []
     }
   }
 
-  static async getClienteById(id: number): Promise<Cliente | null> {
+  // ============================================
+  // IMÁGENES
+  // ============================================
+  static async getImagenes(): Promise<Imagen[]> {
     try {
       if (!isSupabaseConfigured()) {
-        return null
+        console.log("Supabase no está configurado")
+        return []
       }
 
-      const hasCuil = await this.checkCuilColumn()
-      const selectColumns = hasCuil
-        ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
-        : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
+      const { data, error } = await supabase
+        .from("imagenes")
+        .select("id, url_img, txt_alt, created_at, updated_at")
+        .order("id")
 
-      const { data, error } = await supabase.from("clientes").select(selectColumns).eq("cliente_id", id).single()
+      if (error) {
+        console.error("Error fetching imagenes:", error)
+        return []
+      }
 
-      if (error) throw error
-      return data
+      console.log(`Imágenes cargadas: ${data?.length || 0}`)
+      return data || []
     } catch (error) {
-      console.error("Error fetching cliente:", error)
-      return null
+      console.error("Error in getImagenes:", error)
+      return []
     }
   }
 
-  static async createCliente(
-    cliente: Omit<Cliente, "cliente_id" | "created_at" | "updated_at">,
-  ): Promise<Cliente | null> {
-    try {
-      if (!isSupabaseConfigured()) {
-        throw new Error("Database not configured")
-      }
-
-      // Verificar si la columna CUIL existe
-      const hasCuil = await this.checkCuilColumn()
-
-      // Preparar datos para insertar
-      const insertData: any = {
-        cliente_codigo: cliente.cliente_codigo,
-        nombre: cliente.nombre,
-        domicilio: cliente.domicilio,
-        telefono: cliente.telefono,
-      }
-
-      // Solo agregar CUIL si la columna existe
-      if (hasCuil && cliente.cuil) {
-        insertData.cuil = cliente.cuil
-      }
-
-      const { data, error } = await supabase.from("clientes").insert([insertData]).select().single()
-
-      if (error) throw error
-      return data
-    } catch (error) {
-      console.error("Error creating cliente:", error)
-      return null
-    }
-  }
-
-  static async updateCliente(id: number, cliente: Partial<Cliente>): Promise<boolean> {
-    try {
-      if (!isSupabaseConfigured()) {
-        return false
-      }
-
-      const hasCuil = await this.checkCuilColumn()
-
-      const updateData: any = {
-        ...cliente,
-        updated_at: new Date().toISOString(),
-      }
-
-      // Remover CUIL si la columna no existe
-      if (!hasCuil) {
-        delete updateData.cuil
-      }
-
-      // Remover campos que no deben actualizarse
-      delete updateData.cliente_id
-      delete updateData.created_at
-
-      const { error } = await supabase.from("clientes").update(updateData).eq("cliente_id", id)
-
-      if (error) throw error
-      return true
-    } catch (error) {
-      console.error("Error updating cliente:", error)
-      return false
-    }
-  }
-
-  static async deleteCliente(id: number): Promise<boolean> {
-    try {
-      if (!isSupabaseConfigured()) {
-        return false
-      }
-
-      const { error } = await supabase.from("clientes").delete().eq("cliente_id", id)
-
-      if (error) throw error
-      return true
-    } catch (error) {
-      console.error("Error deleting cliente:", error)
-      return false
-    }
-  }
-
-  // Proveedores
+  // ============================================
+  // PROVEEDORES
+  // ============================================
   static async getProveedores(): Promise<Proveedor[]> {
     try {
       if (!isSupabaseConfigured()) {
-        console.log("Supabase not configured, returning empty array")
+        console.log("Supabase no está configurado")
         return []
       }
 
@@ -204,16 +126,17 @@ export class Database {
 
       if (error) {
         console.error("Error fetching proveedores:", error)
-        if (error.message.includes("does not exist") || error.message.includes("schema cache")) {
+        if (error.message.includes("does not exist")) {
           throw new Error("Database tables not found. Please run the setup scripts first.")
         }
         return []
       }
 
+      console.log(`Proveedores cargados: ${data?.length || 0}`)
       return data || []
     } catch (error) {
       console.error("Error in getProveedores:", error)
-      return []
+      throw error
     }
   }
 
@@ -290,66 +213,112 @@ export class Database {
     }
   }
 
-  // Productos
+  // ============================================
+  // PRODUCTOS
+  // ============================================
   static async getProductos(): Promise<Producto[]> {
     try {
+      console.log("=== Iniciando getProductos ===")
+
       if (!isSupabaseConfigured()) {
-        console.log("Supabase not configured, returning empty array")
+        console.log("❌ Supabase no está configurado")
         return []
       }
 
+      console.log("✅ Supabase configurado, obteniendo productos...")
+
+      // Obtener productos
       const { data: productosData, error: productosError } = await supabase
         .from("productos")
-        .select("articulo_numero, producto_codigo, descripcion, unidad_medida, proveedor_id, created_at, updated_at")
-        .order("articulo_numero")
+        .select(
+          "producto_id, articulo_numero, producto_codigo, titulo, descripcion, categoria_id, img_id, proveedor_id, created_at, updated_at",
+        )
+        .order("producto_id", { ascending: false })
 
       if (productosError) {
-        console.error("Error fetching productos:", productosError)
+        console.error("❌ Error fetching productos:", productosError)
         if (productosError.message.includes("does not exist")) {
           throw new Error("Database tables not found. Please run the setup scripts first.")
         }
         return []
       }
 
+      console.log(`✅ Productos obtenidos: ${productosData?.length || 0}`)
+
       if (!productosData || productosData.length === 0) {
+        console.log("⚠️ No hay productos en la base de datos")
         return []
       }
 
-      const { data: proveedoresData, error: proveedoresError } = await supabase
-        .from("proveedores")
-        .select("proveedor_id, proveedor_nombre, created_at, updated_at")
+      // Obtener datos relacionados
+      console.log("Obteniendo categorías...")
+      const { data: categoriasData, error: categoriasError } = await supabase.from("categorias").select("*")
+      if (categoriasError) {
+        console.error("Error obteniendo categorías:", categoriasError)
+      } else {
+        console.log(`✅ Categorías: ${categoriasData?.length || 0}`)
+      }
 
+      console.log("Obteniendo imágenes...")
+      const { data: imagenesData, error: imagenesError } = await supabase.from("imagenes").select("*")
+      if (imagenesError) {
+        console.error("Error obteniendo imágenes:", imagenesError)
+      } else {
+        console.log(`✅ Imágenes: ${imagenesData?.length || 0}`)
+      }
+
+      console.log("Obteniendo proveedores...")
+      const { data: proveedoresData, error: proveedoresError } = await supabase.from("proveedores").select("*")
       if (proveedoresError) {
-        console.error("Error fetching proveedores:", proveedoresError)
-        return []
+        console.error("Error obteniendo proveedores:", proveedoresError)
+      } else {
+        console.log(`✅ Proveedores: ${proveedoresData?.length || 0}`)
       }
 
+      // Crear mapas para búsqueda rápida
+      const categoriasMap = new Map(categoriasData?.map((c) => [c.id, c]) || [])
+      const imagenesMap = new Map(imagenesData?.map((i) => [i.id, i]) || [])
       const proveedoresMap = new Map(proveedoresData?.map((p) => [p.proveedor_id, p]) || [])
 
-      const productos = productosData.map((p) => ({
-        articulo_numero: p.articulo_numero,
-        producto_codigo: p.producto_codigo || "",
-        descripcion: p.descripcion,
-        unidad_medida: p.unidad_medida,
-        proveedor_id: p.proveedor_id,
-        created_at: p.created_at,
-        updated_at: p.updated_at,
-        proveedor: proveedoresMap.get(p.proveedor_id) || {
+      // Combinar datos
+      const productos = productosData.map((p) => {
+        const categoria = categoriasMap.get(p.categoria_id)
+        const imagen = imagenesMap.get(p.img_id)
+        const proveedor = proveedoresMap.get(p.proveedor_id)
+
+        if (!proveedor) {
+          console.warn(`⚠️ Producto ${p.producto_id} sin proveedor (proveedor_id: ${p.proveedor_id})`)
+        }
+
+        return {
+          producto_id: p.producto_id,
+          articulo_numero: p.articulo_numero,
+          producto_codigo: p.producto_codigo || "",
+          titulo: p.titulo || "",
+          descripcion: p.descripcion,
+          categoria_id: p.categoria_id,
+          img_id: p.img_id,
           proveedor_id: p.proveedor_id,
-          proveedor_nombre: "Proveedor no encontrado",
-          created_at: "",
-          updated_at: "",
-        },
-      }))
+          created_at: p.created_at,
+          updated_at: p.updated_at,
+          categoria,
+          imagen,
+          proveedor,
+        }
+      })
+
+      console.log(`✅ Productos procesados correctamente: ${productos.length}`)
+      console.log("Primera muestra:", productos[0])
+      console.log("=== Fin getProductos ===")
 
       return productos
     } catch (error) {
-      console.error("Error in getProductos:", error)
-      return []
+      console.error("❌ Error in getProductos:", error)
+      throw error
     }
   }
 
-  static async getProductoById(articuloNumero: number): Promise<Producto | null> {
+  static async getProductoById(productoId: number): Promise<Producto | null> {
     try {
       if (!isSupabaseConfigured()) {
         return null
@@ -357,31 +326,39 @@ export class Database {
 
       const { data: productoData, error: productoError } = await supabase
         .from("productos")
-        .select("articulo_numero, producto_codigo, descripcion, unidad_medida, proveedor_id, created_at, updated_at")
-        .eq("articulo_numero", articuloNumero)
+        .select(
+          "producto_id, articulo_numero, producto_codigo, titulo, descripcion, categoria_id, img_id, proveedor_id, created_at, updated_at",
+        )
+        .eq("producto_id", productoId)
         .single()
 
       if (productoError) throw productoError
 
-      const { data: proveedorData, error: proveedorError } = await supabase
+      const { data: categoriaData } = await supabase
+        .from("categorias")
+        .select("*")
+        .eq("id", productoData.categoria_id)
+        .single()
+      const { data: imagenData } = await supabase.from("imagenes").select("*").eq("id", productoData.img_id).single()
+      const { data: proveedorData } = await supabase
         .from("proveedores")
-        .select("proveedor_id, proveedor_nombre, created_at, updated_at")
+        .select("*")
         .eq("proveedor_id", productoData.proveedor_id)
         .single()
 
-      if (proveedorError) {
-        console.error("Error fetching proveedor:", proveedorError)
-        return null
-      }
-
       return {
+        producto_id: productoData.producto_id,
         articulo_numero: productoData.articulo_numero,
         producto_codigo: productoData.producto_codigo || "",
+        titulo: productoData.titulo || "",
         descripcion: productoData.descripcion,
-        unidad_medida: productoData.unidad_medida,
+        categoria_id: productoData.categoria_id,
+        img_id: productoData.img_id,
         proveedor_id: productoData.proveedor_id,
         created_at: productoData.created_at,
         updated_at: productoData.updated_at,
+        categoria: categoriaData,
+        imagen: imagenData,
         proveedor: proveedorData,
       }
     } catch (error) {
@@ -390,7 +367,9 @@ export class Database {
     }
   }
 
-  static async createProducto(producto: Omit<Producto, "created_at" | "updated_at">): Promise<Producto | null> {
+  static async createProducto(
+    producto: Omit<Producto, "producto_id" | "created_at" | "updated_at" | "categoria" | "imagen" | "proveedor">,
+  ): Promise<Producto | null> {
     try {
       if (!isSupabaseConfigured()) {
         throw new Error("Database not configured")
@@ -400,10 +379,12 @@ export class Database {
         .from("productos")
         .insert([
           {
-            articulo_numero: producto.articulo_numero,
-            producto_codigo: producto.producto_codigo,
+            articulo_numero: producto.articulo_numero || null,
+            producto_codigo: producto.producto_codigo || "",
+            titulo: producto.titulo || "",
             descripcion: producto.descripcion,
-            unidad_medida: producto.unidad_medida,
+            categoria_id: producto.categoria_id,
+            img_id: producto.img_id,
             proveedor_id: producto.proveedor_id,
           },
         ])
@@ -412,39 +393,32 @@ export class Database {
 
       if (error) throw error
 
-      const proveedor = await this.getProveedorById(data.proveedor_id)
-
-      return {
-        ...data,
-        proveedor: proveedor || {
-          proveedor_id: data.proveedor_id,
-          proveedor_nombre: "Proveedor no encontrado",
-          created_at: "",
-          updated_at: "",
-        },
-      }
+      return await this.getProductoById(data.producto_id)
     } catch (error) {
       console.error("Error creating producto:", error)
       return null
     }
   }
 
-  static async updateProducto(articuloNumero: number, producto: Partial<Producto>): Promise<boolean> {
+  static async updateProducto(productoId: number, producto: Partial<Producto>): Promise<boolean> {
     try {
       if (!isSupabaseConfigured()) {
         return false
       }
 
-      const { error } = await supabase
-        .from("productos")
-        .update({
-          producto_codigo: producto.producto_codigo,
-          descripcion: producto.descripcion,
-          unidad_medida: producto.unidad_medida,
-          proveedor_id: producto.proveedor_id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("articulo_numero", articuloNumero)
+      const updateData: any = {
+        updated_at: new Date().toISOString(),
+      }
+
+      if (producto.articulo_numero !== undefined) updateData.articulo_numero = producto.articulo_numero || null
+      if (producto.producto_codigo !== undefined) updateData.producto_codigo = producto.producto_codigo
+      if (producto.titulo !== undefined) updateData.titulo = producto.titulo
+      if (producto.descripcion !== undefined) updateData.descripcion = producto.descripcion
+      if (producto.categoria_id !== undefined) updateData.categoria_id = producto.categoria_id
+      if (producto.img_id !== undefined) updateData.img_id = producto.img_id
+      if (producto.proveedor_id !== undefined) updateData.proveedor_id = producto.proveedor_id
+
+      const { error } = await supabase.from("productos").update(updateData).eq("producto_id", productoId)
 
       if (error) throw error
       return true
@@ -454,13 +428,13 @@ export class Database {
     }
   }
 
-  static async deleteProducto(articuloNumero: number): Promise<boolean> {
+  static async deleteProducto(productoId: number): Promise<boolean> {
     try {
       if (!isSupabaseConfigured()) {
         return false
       }
 
-      const { error } = await supabase.from("productos").delete().eq("articulo_numero", articuloNumero)
+      const { error } = await supabase.from("productos").delete().eq("producto_id", productoId)
 
       if (error) throw error
       return true
@@ -476,16 +450,13 @@ export class Database {
         throw new Error("Database not configured")
       }
 
-      const invalidProducts = productos.filter((p) => !p.proveedor_id || p.proveedor_id <= 0)
-      if (invalidProducts.length > 0) {
-        throw new Error(`${invalidProducts.length} productos tienen proveedor_id inválido`)
-      }
-
       const insertData = productos.map((p) => ({
-        articulo_numero: p.articulo_numero,
+        articulo_numero: p.articulo_numero || null,
         producto_codigo: p.producto_codigo || "",
+        titulo: p.titulo || "",
         descripcion: p.descripcion,
-        unidad_medida: p.unidad_medida,
+        categoria_id: p.categoria_id,
+        img_id: p.img_id,
         proveedor_id: p.proveedor_id,
       }))
 
@@ -493,43 +464,184 @@ export class Database {
 
       if (error) throw error
 
-      const { data: proveedoresData, error: proveedoresError } = await supabase
-        .from("proveedores")
-        .select("proveedor_id, proveedor_nombre, created_at, updated_at")
+      const productosCompletos = await Promise.all((data || []).map((p) => this.getProductoById(p.producto_id)))
 
-      if (proveedoresError) {
-        console.error("Error fetching proveedores:", proveedoresError)
-        return []
-      }
-
-      const proveedoresMap = new Map(proveedoresData.map((p) => [p.proveedor_id, p]))
-
-      return data.map((p) => ({
-        articulo_numero: p.articulo_numero,
-        producto_codigo: p.producto_codigo || "",
-        descripcion: p.descripcion,
-        unidad_medida: p.unidad_medida,
-        proveedor_id: p.proveedor_id,
-        created_at: p.created_at,
-        updated_at: p.updated_at,
-        proveedor: proveedoresMap.get(p.proveedor_id) || {
-          proveedor_id: p.proveedor_id,
-          proveedor_nombre: "Proveedor no encontrado",
-          created_at: "",
-          updated_at: "",
-        },
-      }))
+      return productosCompletos.filter((p): p is Producto => p !== null)
     } catch (error) {
       console.error("Error in createProductos:", error)
       throw error
     }
   }
 
-  // Pedidos
+  // ============================================
+  // CLIENTES
+  // ============================================
+  static async getClientes(): Promise<Cliente[]> {
+    try {
+      if (!isSupabaseConfigured()) {
+        return []
+      }
+
+      const hasCuil = await this.checkCuilColumn()
+      const selectColumns = hasCuil
+        ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
+        : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
+
+      const { data, error } = await supabase.from("clientes").select(selectColumns).order("nombre")
+
+      if (error) {
+        console.error("Error fetching clientes:", error)
+        if (error.message.includes("does not exist")) {
+          throw new Error("Database tables not found. Please run the setup scripts first.")
+        }
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      console.error("Error in getClientes:", error)
+      return []
+    }
+  }
+
+  static async getClienteById(id: number): Promise<Cliente | null> {
+    try {
+      if (!isSupabaseConfigured()) {
+        return null
+      }
+
+      const hasCuil = await this.checkCuilColumn()
+      const selectColumns = hasCuil
+        ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
+        : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
+
+      const { data, error } = await supabase.from("clientes").select(selectColumns).eq("cliente_id", id).single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error fetching cliente:", error)
+      return null
+    }
+  }
+
+  static async createCliente(
+    cliente: Omit<Cliente, "cliente_id" | "created_at" | "updated_at">,
+  ): Promise<Cliente | null> {
+    try {
+      if (!isSupabaseConfigured()) {
+        throw new Error("Database not configured")
+      }
+
+      const hasCuil = await this.checkCuilColumn()
+
+      const insertData: any = {
+        cliente_codigo: cliente.cliente_codigo,
+        nombre: cliente.nombre,
+        domicilio: cliente.domicilio,
+        telefono: cliente.telefono,
+      }
+
+      if (hasCuil && cliente.cuil) {
+        insertData.cuil = cliente.cuil
+      }
+
+      const { data, error } = await supabase.from("clientes").insert([insertData]).select().single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error creating cliente:", error)
+      return null
+    }
+  }
+
+  static async updateCliente(id: number, cliente: Partial<Cliente>): Promise<boolean> {
+    try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
+      const hasCuil = await this.checkCuilColumn()
+
+      const updateData: any = {
+        ...cliente,
+        updated_at: new Date().toISOString(),
+      }
+
+      if (!hasCuil) {
+        delete updateData.cuil
+      }
+
+      delete updateData.cliente_id
+      delete updateData.created_at
+
+      const { error } = await supabase.from("clientes").update(updateData).eq("cliente_id", id)
+
+      if (error) throw error
+      return true
+    } catch (error) {
+      console.error("Error updating cliente:", error)
+      return false
+    }
+  }
+
+  static async deleteCliente(id: number): Promise<boolean> {
+    try {
+      if (!isSupabaseConfigured()) {
+        return false
+      }
+
+      const { error } = await supabase.from("clientes").delete().eq("cliente_id", id)
+
+      if (error) throw error
+      return true
+    } catch (error) {
+      console.error("Error deleting cliente:", error)
+      return false
+    }
+  }
+
+  static async createClientes(clientes: any[]): Promise<Cliente[]> {
+    try {
+      if (!isSupabaseConfigured()) {
+        throw new Error("Database not configured")
+      }
+
+      const hasCuil = await this.checkCuilColumn()
+
+      const insertData = clientes.map((c) => {
+        const data: any = {
+          cliente_codigo: c.cliente_codigo,
+          nombre: c.nombre,
+          domicilio: c.domicilio,
+          telefono: c.telefono,
+        }
+
+        if (hasCuil && c.cuil) {
+          data.cuil = c.cuil
+        }
+
+        return data
+      })
+
+      const { data, error } = await supabase.from("clientes").insert(insertData).select()
+
+      if (error) throw error
+
+      return data || []
+    } catch (error) {
+      console.error("Error in createClientes:", error)
+      throw error
+    }
+  }
+
+  // ============================================
+  // PEDIDOS
+  // ============================================
   static async getPedidos(): Promise<Pedido[]> {
     try {
       if (!isSupabaseConfigured()) {
-        console.log("Supabase not configured, returning empty array")
         return []
       }
 
@@ -555,39 +667,14 @@ export class Database {
         ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
         : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
 
-      const { data: clientesData, error: clientesError } = await supabase.from("clientes").select(clienteColumns)
-
-      if (clientesError) {
-        console.error("Error fetching clientes:", clientesError)
-      }
-
-      const { data: pedidoProductosData, error: pedidoProductosError } = await supabase
+      const { data: clientesData } = await supabase.from("clientes").select(clienteColumns)
+      const { data: pedidoProductosData } = await supabase
         .from("pedido_productos")
-        .select("id, pedido_id, articulo_numero, cantidad, created_at")
+        .select("id, pedido_id, producto_id, cantidad, created_at")
 
-      if (pedidoProductosError) {
-        console.error("Error fetching pedido_productos:", pedidoProductosError)
-      }
-
-      const { data: productosData, error: productosError } = await supabase
-        .from("productos")
-        .select("articulo_numero, producto_codigo, descripcion, unidad_medida, proveedor_id, created_at, updated_at")
-
-      if (productosError) {
-        console.error("Error fetching productos:", productosError)
-      }
-
-      const { data: proveedoresData, error: proveedoresError } = await supabase
-        .from("proveedores")
-        .select("proveedor_id, proveedor_nombre, created_at, updated_at")
-
-      if (proveedoresError) {
-        console.error("Error fetching proveedores:", proveedoresError)
-      }
-
+      const productos = await this.getProductos()
       const clientesMap = new Map((clientesData || []).map((c) => [c.cliente_id, c]))
-      const productosMap = new Map((productosData || []).map((p) => [p.articulo_numero, p]))
-      const proveedoresMap = new Map((proveedoresData || []).map((p) => [p.proveedor_id, p]))
+      const productosMap = new Map(productos.map((p) => [p.producto_id, p]))
 
       const pedidoProductosMap = new Map<number, any[]>()
       ;(pedidoProductosData || []).forEach((pp) => {
@@ -611,55 +698,15 @@ export class Database {
         const pedidoProductos = pedidoProductosMap.get(pedido.pedido_id) || []
 
         const productos = pedidoProductos.map((pp) => {
-          const producto = productosMap.get(pp.articulo_numero)
-          let proveedor = null
-
-          if (producto && producto.proveedor_id) {
-            proveedor = proveedoresMap.get(producto.proveedor_id) || {
-              proveedor_id: producto.proveedor_id,
-              proveedor_nombre: "Proveedor no encontrado",
-              created_at: "",
-              updated_at: "",
-            }
-          }
+          const producto = productosMap.get(pp.producto_id)
 
           return {
             id: pp.id,
             pedido_id: pp.pedido_id,
-            articulo_numero: pp.articulo_numero,
+            producto_id: pp.producto_id,
             cantidad: pp.cantidad || 0,
             created_at: pp.created_at,
-            producto: producto
-              ? {
-                  articulo_numero: producto.articulo_numero,
-                  producto_codigo: producto.producto_codigo || "",
-                  descripcion: producto.descripcion || "Descripción no disponible",
-                  unidad_medida: producto.unidad_medida || "unidad",
-                  proveedor_id: producto.proveedor_id || 1,
-                  created_at: producto.created_at || "",
-                  updated_at: producto.updated_at || "",
-                  proveedor: proveedor || {
-                    proveedor_id: 1,
-                    proveedor_nombre: "Proveedor no encontrado",
-                    created_at: "",
-                    updated_at: "",
-                  },
-                }
-              : {
-                  articulo_numero: pp.articulo_numero,
-                  producto_codigo: "",
-                  descripcion: "Producto no encontrado",
-                  unidad_medida: "unidad",
-                  proveedor_id: 1,
-                  created_at: "",
-                  updated_at: "",
-                  proveedor: {
-                    proveedor_id: 1,
-                    proveedor_nombre: "Proveedor no encontrado",
-                    created_at: "",
-                    updated_at: "",
-                  },
-                },
+            producto: producto || undefined,
           }
         })
 
@@ -703,98 +750,28 @@ export class Database {
         ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
         : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
 
-      const { data: clienteData, error: clienteError } = await supabase
+      const { data: clienteData } = await supabase
         .from("clientes")
         .select(clienteColumns)
         .eq("cliente_id", pedidoData.cliente_id)
         .single()
 
-      if (clienteError) {
-        console.error("Error fetching cliente:", clienteError)
-      }
-
-      const { data: pedidoProductosData, error: pedidoProductosError } = await supabase
+      const { data: pedidoProductosData } = await supabase
         .from("pedido_productos")
-        .select("id, pedido_id, articulo_numero, cantidad, created_at")
+        .select("id, pedido_id, producto_id, cantidad, created_at")
         .eq("pedido_id", id)
 
-      if (pedidoProductosError) {
-        console.error("Error fetching pedido productos:", pedidoProductosError)
-      }
+      const productos = await this.getProductos()
+      const productosMap = new Map(productos.map((p) => [p.producto_id, p]))
 
-      let productosCompletos: any[] = []
-      if (pedidoProductosData && pedidoProductosData.length > 0) {
-        const articuloNumeros = pedidoProductosData.map((pp) => pp.articulo_numero)
-
-        const { data: productosData, error: productosError } = await supabase
-          .from("productos")
-          .select("articulo_numero, producto_codigo, descripcion, unidad_medida, proveedor_id, created_at, updated_at")
-          .in("articulo_numero", articuloNumeros)
-
-        if (productosError) {
-          console.error("Error fetching productos:", productosError)
-        }
-
-        if (productosData && productosData.length > 0) {
-          const proveedorIds = [...new Set(productosData.map((p) => p.proveedor_id).filter(Boolean))]
-
-          const { data: proveedoresData, error: proveedoresError } = await supabase
-            .from("proveedores")
-            .select("proveedor_id, proveedor_nombre, created_at, updated_at")
-            .in("proveedor_id", proveedorIds)
-
-          if (proveedoresError) {
-            console.error("Error fetching proveedores:", proveedoresError)
-          }
-
-          const productosMap = new Map((productosData || []).map((p) => [p.articulo_numero, p]))
-          const proveedoresMap = new Map((proveedoresData || []).map((p) => [p.proveedor_id, p]))
-
-          productosCompletos = pedidoProductosData.map((pp) => {
-            const producto = productosMap.get(pp.articulo_numero)
-            const proveedor = producto && producto.proveedor_id ? proveedoresMap.get(producto.proveedor_id) : null
-
-            return {
-              id: pp.id,
-              pedido_id: pp.pedido_id,
-              articulo_numero: pp.articulo_numero,
-              cantidad: pp.cantidad || 0,
-              created_at: pp.created_at,
-              producto: producto
-                ? {
-                    articulo_numero: producto.articulo_numero,
-                    producto_codigo: producto.producto_codigo || "",
-                    descripcion: producto.descripcion || "Descripción no disponible",
-                    unidad_medida: producto.unidad_medida || "unidad",
-                    proveedor_id: producto.proveedor_id || 1,
-                    created_at: producto.created_at || "",
-                    updated_at: producto.updated_at || "",
-                    proveedor: proveedor || {
-                      proveedor_id: producto.proveedor_id || 1,
-                      proveedor_nombre: "Proveedor no encontrado",
-                      created_at: "",
-                      updated_at: "",
-                    },
-                  }
-                : {
-                    articulo_numero: pp.articulo_numero,
-                    producto_codigo: "",
-                    descripcion: "Producto no encontrado",
-                    unidad_medida: "unidad",
-                    proveedor_id: 1,
-                    created_at: "",
-                    updated_at: "",
-                    proveedor: {
-                      proveedor_id: 1,
-                      proveedor_nombre: "Proveedor no encontrado",
-                      created_at: "",
-                      updated_at: "",
-                    },
-                  },
-            }
-          })
-        }
-      }
+      const productosCompletos = (pedidoProductosData || []).map((pp) => ({
+        id: pp.id,
+        pedido_id: pp.pedido_id,
+        producto_id: pp.producto_id,
+        cantidad: pp.cantidad || 0,
+        created_at: pp.created_at,
+        producto: productosMap.get(pp.producto_id),
+      }))
 
       const pedidoCompleto = {
         pedido_id: pedidoData.pedido_id,
@@ -824,7 +801,7 @@ export class Database {
     }
   }
 
-  static async createPedido(pedido: Omit<Pedido, "pedido_id" | "fecha_creacion">): Promise<Pedido | null> {
+  static async createPedido(pedido: Omit<Pedido, "pedido_id" | "created_at">): Promise<Pedido | null> {
     try {
       if (!isSupabaseConfigured()) {
         throw new Error("Database not configured")
@@ -854,7 +831,7 @@ export class Database {
       const productosData =
         pedido.productos?.map((producto) => ({
           pedido_id: nuevoPedido.pedido_id,
-          articulo_numero: producto.articulo_numero,
+          producto_id: producto.producto_id,
           cantidad: producto.cantidad,
         })) || []
 
@@ -880,7 +857,7 @@ export class Database {
     pedido: {
       cliente_id?: number
       fecha_pedido?: string
-      productos?: { articulo_numero: number; cantidad: number }[]
+      productos?: { producto_id: number; cantidad: number }[]
     },
   ): Promise<boolean> {
     try {
@@ -903,7 +880,7 @@ export class Database {
 
         const productosData = pedido.productos.map((producto) => ({
           pedido_id: id,
-          articulo_numero: producto.articulo_numero,
+          producto_id: producto.producto_id,
           cantidad: producto.cantidad,
         }))
 
@@ -940,8 +917,10 @@ export class Database {
     }
   }
 
-  // Reportes
-  static async getReportesAutomaticos(): Promise<ReporteAutomatico[]> {
+  // ============================================
+  // REPORTES
+  // ============================================
+  static async getReportesAutomaticos(): Promise<any[]> {
     try {
       const stored = localStorage.getItem("reportes_automaticos")
       const reportes = stored ? JSON.parse(stored) : []
@@ -952,7 +931,7 @@ export class Database {
     }
   }
 
-  static async createReporteAutomatico(reporte: ReporteAutomatico): Promise<ReporteAutomatico | null> {
+  static async createReporteAutomatico(reporte: any): Promise<any | null> {
     try {
       const existing = await this.getReportesAutomaticos()
       const updated = [reporte, ...existing]
@@ -964,7 +943,7 @@ export class Database {
     }
   }
 
-  static async saveReporteAutomatico(reporte: ReporteAutomatico): Promise<boolean> {
+  static async saveReporteAutomatico(reporte: any): Promise<boolean> {
     const result = await this.createReporteAutomatico(reporte)
     return result !== null
   }
@@ -976,7 +955,7 @@ export class Database {
 
       const pedidosReportados = new Set<number>()
       reportesAutomaticos.forEach((reporte) => {
-        reporte.pedidos_incluidos.forEach((pedidoId) => {
+        reporte.pedidos_incluidos?.forEach((pedidoId: number) => {
           pedidosReportados.add(pedidoId)
         })
       })
