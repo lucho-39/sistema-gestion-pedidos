@@ -6,7 +6,6 @@ export class ReportScheduler {
     try {
       console.log("Iniciando generación de reporte automático...")
 
-      // Obtener pedidos sin reportar
       const pedidosSinReportar = await Database.getPedidosSinReportar()
 
       if (pedidosSinReportar.length === 0) {
@@ -16,16 +15,15 @@ export class ReportScheduler {
 
       console.log(`Encontrados ${pedidosSinReportar.length} pedidos sin reportar`)
 
-      // Calcular fechas del período
       const now = new Date()
-      const lastWednesday = this.getLastWednesdayAt11AM()
-      const currentWednesday = this.getCurrentWednesdayAt1059AM()
+      const lastWednesday = this.getLastWednesdayAt6PM()
+      const currentWednesday = this.getCurrentWednesdayAt6PM()
 
       console.log("Período de reporte:")
       console.log(`- Inicio: ${lastWednesday.toISOString()}`)
       console.log(`- Fin: ${currentWednesday.toISOString()}`)
 
-      // Filtrar pedidos del período actual (desde último miércoles 11:00 AM hasta hoy 10:59 AM)
+      // Filtrar pedidos del período actual (desde último miércoles 18:00 hasta hoy 18:00)
       const pedidosDelPeriodo = pedidosSinReportar.filter((pedido) => {
         const fechaPedido = new Date(pedido.fecha_pedido)
         const enPeriodo = fechaPedido >= lastWednesday && fechaPedido <= currentWednesday
@@ -44,12 +42,10 @@ export class ReportScheduler {
 
       console.log(`${pedidosDelPeriodo.length} pedidos del período serán incluidos en el reporte`)
 
-      // Generar reportes
       const reporteGeneral = this.generateGeneralReport(pedidosDelPeriodo)
       const reporteProductosPorProveedor = this.generateProductosPorProveedorReport(pedidosDelPeriodo)
       const reportePedidos = this.generatePedidosReport(pedidosDelPeriodo)
 
-      // Crear reporte automático
       const reporteAutomatico: ReporteAutomatico = {
         id: `auto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         tipo: "automatico",
@@ -66,13 +62,11 @@ export class ReportScheduler {
         updated_at: now.toISOString(),
       }
 
-      // Guardar en base de datos
       const savedReporte = await Database.createReporteAutomatico(reporteAutomatico)
 
       if (savedReporte) {
         console.log(`Reporte automático generado con ID: ${savedReporte.id}`)
 
-        // Marcar pedidos como incluidos en reporte
         await this.markOrdersAsReported(
           pedidosDelPeriodo.map((p) => p.pedido_id),
           savedReporte.id,
@@ -92,7 +86,6 @@ export class ReportScheduler {
     try {
       console.log("Iniciando generación de reporte manual...")
 
-      // Obtener pedidos sin reportar
       const pedidosSinReportar = await Database.getPedidosSinReportar()
 
       if (pedidosSinReportar.length === 0) {
@@ -102,11 +95,9 @@ export class ReportScheduler {
 
       console.log(`Generando reporte manual con ${pedidosSinReportar.length} pedidos`)
 
-      // Para reportes manuales, usar todos los pedidos sin reportar hasta el momento actual
       const now = new Date()
-      const lastWednesday = this.getLastWednesdayAt11AM()
+      const lastWednesday = this.getLastWednesdayAt6PM()
 
-      // Filtrar pedidos hasta el último corte (miércoles 10:59 AM)
       const pedidosParaReporte = pedidosSinReportar.filter((pedido) => {
         const fechaPedido = new Date(pedido.fecha_pedido)
         return fechaPedido <= now
@@ -119,19 +110,16 @@ export class ReportScheduler {
 
       console.log(`${pedidosParaReporte.length} pedidos serán incluidos en el reporte manual`)
 
-      // Calcular fechas del período
       const fechaInicio =
         pedidosParaReporte.length > 0
           ? new Date(Math.min(...pedidosParaReporte.map((p) => new Date(p.fecha_pedido).getTime())))
           : lastWednesday
       const fechaFin = now
 
-      // Generar reportes
       const reporteGeneral = this.generateGeneralReport(pedidosParaReporte)
       const reporteProductosPorProveedor = this.generateProductosPorProveedorReport(pedidosParaReporte)
       const reportePedidos = this.generatePedidosReport(pedidosParaReporte)
 
-      // Crear reporte manual
       const reporteManual: ReporteAutomatico = {
         id: `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         tipo: "manual",
@@ -148,13 +136,11 @@ export class ReportScheduler {
         updated_at: now.toISOString(),
       }
 
-      // Guardar en base de datos
       const savedReporte = await Database.createReporteAutomatico(reporteManual)
 
       if (savedReporte) {
         console.log(`Reporte manual generado con ID: ${savedReporte.id}`)
 
-        // Marcar pedidos como incluidos en reporte
         await this.markOrdersAsReported(
           pedidosParaReporte.map((p) => p.pedido_id),
           savedReporte.id,
@@ -172,17 +158,17 @@ export class ReportScheduler {
 
   static shouldGenerateReport(): boolean {
     const now = new Date()
-    const dayOfWeek = now.getDay() // 0 = domingo, 3 = miércoles
+    const dayOfWeek = now.getDay()
     const hour = now.getHours()
     const minute = now.getMinutes()
 
-    // Miércoles (día 3) a las 10:59 AM
+    // Miércoles (día 3) a las 18:00 (6:00 PM)
     const isWednesday = dayOfWeek === 3
-    const isCorrectTime = hour === 10 && minute === 59
+    const isCorrectTime = hour === 18 && minute === 0
 
     console.log(`Verificando si es momento de generar reporte:`)
     console.log(`- Día actual: ${dayOfWeek} (${isWednesday ? "Miércoles ✓" : "No es miércoles"})`)
-    console.log(`- Hora actual: ${hour}:${minute} (${isCorrectTime ? "10:59 ✓" : "No es 10:59"})`)
+    console.log(`- Hora actual: ${hour}:${minute} (${isCorrectTime ? "18:00 ✓" : "No es 18:00"})`)
 
     return isWednesday && isCorrectTime
   }
@@ -194,75 +180,61 @@ export class ReportScheduler {
     let daysUntilWednesday: number
 
     if (dayOfWeek === 3) {
-      // Si es miércoles, verificar si ya pasó las 10:59 AM
       const currentHour = now.getHours()
-      const currentMinute = now.getMinutes()
 
-      if (currentHour > 10 || (currentHour === 10 && currentMinute >= 59)) {
-        // Ya pasó el horario, próximo miércoles es en 7 días
+      if (currentHour >= 18) {
         daysUntilWednesday = 7
       } else {
-        // Aún no es la hora, usar hoy
         daysUntilWednesday = 0
       }
     } else if (dayOfWeek < 3) {
-      // Lunes o martes
       daysUntilWednesday = 3 - dayOfWeek
     } else {
-      // Jueves a domingo
       daysUntilWednesday = 7 - dayOfWeek + 3
     }
 
     const nextWednesday = new Date(now)
     nextWednesday.setDate(now.getDate() + daysUntilWednesday)
-    nextWednesday.setHours(10, 59, 0, 0)
+    nextWednesday.setHours(18, 0, 0, 0)
 
     return nextWednesday
   }
 
-  static getLastWednesdayAt11AM(): Date {
+  static getLastWednesdayAt6PM(): Date {
     const now = new Date()
     const dayOfWeek = now.getDay()
     const currentHour = now.getHours()
-    const currentMinute = now.getMinutes()
 
     let daysAgo: number
 
     if (dayOfWeek === 3) {
-      // Si es miércoles
-      if (currentHour < 11) {
-        // Si aún no son las 11 AM, usar el miércoles anterior (7 días atrás)
+      if (currentHour < 18) {
         daysAgo = 7
       } else {
-        // Si ya pasaron las 11 AM, usar el miércoles actual
         daysAgo = 0
       }
     } else if (dayOfWeek > 3) {
-      // Jueves a sábado: usar el miércoles de esta semana
       daysAgo = dayOfWeek - 3
     } else {
-      // Domingo a martes: usar el miércoles de la semana pasada
       daysAgo = dayOfWeek + 4
     }
 
     const lastWednesday = new Date(now)
     lastWednesday.setDate(now.getDate() - daysAgo)
-    lastWednesday.setHours(11, 0, 0, 0) // 11:00 AM
+    lastWednesday.setHours(18, 0, 0, 0)
 
     return lastWednesday
   }
 
-  static getCurrentWednesdayAt1059AM(): Date {
+  static getCurrentWednesdayAt6PM(): Date {
     const now = new Date()
     const dayOfWeek = now.getDay()
 
     if (dayOfWeek === 3) {
-      // Si es miércoles, usar hoy a las 10:59 AM
       const currentWednesday = new Date(now)
-      currentWednesday.setHours(10, 59, 0, 0)
+      currentWednesday.setHours(18, 0, 0, 0)
       return currentWednesday
     } else {
-      // Si no es miércoles, obtener el próximo miércoles a las 10:59 AM
       return this.getNextWednesday()
     }
   }

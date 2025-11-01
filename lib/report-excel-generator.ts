@@ -14,6 +14,7 @@ export interface ReporteData {
     pedidos: Array<{
       pedido_id: number
       cliente_nombre: string
+      cliente_codigo: string
       fecha_pedido: string
       productos: Array<{
         descripcion: string
@@ -44,6 +45,7 @@ export interface ReporteData {
     pedidos: Array<{
       pedido_id: number
       cliente_nombre: string
+      cliente_codigo: string
       fecha_pedido: string
       productos: Array<{
         descripcion: string
@@ -97,7 +99,6 @@ export class ReportExcelGenerator {
   private static addGeneralSheet(workbook: any, XLSX: any, data: ReporteData["general"]): void {
     const worksheetData: any[][] = []
 
-    // Encabezado del reporte
     worksheetData.push(["REPORTE GENERAL DE PEDIDOS"])
     worksheetData.push([])
     worksheetData.push(["Fecha de Corte:", this.formatDate(data.fecha_corte)])
@@ -107,21 +108,29 @@ export class ReportExcelGenerator {
     ])
     worksheetData.push([])
 
-    // Resumen
     worksheetData.push(["RESUMEN"])
     worksheetData.push(["Total de Pedidos:", data.resumen.total_pedidos])
     worksheetData.push(["Total de Productos:", data.resumen.total_productos])
     worksheetData.push(["Total de Clientes:", data.resumen.total_clientes])
     worksheetData.push([])
 
-    // Detalle de pedidos
     worksheetData.push(["DETALLE DE PEDIDOS"])
-    worksheetData.push(["Pedido ID", "Cliente", "Fecha", "Producto", "Cantidad", "Unidad", "Proveedor"])
+    worksheetData.push([
+      "Pedido ID",
+      "Código Cliente",
+      "Cliente",
+      "Fecha",
+      "Producto",
+      "Cantidad",
+      "Unidad",
+      "Proveedor",
+    ])
 
     data.pedidos.forEach((pedido) => {
       pedido.productos.forEach((producto, index) => {
         worksheetData.push([
           index === 0 ? pedido.pedido_id : "",
+          index === 0 ? pedido.cliente_codigo : "",
           index === 0 ? pedido.cliente_nombre : "",
           index === 0 ? this.formatDate(pedido.fecha_pedido) : "",
           producto.descripcion,
@@ -134,9 +143,9 @@ export class ReportExcelGenerator {
 
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
 
-    // Configurar anchos de columna
     worksheet["!cols"] = [
       { wch: 10 }, // Pedido ID
+      { wch: 15 }, // Código Cliente
       { wch: 25 }, // Cliente
       { wch: 12 }, // Fecha
       { wch: 30 }, // Producto
@@ -155,14 +164,12 @@ export class ReportExcelGenerator {
   ): void {
     const worksheetData: any[][] = []
 
-    // Encabezado del reporte
     worksheetData.push(["REPORTE POR PROVEEDOR"])
     worksheetData.push([])
     worksheetData.push(["Fecha de Corte:", this.formatDate(data.fecha_corte)])
     worksheetData.push(["Total de Proveedores:", data.total_proveedores])
     worksheetData.push([])
 
-    // Detalle por proveedor
     worksheetData.push(["PRODUCTOS POR PROVEEDOR"])
     worksheetData.push(["Proveedor", "Artículo", "Código", "Descripción", "Unidad", "Cantidad Total"])
 
@@ -178,7 +185,6 @@ export class ReportExcelGenerator {
         ])
       })
 
-      // Línea de total por proveedor
       worksheetData.push([
         `TOTAL ${proveedor.proveedor_nombre.toUpperCase()}:`,
         "",
@@ -192,7 +198,6 @@ export class ReportExcelGenerator {
 
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
 
-    // Configurar anchos de columna
     worksheet["!cols"] = [
       { wch: 25 }, // Proveedor
       { wch: 12 }, // Artículo
@@ -208,21 +213,20 @@ export class ReportExcelGenerator {
   private static addPedidosSheet(workbook: any, XLSX: any, data: ReporteData["pedidos"]): void {
     const worksheetData: any[][] = []
 
-    // Encabezado del reporte
     worksheetData.push(["REPORTE DE PEDIDOS"])
     worksheetData.push([])
     worksheetData.push(["Fecha de Corte:", this.formatDate(data.fecha_corte)])
     worksheetData.push(["Total de Pedidos:", data.total_pedidos])
     worksheetData.push([])
 
-    // Detalle de pedidos
     worksheetData.push(["DETALLE DE PEDIDOS"])
-    worksheetData.push(["Pedido ID", "Cliente", "Fecha", "Producto", "Cantidad", "Unidad"])
+    worksheetData.push(["Pedido ID", "Código Cliente", "Cliente", "Fecha", "Producto", "Cantidad", "Unidad"])
 
     data.pedidos.forEach((pedido) => {
       pedido.productos.forEach((producto, index) => {
         worksheetData.push([
           index === 0 ? pedido.pedido_id : "",
+          index === 0 ? pedido.cliente_codigo : "",
           index === 0 ? pedido.cliente_nombre : "",
           index === 0 ? this.formatDate(pedido.fecha_pedido) : "",
           producto.descripcion,
@@ -234,9 +238,9 @@ export class ReportExcelGenerator {
 
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
 
-    // Configurar anchos de columna
     worksheet["!cols"] = [
       { wch: 10 }, // Pedido ID
+      { wch: 15 }, // Código Cliente
       { wch: 25 }, // Cliente
       { wch: 12 }, // Fecha
       { wch: 35 }, // Producto
@@ -267,11 +271,9 @@ export class ReportExcelGenerator {
     return `reporte-${tipo}-${timestamp}.xlsx`
   }
 
-  // Método auxiliar para generar reportes desde pedidos
   static generateReportFromPedidos(pedidos: any[], fechaInicio: string, fechaFin: string): ReporteData {
     const fechaCorte = new Date().toISOString()
 
-    // Procesar datos para reporte general
     const clientesUnicos = new Set()
     let totalProductos = 0
     const pedidosParaReporte: any[] = []
@@ -283,6 +285,7 @@ export class ReportExcelGenerator {
       pedidosParaReporte.push({
         pedido_id: pedido.pedido_id,
         cliente_nombre: pedido.cliente?.nombre || "Cliente desconocido",
+        cliente_codigo: pedido.cliente?.cliente_codigo || "N/A",
         fecha_pedido: pedido.fecha_pedido,
         productos:
           pedido.productos?.map((p: any) => ({
@@ -294,7 +297,6 @@ export class ReportExcelGenerator {
       })
     })
 
-    // Procesar datos por proveedor
     const proveedoresMap = new Map()
     pedidos.forEach((pedido) => {
       pedido.productos?.forEach((p: any) => {
@@ -355,6 +357,7 @@ export class ReportExcelGenerator {
         pedidos: pedidosParaReporte.map((p) => ({
           pedido_id: p.pedido_id,
           cliente_nombre: p.cliente_nombre,
+          cliente_codigo: p.cliente_codigo,
           fecha_pedido: p.fecha_pedido,
           productos: p.productos.map((prod: any) => ({
             descripcion: prod.descripcion,
@@ -368,7 +371,6 @@ export class ReportExcelGenerator {
   }
 }
 
-// Función principal que se exporta para usar en la página de reportes
 export async function generateExcelFromReporte(
   reporte: ReporteAutomatico,
   tipo: "general" | "productos_por_proveedor" | "pedidos",
@@ -376,10 +378,8 @@ export async function generateExcelFromReporte(
   try {
     console.log("Generating Excel from reporte:", reporte.id, "tipo:", tipo)
 
-    // Crear un nuevo workbook
     const workbook = XLSX.utils.book_new()
 
-    // Convertir el reporte automático al formato esperado por el generador
     const reporteData: ReporteData = {
       general: {
         fecha_corte: reporte.fecha_generacion,
@@ -396,12 +396,10 @@ export async function generateExcelFromReporte(
       pedidos: reporte.reportes.pedidos,
     }
 
-    // Generar nombre de archivo específico
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-")
     const filename = `reporte_${tipo}_${timestamp}.xlsx`
 
     if (tipo === "general") {
-      // Hoja de resumen
       const resumenData = [
         ["Reporte General"],
         [""],
@@ -419,54 +417,64 @@ export async function generateExcelFromReporte(
       const resumenWS = XLSX.utils.aoa_to_sheet(resumenData)
       XLSX.utils.book_append_sheet(workbook, resumenWS, "Resumen")
 
-      // Hoja de pedidos detallados
-      const pedidosData = [["ID Pedido", "Cliente", "Fecha Pedido", "Productos", "Total Unidades"]]
+      const pedidosData = [
+        ["ID Pedido", "Código Cliente", "Cliente", "Fecha Pedido", "Producto", "Cantidad", "Unidad", "Proveedor"],
+      ]
 
       reporte.reportes.general.pedidos.forEach((pedido) => {
-        const totalUnidades = pedido.productos?.reduce((sum, p) => sum + p.cantidad, 0) || 0
-        const productosDesc =
-          pedido.productos?.map((p) => `${p.producto?.descripcion || "N/A"} (${p.cantidad})`).join("; ") ||
-          "Sin productos"
-
-        pedidosData.push([
-          pedido.pedido_id,
-          pedido.cliente?.nombre || "N/A",
-          new Date(pedido.fecha_pedido).toLocaleDateString("es-AR"),
-          productosDesc,
-          totalUnidades,
-        ])
+        pedido.productos?.forEach((producto, index) => {
+          pedidosData.push([
+            index === 0 ? pedido.pedido_id : "",
+            index === 0 ? pedido.cliente?.cliente_codigo || "N/A" : "",
+            index === 0 ? pedido.cliente?.nombre || "N/A" : "",
+            index === 0 ? new Date(pedido.fecha_pedido).toLocaleDateString("es-AR") : "",
+            producto.producto?.descripcion || "N/A",
+            producto.cantidad,
+            producto.producto?.unidad_medida || "u",
+            producto.producto?.proveedor?.proveedor_nombre || "N/A",
+          ])
+        })
       })
 
       const pedidosWS = XLSX.utils.aoa_to_sheet(pedidosData)
+
+      pedidosWS["!cols"] = [
+        { wch: 10 }, // ID Pedido
+        { wch: 15 }, // Código Cliente
+        { wch: 25 }, // Cliente
+        { wch: 12 }, // Fecha
+        { wch: 35 }, // Producto
+        { wch: 10 }, // Cantidad
+        { wch: 10 }, // Unidad
+        { wch: 20 }, // Proveedor
+      ]
+
       XLSX.utils.book_append_sheet(workbook, pedidosWS, "Pedidos Detallados")
     } else if (tipo === "productos_por_proveedor") {
-      // Crear una hoja por cada proveedor
       reporte.reportes.productos_por_proveedor.proveedores.forEach((proveedor, index) => {
         const worksheetData = [
           [`Proveedor: ${proveedor.proveedor_nombre}`],
           [""],
-          ["Artículo", "Código", "Descripción", "Unidad", "Cantidad Total"],
+          ["Artículo", "Código Proveedor", "Descripción", "Unidad", "Cantidad Total"],
         ]
 
         proveedor.productos.forEach((producto) => {
           worksheetData.push([
             producto.articulo_numero,
-            producto.producto_codigo || "",
+            producto.producto_codigo || "N/A",
             producto.descripcion,
             producto.unidad_medida,
             producto.cantidad_total,
           ])
         })
 
-        // Agregar totales
         worksheetData.push(["", "", "", "TOTAL PRODUCTOS:", proveedor.productos.length])
 
         const ws = XLSX.utils.aoa_to_sheet(worksheetData)
 
-        // Ajustar ancho de columnas
         ws["!cols"] = [
           { wch: 10 }, // Artículo
-          { wch: 15 }, // Código
+          { wch: 18 }, // Código Proveedor
           { wch: 40 }, // Descripción
           { wch: 10 }, // Unidad
           { wch: 15 }, // Cantidad
@@ -476,7 +484,6 @@ export async function generateExcelFromReporte(
         XLSX.utils.book_append_sheet(workbook, ws, sheetName)
       })
 
-      // Hoja resumen de todos los proveedores
       const resumenData = [["Resumen por Proveedores"], [""], ["Proveedor", "Total Productos", "Total Cantidad"]]
 
       reporte.reportes.productos_por_proveedor.proveedores.forEach((proveedor) => {
@@ -487,27 +494,37 @@ export async function generateExcelFromReporte(
       const resumenWS = XLSX.utils.aoa_to_sheet(resumenData)
       XLSX.utils.book_append_sheet(workbook, resumenWS, "Resumen Proveedores")
     } else if (tipo === "pedidos") {
-      // Hoja de pedidos
-      const pedidosData = [["ID Pedido", "Cliente", "Fecha", "Productos"]]
+      const pedidosData = [["ID Pedido", "Código Cliente", "Cliente", "Fecha", "Producto", "Cantidad", "Unidad"]]
 
       reporte.reportes.pedidos.pedidos.forEach((pedido) => {
-        const productosTexto = pedido.productos
-          .map((p) => `${p.descripcion} (${p.cantidad} ${p.unidad_medida})`)
-          .join("; ")
-
-        pedidosData.push([
-          pedido.pedido_id,
-          pedido.cliente_nombre,
-          new Date(pedido.fecha_pedido).toLocaleDateString("es-AR"),
-          productosTexto,
-        ])
+        pedido.productos.forEach((producto, index) => {
+          pedidosData.push([
+            index === 0 ? pedido.pedido_id : "",
+            index === 0 ? pedido.cliente?.cliente_codigo || "N/A" : "",
+            index === 0 ? pedido.cliente_nombre : "",
+            index === 0 ? new Date(pedido.fecha_pedido).toLocaleDateString("es-AR") : "",
+            producto.descripcion,
+            producto.cantidad,
+            producto.unidad_medida,
+          ])
+        })
       })
 
       const pedidosWS = XLSX.utils.aoa_to_sheet(pedidosData)
+
+      pedidosWS["!cols"] = [
+        { wch: 10 }, // ID Pedido
+        { wch: 15 }, // Código Cliente
+        { wch: 25 }, // Cliente
+        { wch: 12 }, // Fecha
+        { wch: 35 }, // Producto
+        { wch: 10 }, // Cantidad
+        { wch: 10 }, // Unidad
+      ]
+
       XLSX.utils.book_append_sheet(workbook, pedidosWS, "Lista de Pedidos")
     }
 
-    // Generar y descargar el archivo
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" })
     const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
 

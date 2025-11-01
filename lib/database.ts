@@ -733,7 +733,10 @@ export class Database {
 
   static async getPedidoById(id: number): Promise<Pedido | null> {
     try {
+      console.log(`[v0] === getPedidoById(${id}) ===`)
+
       if (!isSupabaseConfigured()) {
+        console.log("[v0] Supabase no configurado")
         return null
       }
 
@@ -743,7 +746,12 @@ export class Database {
         .eq("pedido_id", id)
         .single()
 
-      if (pedidoError) throw pedidoError
+      if (pedidoError) {
+        console.error("[v0] Error obteniendo pedido:", pedidoError)
+        throw pedidoError
+      }
+
+      console.log("[v0] Pedido encontrado:", pedidoData)
 
       const hasCuil = await this.checkCuilColumn()
       const clienteColumns = hasCuil
@@ -756,22 +764,55 @@ export class Database {
         .eq("cliente_id", pedidoData.cliente_id)
         .single()
 
-      const { data: pedidoProductosData } = await supabase
+      console.log("[v0] Cliente encontrado:", clienteData)
+
+      const { data: pedidoProductosData, error: ppError } = await supabase
         .from("pedido_productos")
         .select("id, pedido_id, producto_id, cantidad, created_at")
         .eq("pedido_id", id)
 
-      const productos = await this.getProductos()
-      const productosMap = new Map(productos.map((p) => [p.producto_id, p]))
+      if (ppError) {
+        console.error("[v0] Error obteniendo pedido_productos:", ppError)
+      }
 
-      const productosCompletos = (pedidoProductosData || []).map((pp) => ({
-        id: pp.id,
-        pedido_id: pp.pedido_id,
-        producto_id: pp.producto_id,
-        cantidad: pp.cantidad || 0,
-        created_at: pp.created_at,
-        producto: productosMap.get(pp.producto_id),
-      }))
+      console.log("[v0] PedidoProductos encontrados:", pedidoProductosData?.length || 0)
+      console.log("[v0] PedidoProductos data:", pedidoProductosData)
+
+      console.log("[v0] Cargando todos los productos...")
+      const productos = await this.getProductos()
+      console.log("[v0] Total productos en sistema:", productos.length)
+
+      const productosMap = new Map(productos.map((p) => [p.producto_id, p]))
+      console.log("[v0] ProductosMap size:", productosMap.size)
+
+      const productosCompletos = (pedidoProductosData || []).map((pp) => {
+        const producto = productosMap.get(pp.producto_id)
+
+        console.log(`[v0] Procesando producto_id ${pp.producto_id}:`, {
+          encontrado: !!producto,
+          articulo_numero: producto?.articulo_numero,
+          titulo: producto?.titulo,
+          descripcion: producto?.descripcion,
+          producto_codigo: producto?.producto_codigo,
+          proveedor: producto?.proveedor?.proveedor_nombre,
+        })
+
+        if (!producto) {
+          console.warn(`[v0] ⚠️ Producto ${pp.producto_id} NO ENCONTRADO en la base de datos`)
+        }
+
+        return {
+          id: pp.id,
+          pedido_id: pp.pedido_id,
+          producto_id: pp.producto_id,
+          articulo_numero: producto?.articulo_numero || null,
+          cantidad: pp.cantidad || 0,
+          created_at: pp.created_at,
+          producto: producto,
+        }
+      })
+
+      console.log("[v0] Productos completos procesados:", productosCompletos.length)
 
       const pedidoCompleto = {
         pedido_id: pedidoData.pedido_id,
@@ -794,9 +835,11 @@ export class Database {
         productos: productosCompletos,
       }
 
+      console.log("[v0] === Fin getPedidoById ===")
+
       return pedidoCompleto
     } catch (error) {
-      console.error("Error in getPedidoById:", error)
+      console.error("[v0] Error in getPedidoById:", error)
       return null
     }
   }

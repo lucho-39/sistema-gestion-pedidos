@@ -121,6 +121,27 @@ export default function PedidosPage() {
     return pedido.productos.reduce((total, producto) => total + (producto.cantidad || 0), 0)
   }
 
+  const groupPedidosByMonth = (pedidos: Pedido[]) => {
+    const grouped = new Map<string, Pedido[]>()
+
+    pedidos.forEach((pedido) => {
+      const date = new Date(pedido.fecha_pedido)
+      const monthKey = date.toLocaleDateString("es-AR", { year: "numeric", month: "long" })
+
+      if (!grouped.has(monthKey)) {
+        grouped.set(monthKey, [])
+      }
+      grouped.get(monthKey)!.push(pedido)
+    })
+
+    // Ordenar por fecha (más reciente primero)
+    return Array.from(grouped.entries()).sort((a, b) => {
+      const dateA = new Date(a[1][0].fecha_pedido)
+      const dateB = new Date(b[1][0].fecha_pedido)
+      return dateB.getTime() - dateA.getTime()
+    })
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 p-4 pb-24 md:pb-8">
@@ -142,6 +163,8 @@ export default function PedidosPage() {
       </div>
     )
   }
+
+  const pedidosPorMes = groupPedidosByMonth(filteredPedidos)
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 p-4 pb-24 md:pb-8">
@@ -192,87 +215,97 @@ export default function PedidosPage() {
           </Card>
         ) : (
           <>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full">
-              {filteredPedidos.map((pedido) => (
-                <Card key={pedido.pedido_id} className="hover:shadow-lg transition-shadow w-full overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start gap-2 min-w-0">
-                      <CardTitle className="text-base md:text-lg truncate min-w-0 flex-1">
-                        Pedido #{pedido.pedido_id}
-                      </CardTitle>
-                      <div className="flex gap-1 flex-shrink-0">
-                        <Link href={`/reportes/pedido/${pedido.pedido_id}`}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Ver">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/pedidos/editar/${pedido.pedido_id}`}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Editar">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(pedido.pedido_id)}
-                          className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-start gap-2 text-sm min-w-0">
-                      <User className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{pedido.cliente?.nombre || "Cliente no encontrado"}</p>
-                        <p className="text-xs text-gray-500 truncate">
-                          Código: #{pedido.cliente?.cliente_codigo || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm min-w-0">
-                      <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                      <span className="text-gray-700 truncate">{formatDate(pedido.fecha_pedido)}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm flex-wrap">
-                      <Package className="h-4 w-4 text-orange-600 flex-shrink-0" />
-                      <Badge variant="secondary" className="text-xs">
-                        {pedido.productos?.length || 0} tipos
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {calcularTotalProductos(pedido)} u
-                      </Badge>
-                    </div>
-
-                    {pedido.productos && pedido.productos.length > 0 && (
-                      <div className="mt-3 pt-3 border-t">
-                        <p className="text-xs text-gray-500 mb-2 font-medium">Productos:</p>
-                        <div className="space-y-1.5">
-                          {pedido.productos.slice(0, 3).map((producto, index) => (
-                            <div key={index} className="text-xs flex justify-between gap-2 min-w-0">
-                              <span className="text-gray-600 truncate flex-1 min-w-0">
-                                {producto.producto?.descripcion || "N/A"}
-                              </span>
-                              <span className="text-gray-400 flex-shrink-0 whitespace-nowrap">
-                                {producto.cantidad || 0} {producto.producto?.unidad_medida || "u"}
-                              </span>
-                            </div>
-                          ))}
-                          {pedido.productos.length > 3 && (
-                            <p className="text-xs text-gray-400 italic">+{pedido.productos.length - 3} más</p>
-                          )}
+            {pedidosPorMes.map(([mes, pedidosDelMes]) => (
+              <div key={mes} className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-700 mb-4 capitalize">{mes}</h2>
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full">
+                  {pedidosDelMes.map((pedido) => (
+                    <Card key={pedido.pedido_id} className="hover:shadow-lg transition-shadow w-full overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start gap-2 min-w-0">
+                          <CardTitle className="text-base md:text-lg truncate min-w-0 flex-1">
+                            Pedido #{pedido.pedido_id}
+                          </CardTitle>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Link href={`/reportes/pedido/${pedido.pedido_id}`}>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Ver">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            <Link href={`/pedidos/editar/${pedido.pedido_id}`}>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Editar">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(pedido.pedido_id)}
+                              className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-start gap-2 text-sm min-w-0">
+                          <User className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{pedido.cliente?.nombre || "Cliente no encontrado"}</p>
+                            <p className="text-xs text-gray-500 truncate">
+                              Código: #{pedido.cliente?.cliente_codigo || "N/A"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm min-w-0">
+                          <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                          <span className="text-gray-700 truncate">{formatDate(pedido.fecha_pedido)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm flex-wrap">
+                          <Package className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                          <Badge variant="secondary" className="text-xs">
+                            {pedido.productos?.length || 0} tipos
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {calcularTotalProductos(pedido)} u
+                          </Badge>
+                        </div>
+
+                        {pedido.productos && pedido.productos.length > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs text-gray-500 mb-2 font-medium">Productos:</p>
+                            <div className="space-y-2">
+                              {pedido.productos.slice(0, 3).map((producto, index) => (
+                                <div key={index} className="text-xs space-y-0.5">
+                                  <div className="flex justify-between gap-2 min-w-0">
+                                    <span className="text-gray-700 font-medium truncate flex-1 min-w-0">
+                                      {producto.producto?.descripcion || "N/A"}
+                                    </span>
+                                    <span className="text-gray-500 flex-shrink-0 whitespace-nowrap">
+                                      {producto.cantidad || 0} {producto.producto?.unidad_medida || "u"}
+                                    </span>
+                                  </div>
+                                  <div className="text-gray-400 text-[10px] truncate">
+                                    Cód. Prov: {producto.producto?.producto_codigo || "N/A"}
+                                  </div>
+                                </div>
+                              ))}
+                              {pedido.productos.length > 3 && (
+                                <p className="text-xs text-gray-400 italic">+{pedido.productos.length - 3} más</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))}
 
             {searchTerm && filteredPedidos.length > 0 && (
               <div className="mt-6 text-center">

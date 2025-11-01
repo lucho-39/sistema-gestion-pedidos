@@ -15,7 +15,8 @@ import type { Pedido, Cliente, Producto } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 
 interface PedidoProducto {
-  articulo_numero: number
+  producto_id: number
+  articulo_numero: number | null
   cantidad: number
   producto?: Producto
 }
@@ -29,12 +30,10 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Form state
   const [clienteId, setClienteId] = useState<number>(0)
   const [fechaPedido, setFechaPedido] = useState("")
   const [pedidoProductos, setPedidoProductos] = useState<PedidoProducto[]>([])
 
-  // Search states
   const [clienteSearch, setClienteSearch] = useState("")
   const [productoSearch, setProductoSearch] = useState("")
   const [showClienteDropdown, setShowClienteDropdown] = useState(false)
@@ -68,12 +67,12 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
       setClientes(clientesData)
       setProductos(productosData)
 
-      // Set form data
       setClienteId(pedidoData.cliente_id)
       setClienteSearch(pedidoData.cliente?.nombre || "")
       setFechaPedido(pedidoData.fecha_pedido.split("T")[0])
       setPedidoProductos(
         pedidoData.productos?.map((pp) => ({
+          producto_id: pp.producto_id,
           articulo_numero: pp.articulo_numero,
           cantidad: pp.cantidad,
           producto: pp.producto,
@@ -111,7 +110,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
   }
 
   const agregarProducto = (producto: Producto) => {
-    const exists = pedidoProductos.find((pp) => pp.articulo_numero === producto.articulo_numero)
+    const exists = pedidoProductos.find((pp) => pp.producto_id === producto.producto_id)
     if (exists) {
       toast({
         title: "Producto ya agregado",
@@ -124,6 +123,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
     setPedidoProductos([
       ...pedidoProductos,
       {
+        producto_id: producto.producto_id,
         articulo_numero: producto.articulo_numero,
         cantidad: 1,
         producto: producto,
@@ -133,18 +133,18 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
     setShowProductoDropdown(false)
   }
 
-  const actualizarCantidad = (articuloNumero: number, cantidad: number) => {
+  const actualizarCantidad = (productoId: number, cantidad: number) => {
     if (cantidad < 0) {
-      return // No permitir cantidades negativas
+      return
     }
 
     setPedidoProductos(
-      pedidoProductos.map((pp) => (pp.articulo_numero === articuloNumero ? { ...pp, cantidad: cantidad } : pp)),
+      pedidoProductos.map((pp) => (pp.producto_id === productoId ? { ...pp, cantidad: cantidad } : pp)),
     )
   }
 
-  const eliminarProducto = (articuloNumero: number) => {
-    setPedidoProductos(pedidoProductos.filter((pp) => pp.articulo_numero !== articuloNumero))
+  const eliminarProducto = (productoId: number) => {
+    setPedidoProductos(pedidoProductos.filter((pp) => pp.producto_id !== productoId))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -159,7 +159,6 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
       return
     }
 
-    // Validar que al menos un producto tenga cantidad > 0
     const productosConCantidad = pedidoProductos.filter((pp) => pp.cantidad > 0)
     if (productosConCantidad.length === 0) {
       toast({
@@ -177,7 +176,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
         cliente_id: clienteId,
         fecha_pedido: fechaPedido,
         productos: pedidoProductos.map((pp) => ({
-          articulo_numero: pp.articulo_numero,
+          producto_id: pp.producto_id,
           cantidad: pp.cantidad,
         })),
       })
@@ -205,8 +204,8 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="min-h-screen bg-gray-50 p-4 pb-24 md:pb-8">
+        <div className="max-w-4xl mx-auto w-full">
           <div className="flex items-center gap-3 py-2 mb-6">
             <Link href="/pedidos">
               <Button variant="ghost" size="sm">
@@ -224,15 +223,15 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-4 pb-24 md:pb-8">
+      <div className="max-w-4xl mx-auto w-full">
         <div className="flex items-center gap-3 py-2 mb-6">
           <Link href="/pedidos">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">Editar Pedido #{params.id}</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Editar Pedido #{params.id}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -339,34 +338,37 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
                 <div className="space-y-3">
                   <h4 className="font-medium">Productos seleccionados:</h4>
                   {pedidoProductos.map((pp) => (
-                    <div key={pp.articulo_numero} className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="font-medium">{pp.producto?.descripcion || "N/A"}</div>
+                    <div
+                      key={pp.producto_id}
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 border rounded-lg"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium">{pp.producto?.descripcion || "Descripción no disponible"}</div>
                         <div className="text-sm text-gray-500">
-                          Art: {pp.articulo_numero} • Código: {pp.producto?.producto_codigo || "N/A"} •{" "}
-                          {pp.producto?.unidad_medida || "unidad"}
+                          Art: {pp.articulo_numero || "N/A"} • Código: {pp.producto?.producto_codigo || "Sin código"}
                         </div>
                         <div className="text-xs text-gray-400">
-                          Proveedor: {pp.producto?.proveedor?.proveedor_nombre || "N/A"}
+                          Proveedor: {pp.producto?.proveedor?.proveedor_nombre || "Sin proveedor"} • Código Proveedor:{" "}
+                          {pp.producto?.producto_codigo || "Sin código proveedor"}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <Input
                           type="number"
                           min="0"
                           step="1"
                           value={pp.cantidad}
-                          onChange={(e) => actualizarCantidad(pp.articulo_numero, Number.parseInt(e.target.value) || 0)}
+                          onChange={(e) => actualizarCantidad(pp.producto_id, Number.parseInt(e.target.value) || 0)}
                           className="w-20"
                         />
                         <span className="text-sm text-gray-500 min-w-[60px]">
-                          {pp.producto?.unidad_medida || "unidad"}
+                          {pp.producto?.categoria?.unidad || "unidad"}
                         </span>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => eliminarProducto(pp.articulo_numero)}
+                          onClick={() => eliminarProducto(pp.producto_id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -394,13 +396,13 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
             </CardContent>
           </Card>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button type="submit" disabled={isSaving} className="flex-1">
               <Save className="h-4 w-4 mr-2" />
               {isSaving ? "Guardando..." : "Guardar Cambios"}
             </Button>
-            <Link href="/pedidos">
-              <Button type="button" variant="outline">
+            <Link href="/pedidos" className="w-full sm:w-auto">
+              <Button type="button" variant="outline" className="w-full bg-transparent">
                 Cancelar
               </Button>
             </Link>
