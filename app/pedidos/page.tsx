@@ -110,6 +110,7 @@ export default function PedidosPage() {
         year: "numeric",
         month: "short",
         day: "numeric",
+        timeZone: "UTC",
       })
     } catch (error) {
       return "Fecha no válida"
@@ -126,7 +127,7 @@ export default function PedidosPage() {
 
     pedidos.forEach((pedido) => {
       const date = new Date(pedido.fecha_pedido)
-      const monthKey = date.toLocaleDateString("es-AR", { year: "numeric", month: "long" })
+      const monthKey = date.toLocaleDateString("es-AR", { year: "numeric", month: "long", timeZone: "UTC" })
 
       if (!grouped.has(monthKey)) {
         grouped.set(monthKey, [])

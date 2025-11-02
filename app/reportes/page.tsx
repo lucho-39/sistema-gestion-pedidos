@@ -477,13 +477,13 @@ export default function ReportesPage() {
                         <div>
                           <p className="text-gray-500">Inicio</p>
                           <p className="font-medium">
-                            {new Date(reporte.fecha_inicio_periodo).toLocaleDateString("es-AR")}
+                            {new Date(reporte.fecha_inicio_periodo).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                           </p>
                         </div>
                         <div>
                           <p className="text-gray-500">Fin</p>
                           <p className="font-medium">
-                            {new Date(reporte.fecha_fin_periodo).toLocaleDateString("es-AR")}
+                            {new Date(reporte.fecha_fin_periodo).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                           </p>
                         </div>
                         <div>
@@ -567,13 +567,13 @@ export default function ReportesPage() {
                         <div>
                           <p className="text-gray-500">Inicio</p>
                           <p className="font-medium">
-                            {new Date(reporte.fecha_inicio_periodo).toLocaleDateString("es-AR")}
+                            {new Date(reporte.fecha_inicio_periodo).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                           </p>
                         </div>
                         <div>
                           <p className="text-gray-500">Fin</p>
                           <p className="font-medium">
-                            {new Date(reporte.fecha_fin_periodo).toLocaleDateString("es-AR")}
+                            {new Date(reporte.fecha_fin_periodo).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                           </p>
                         </div>
                         <div>

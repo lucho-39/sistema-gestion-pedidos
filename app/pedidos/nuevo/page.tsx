@@ -113,7 +113,7 @@ export default function NuevoPedidoPage() {
       const nuevoPedido = {
         cliente: clienteSeleccionado,
         cliente_id: clienteSeleccionado.cliente_id,
-        fecha_pedido: new Date(fechaPedido).toISOString(),
+        fecha_pedido: `${fechaPedido}T00:00:00.000Z`,
         productos: productosSeleccionados.map((p) => ({
           producto_id: p.producto_id,
           articulo_numero: p.articulo_numero,
