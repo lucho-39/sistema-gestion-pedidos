@@ -61,7 +61,7 @@ export default function DetallePedidoPage() {
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-md mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
-            <Link href="/reportes">
+            <Link href="/pedidos">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -81,7 +81,7 @@ export default function DetallePedidoPage() {
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-md mx-auto">
           <div className="flex items-center gap-3 py-2">
-            <Link href="/reportes">
+            <Link href="/pedidos">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -91,10 +91,10 @@ export default function DetallePedidoPage() {
           <Card>
             <CardContent className="p-6 text-center">
               <p className="text-gray-500">El pedido solicitado no existe</p>
-              <Link href="/reportes" className="inline-block mt-4">
+              <Link href="/pedidos" className="inline-block mt-4">
                 <Button variant="outline" className="w-full bg-transparent">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Volver a Reportes
+                  Volver a Pedidos
                 </Button>
               </Link>
             </CardContent>
@@ -108,7 +108,7 @@ export default function DetallePedidoPage() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-md mx-auto space-y-4">
         <div className="flex items-center gap-3 py-2">
-          <Link href="/reportes">
+          <Link href="/pedidos">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
