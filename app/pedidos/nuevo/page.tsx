@@ -109,13 +109,23 @@ export default function NuevoPedidoPage() {
     setIsSaving(true)
 
     try {
+      console.log("[v0] === CREANDO PEDIDO ===")
+      console.log(
+        "[v0] Productos seleccionados:",
+        productosSeleccionados.map((p) => ({
+          producto_id: p.producto_id,
+          articulo_numero: p.articulo_numero,
+          cantidad: p.cantidad,
+        })),
+      )
+
       // Preparar datos en el formato correcto para la base de datos
       const nuevoPedido = {
         cliente: clienteSeleccionado,
         cliente_id: clienteSeleccionado.cliente_id,
         fecha_pedido: new Date(fechaPedido).toISOString(),
         productos: productosSeleccionados.map((p) => ({
-          producto_id: p.producto_id, // ← AGREGADO: Esto previene producto_id null
+          producto_id: p.producto_id,
           articulo_numero: p.articulo_numero,
           cantidad: p.cantidad,
           id: 0,
@@ -128,9 +138,19 @@ export default function NuevoPedidoPage() {
         reporte_id: undefined,
       }
 
-      console.log("Sending pedido data:", nuevoPedido)
+      console.log("[v0] Datos del pedido a enviar:", {
+        cliente_id: nuevoPedido.cliente_id,
+        fecha_pedido: nuevoPedido.fecha_pedido,
+        productos: nuevoPedido.productos.map((p) => ({
+          producto_id: p.producto_id,
+          articulo_numero: p.articulo_numero,
+          cantidad: p.cantidad,
+        })),
+      })
 
       const createdPedido = await Database.createPedido(nuevoPedido)
+
+      console.log("[v0] Pedido creado:", createdPedido)
 
       if (createdPedido) {
         toast({
@@ -146,7 +166,7 @@ export default function NuevoPedidoPage() {
         })
       }
     } catch (error) {
-      console.error("Error creating pedido:", error)
+      console.error("[v0] Error creating pedido:", error)
       toast({
         title: "Error",
         description: `Error al crear el pedido: ${error instanceof Error ? error.message : "Error desconocido"}`,
@@ -169,10 +189,22 @@ export default function NuevoPedidoPage() {
       return
     }
 
+    console.log("[v0] Agregando producto:", {
+      producto_id: producto.producto_id,
+      articulo_numero: producto.articulo_numero,
+      descripcion: producto.descripcion,
+    })
+
     const productoConCantidad: ProductoPedido = {
       ...producto,
       cantidad: 1,
     }
+
+    console.log("[v0] Producto con cantidad:", {
+      producto_id: productoConCantidad.producto_id,
+      articulo_numero: productoConCantidad.articulo_numero,
+      cantidad: productoConCantidad.cantidad,
+    })
 
     setProductosSeleccionados([...productosSeleccionados, productoConCantidad])
     setBusquedaProducto("")

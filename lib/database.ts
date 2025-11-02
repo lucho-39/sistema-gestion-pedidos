@@ -846,6 +846,24 @@ export class Database {
 
   static async createPedido(pedido: Omit<Pedido, "pedido_id" | "created_at">): Promise<Pedido | null> {
     try {
+      console.log("[v0] === createPedido en database.ts ===")
+      console.log("[v0] Pedido recibido:", {
+        cliente_id: pedido.cliente_id,
+        fecha_pedido: pedido.fecha_pedido,
+        productos_count: pedido.productos?.length || 0,
+      })
+
+      if (pedido.productos && pedido.productos.length > 0) {
+        console.log("[v0] Productos recibidos:")
+        pedido.productos.forEach((p, index) => {
+          console.log(`[v0]   Producto ${index + 1}:`, {
+            producto_id: p.producto_id,
+            articulo_numero: p.articulo_numero,
+            cantidad: p.cantidad,
+          })
+        })
+      }
+
       if (!isSupabaseConfigured()) {
         throw new Error("Database not configured")
       }
@@ -854,7 +872,7 @@ export class Database {
         typeof pedido.cliente === "object" && pedido.cliente ? pedido.cliente.cliente_id : pedido.cliente_id
 
       if (!cliente_id) {
-        console.error("No cliente_id found in pedido data")
+        console.error("[v0] No cliente_id found in pedido data")
         return null
       }
 
@@ -871,6 +889,8 @@ export class Database {
 
       if (pedidoError) throw pedidoError
 
+      console.log("[v0] Pedido insertado con ID:", nuevoPedido.pedido_id)
+
       const productosData =
         pedido.productos?.map((producto) => ({
           pedido_id: nuevoPedido.pedido_id,
@@ -878,19 +898,28 @@ export class Database {
           cantidad: producto.cantidad,
         })) || []
 
+      console.log("[v0] Datos de productos a insertar en pedido_productos:")
+      productosData.forEach((p, index) => {
+        console.log(`[v0]   ${index + 1}:`, p)
+      })
+
       if (productosData.length > 0) {
         const { error: productosError } = await supabase.from("pedido_productos").insert(productosData)
 
         if (productosError) {
+          console.error("[v0] Error insertando productos:", productosError)
           await supabase.from("pedidos").delete().eq("pedido_id", nuevoPedido.pedido_id)
           throw productosError
         }
+
+        console.log("[v0] ✅ Productos insertados exitosamente")
       }
 
       const pedidoCompleto = await this.getPedidoById(nuevoPedido.pedido_id)
+      console.log("[v0] === Fin createPedido ===")
       return pedidoCompleto
     } catch (error) {
-      console.error("Error in createPedido:", error)
+      console.error("[v0] Error in createPedido:", error)
       return null
     }
   }
