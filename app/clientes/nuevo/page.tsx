@@ -23,16 +23,16 @@ export default function NuevoClientePage() {
     nombre: "",
     domicilio: "",
     telefono: "",
-    cuil: "",
+    cuil: "00-00000000-0",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.cliente_codigo || !formData.nombre || !formData.domicilio || !formData.telefono) {
+    if (!formData.cliente_codigo || !formData.nombre || !formData.domicilio) {
       toast({
         title: "Error",
-        description: "Los campos Código, Nombre, Domicilio y Teléfono son obligatorios",
+        description: "Los campos Código, Nombre y Domicilio son obligatorios",
         variant: "destructive",
       })
       return
@@ -59,8 +59,8 @@ export default function NuevoClientePage() {
         cliente_codigo: Number(formData.cliente_codigo),
         nombre: formData.nombre,
         domicilio: formData.domicilio,
-        telefono: formData.telefono,
-        cuil: formData.cuil || undefined,
+        telefono: formData.telefono || "",
+        cuil: formData.cuil || "00-00000000-0",
       }
 
       const createdCliente = await Database.createCliente(nuevoCliente)
@@ -144,9 +144,10 @@ export default function NuevoClientePage() {
               </div>
 
               <div>
-                <Label htmlFor="telefono">Teléfono *</Label>
+                <Label htmlFor="telefono">Teléfono (opcional)</Label>
                 <Input
                   id="telefono"
+                  type="text"
                   value={formData.telefono}
                   onChange={(e) => handleChange("telefono", e.target.value)}
                   placeholder="Ingresa el teléfono"
@@ -157,6 +158,7 @@ export default function NuevoClientePage() {
                 <Label htmlFor="cuil">CUIL (opcional)</Label>
                 <Input
                   id="cuil"
+                  type="text"
                   value={formData.cuil}
                   onChange={(e) => handleChange("cuil", e.target.value)}
                   placeholder="XX-XXXXXXXX-X"

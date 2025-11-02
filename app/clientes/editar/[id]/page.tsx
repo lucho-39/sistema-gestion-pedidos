@@ -25,7 +25,7 @@ export default function EditarClientePage() {
     nombre: "",
     domicilio: "",
     telefono: "",
-    CUIL: "",
+    cuil: "",
   })
 
   useEffect(() => {
@@ -41,8 +41,8 @@ export default function EditarClientePage() {
             cliente_codigo: clienteEncontrado.cliente_codigo?.toString() || "",
             nombre: clienteEncontrado.nombre,
             domicilio: clienteEncontrado.domicilio,
-            telefono: clienteEncontrado.telefono,
-            CUIL: clienteEncontrado.CUIL,
+            telefono: clienteEncontrado.telefono || "",
+            cuil: clienteEncontrado.cuil || "00-00000000-0",
           })
         } else {
           toast({
@@ -71,10 +71,10 @@ export default function EditarClientePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.cliente_codigo || !formData.nombre || !formData.domicilio || !formData.telefono || !formData.CUIL) {
+    if (!formData.cliente_codigo || !formData.nombre || !formData.domicilio) {
       toast({
         title: "Error",
-        description: "Todos los campos son obligatorios",
+        description: "Los campos Código, Nombre y Domicilio son obligatorios",
         variant: "destructive",
       })
       return
@@ -103,8 +103,8 @@ export default function EditarClientePage() {
         cliente_codigo: Number(formData.cliente_codigo),
         nombre: formData.nombre,
         domicilio: formData.domicilio,
-        telefono: formData.telefono,
-        CUIL: formData.CUIL,
+        telefono: formData.telefono || "",
+        cuil: formData.cuil || "00-00000000-0",
       }
 
       const success = await Database.updateCliente(Number(params.id), updates)
@@ -208,9 +208,10 @@ export default function EditarClientePage() {
               </div>
 
               <div>
-                <Label htmlFor="telefono">Teléfono *</Label>
+                <Label htmlFor="telefono">Teléfono (opcional)</Label>
                 <Input
                   id="telefono"
+                  type="text"
                   value={formData.telefono}
                   onChange={(e) => handleChange("telefono", e.target.value)}
                   placeholder="Ingresa el teléfono"
@@ -218,11 +219,12 @@ export default function EditarClientePage() {
               </div>
 
               <div>
-                <Label htmlFor="cuil">CUIL *</Label>
+                <Label htmlFor="cuil">CUIL (opcional)</Label>
                 <Input
                   id="cuil"
-                  value={formData.CUIL}
-                  onChange={(e) => handleChange("CUIL", e.target.value)}
+                  type="text"
+                  value={formData.cuil}
+                  onChange={(e) => handleChange("cuil", e.target.value)}
                   placeholder="XX-XXXXXXXX-X"
                 />
               </div>
