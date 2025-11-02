@@ -150,7 +150,7 @@ export default function NuevoClientePage() {
                   type="text"
                   value={formData.telefono}
                   onChange={(e) => handleChange("telefono", e.target.value)}
-                  placeholder="Ingresa el teléfono"
+                  placeholder="+54 9 11 0000-0000"
                 />
               </div>
 
