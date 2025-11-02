@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "Sistema de Gestión - Inventario y Pedidos",
   description: "Aplicación para gestionar productos, clientes, pedidos y reportes",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
-    generator: 'v0.app'
+  generator: "v0.app",
 }
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className}>
         <Navigation />
-        <main className="min-h-screen bg-gray-50">{children}</main>
+        <main className="min-h-screen bg-gray-50 pb-24 md:pb-0">{children}</main>
         <Toaster />
       </body>
     </html>
