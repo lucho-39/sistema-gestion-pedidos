@@ -733,10 +733,7 @@ export class Database {
 
   static async getPedidoById(id: number): Promise<Pedido | null> {
     try {
-      console.log(`[v0] === getPedidoById(${id}) ===`)
-
       if (!isSupabaseConfigured()) {
-        console.log("[v0] Supabase no configurado")
         return null
       }
 
@@ -747,11 +744,9 @@ export class Database {
         .single()
 
       if (pedidoError) {
-        console.error("[v0] Error obteniendo pedido:", pedidoError)
+        console.error("Error obteniendo pedido:", pedidoError)
         throw pedidoError
       }
-
-      console.log("[v0] Pedido encontrado:", pedidoData)
 
       const hasCuil = await this.checkCuilColumn()
       const clienteColumns = hasCuil
@@ -764,42 +759,20 @@ export class Database {
         .eq("cliente_id", pedidoData.cliente_id)
         .single()
 
-      console.log("[v0] Cliente encontrado:", clienteData)
-
       const { data: pedidoProductosData, error: ppError } = await supabase
         .from("pedido_productos")
         .select("id, pedido_id, producto_id, cantidad, created_at")
         .eq("pedido_id", id)
 
       if (ppError) {
-        console.error("[v0] Error obteniendo pedido_productos:", ppError)
+        console.error("Error obteniendo pedido_productos:", ppError)
       }
 
-      console.log("[v0] PedidoProductos encontrados:", pedidoProductosData?.length || 0)
-      console.log("[v0] PedidoProductos data:", pedidoProductosData)
-
-      console.log("[v0] Cargando todos los productos...")
       const productos = await this.getProductos()
-      console.log("[v0] Total productos en sistema:", productos.length)
-
       const productosMap = new Map(productos.map((p) => [p.producto_id, p]))
-      console.log("[v0] ProductosMap size:", productosMap.size)
 
       const productosCompletos = (pedidoProductosData || []).map((pp) => {
         const producto = productosMap.get(pp.producto_id)
-
-        console.log(`[v0] Procesando producto_id ${pp.producto_id}:`, {
-          encontrado: !!producto,
-          articulo_numero: producto?.articulo_numero,
-          titulo: producto?.titulo,
-          descripcion: producto?.descripcion,
-          producto_codigo: producto?.producto_codigo,
-          proveedor: producto?.proveedor?.proveedor_nombre,
-        })
-
-        if (!producto) {
-          console.warn(`[v0] ⚠️ Producto ${pp.producto_id} NO ENCONTRADO en la base de datos`)
-        }
 
         return {
           id: pp.id,
@@ -811,8 +784,6 @@ export class Database {
           producto: producto,
         }
       })
-
-      console.log("[v0] Productos completos procesados:", productosCompletos.length)
 
       const pedidoCompleto = {
         pedido_id: pedidoData.pedido_id,
@@ -835,35 +806,15 @@ export class Database {
         productos: productosCompletos,
       }
 
-      console.log("[v0] === Fin getPedidoById ===")
-
       return pedidoCompleto
     } catch (error) {
-      console.error("[v0] Error in getPedidoById:", error)
+      console.error("Error in getPedidoById:", error)
       return null
     }
   }
 
   static async createPedido(pedido: Omit<Pedido, "pedido_id" | "created_at">): Promise<Pedido | null> {
     try {
-      console.log("[v0] === createPedido en database.ts ===")
-      console.log("[v0] Pedido recibido:", {
-        cliente_id: pedido.cliente_id,
-        fecha_pedido: pedido.fecha_pedido,
-        productos_count: pedido.productos?.length || 0,
-      })
-
-      if (pedido.productos && pedido.productos.length > 0) {
-        console.log("[v0] Productos recibidos:")
-        pedido.productos.forEach((p, index) => {
-          console.log(`[v0]   Producto ${index + 1}:`, {
-            producto_id: p.producto_id,
-            articulo_numero: p.articulo_numero,
-            cantidad: p.cantidad,
-          })
-        })
-      }
-
       if (!isSupabaseConfigured()) {
         throw new Error("Database not configured")
       }
@@ -872,7 +823,7 @@ export class Database {
         typeof pedido.cliente === "object" && pedido.cliente ? pedido.cliente.cliente_id : pedido.cliente_id
 
       if (!cliente_id) {
-        console.error("[v0] No cliente_id found in pedido data")
+        console.error("No cliente_id found in pedido data")
         return null
       }
 
@@ -889,8 +840,6 @@ export class Database {
 
       if (pedidoError) throw pedidoError
 
-      console.log("[v0] Pedido insertado con ID:", nuevoPedido.pedido_id)
-
       const productosData =
         pedido.productos?.map((producto) => ({
           pedido_id: nuevoPedido.pedido_id,
@@ -898,28 +847,20 @@ export class Database {
           cantidad: producto.cantidad,
         })) || []
 
-      console.log("[v0] Datos de productos a insertar en pedido_productos:")
-      productosData.forEach((p, index) => {
-        console.log(`[v0]   ${index + 1}:`, p)
-      })
-
       if (productosData.length > 0) {
         const { error: productosError } = await supabase.from("pedido_productos").insert(productosData)
 
         if (productosError) {
-          console.error("[v0] Error insertando productos:", productosError)
+          console.error("Error insertando productos:", productosError)
           await supabase.from("pedidos").delete().eq("pedido_id", nuevoPedido.pedido_id)
           throw productosError
         }
-
-        console.log("[v0] ✅ Productos insertados exitosamente")
       }
 
       const pedidoCompleto = await this.getPedidoById(nuevoPedido.pedido_id)
-      console.log("[v0] === Fin createPedido ===")
       return pedidoCompleto
     } catch (error) {
-      console.error("[v0] Error in createPedido:", error)
+      console.error("Error in createPedido:", error)
       return null
     }
   }
