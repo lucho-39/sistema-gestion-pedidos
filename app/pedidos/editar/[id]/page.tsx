@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Save, Trash2, Search } from "lucide-react"
+import { ArrowLeft, Save, Trash2, Search, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Database } from "@/lib/database"
 import type { Pedido, Cliente, Producto } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface PedidoProducto {
   producto_id: number
@@ -33,6 +34,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
   const [clienteId, setClienteId] = useState<number>(0)
   const [fechaPedido, setFechaPedido] = useState("")
   const [pedidoProductos, setPedidoProductos] = useState<PedidoProducto[]>([])
+  const [hasNullProducts, setHasNullProducts] = useState(false)
 
   const [clienteSearch, setClienteSearch] = useState("")
   const [productoSearch, setProductoSearch] = useState("")
@@ -70,13 +72,22 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
       setClienteId(pedidoData.cliente_id)
       setClienteSearch(pedidoData.cliente?.nombre || "")
       setFechaPedido(pedidoData.fecha_pedido.split("T")[0])
+
+      const validProducts = (pedidoData.productos || []).filter((pp) => pp.producto_id != null)
+      const nullProductsCount = (pedidoData.productos || []).length - validProducts.length
+
+      if (nullProductsCount > 0) {
+        setHasNullProducts(true)
+        console.log(`[v0] ⚠️ Encontrados ${nullProductsCount} productos con producto_id null - fueron filtrados`)
+      }
+
       setPedidoProductos(
-        pedidoData.productos?.map((pp) => ({
+        validProducts.map((pp) => ({
           producto_id: pp.producto_id,
           articulo_numero: pp.articulo_numero,
           cantidad: pp.cantidad,
           producto: pp.producto,
-        })) || [],
+        })),
       )
     } catch (error) {
       console.error("Error loading data:", error)
@@ -234,6 +245,20 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
           <h1 className="text-xl md:text-2xl font-bold">Editar Pedido #{params.id}</h1>
         </div>
 
+        {hasNullProducts && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Este pedido tenía productos inválidos (sin producto_id) que fueron filtrados automáticamente. Para limpiar
+              estos datos permanentemente, ejecuta el <strong>Script 4: Limpiar Productos Null</strong> en{" "}
+              <Link href="/setup" className="underline font-medium">
+                la página de setup
+              </Link>
+              .
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
             <CardHeader>
@@ -295,11 +320,12 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Agregar Producto</Label>
+                <Label htmlFor="producto-search">Agregar Producto</Label>
                 <div className="relative">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
+                      id="producto-search"
                       placeholder="Buscar producto por descripción, artículo o código..."
                       value={productoSearch}
                       onChange={(e) => {
@@ -315,7 +341,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
                       {filteredProductos.length > 0 ? (
                         filteredProductos.map((producto) => (
                           <div
-                            key={producto.articulo_numero}
+                            key={producto.producto_id}
                             className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                             onClick={() => agregarProducto(producto)}
                           >
@@ -334,7 +360,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
                 </div>
               </div>
 
-              {pedidoProductos.length > 0 && (
+              {pedidoProductos.length > 0 ? (
                 <div className="space-y-3">
                   <h4 className="font-medium">Productos seleccionados:</h4>
                   {pedidoProductos.map((pp) => (
@@ -360,6 +386,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
                           value={pp.cantidad}
                           onChange={(e) => actualizarCantidad(pp.producto_id, Number.parseInt(e.target.value) || 0)}
                           className="w-20"
+                          aria-label={`Cantidad de ${pp.producto?.descripcion || "producto"}`}
                         />
                         <span className="text-sm text-gray-500 min-w-[60px]">
                           {pp.producto?.categoria?.unidad || "unidad"}
@@ -370,6 +397,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
                           size="sm"
                           onClick={() => eliminarProducto(pp.producto_id)}
                           className="text-red-600 hover:text-red-700"
+                          aria-label={`Eliminar ${pp.producto?.descripcion || "producto"}`}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -391,6 +419,10 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
                       <span>{pedidoProductos.filter((pp) => pp.cantidad > 0).length}</span>
                     </div>
                   </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No hay productos en este pedido. Usa el buscador arriba para agregar productos.
                 </div>
               )}
             </CardContent>

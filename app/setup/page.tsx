@@ -178,6 +178,37 @@ WHERE schemaname = 'public'
 AND tablename IN ('proveedores', 'categorias', 'imagenes', 'productos', 'clientes', 'pedidos', 'pedido_productos')
 ORDER BY tablename;`,
     },
+    {
+      title: "4. Limpiar Productos Null",
+      description: "Elimina registros con producto_id null en pedido_productos",
+      code: `-- ============================================
+-- Script 4: Limpiar Productos Null
+-- ============================================
+
+-- Ver cuántos registros tienen producto_id null
+SELECT 
+  pp.id,
+  pp.pedido_id,
+  pp.producto_id,
+  pp.cantidad,
+  p.pedido_id as pedido_numero
+FROM pedido_productos pp
+LEFT JOIN pedidos p ON pp.pedido_id = p.pedido_id
+WHERE pp.producto_id IS NULL;
+
+-- Eliminar registros con producto_id null
+DELETE FROM pedido_productos
+WHERE producto_id IS NULL;
+
+-- Verificar que se eliminaron
+SELECT 
+  CASE 
+    WHEN COUNT(*) = 0 THEN '✅ No hay productos null'
+    ELSE '⚠️ Aún hay ' || COUNT(*) || ' productos null'
+  END as resultado
+FROM pedido_productos
+WHERE producto_id IS NULL;`,
+    },
   ]
 
   return (
@@ -240,6 +271,9 @@ ORDER BY tablename;`,
               <li>Copia y ejecuta el Script 1 (Crear Tablas)</li>
               <li>Copia y ejecuta el Script 2 (Datos Iniciales)</li>
               <li>Copia y ejecuta el Script 3 (Configurar RLS)</li>
+              <li>
+                Copia y ejecuta el Script 4 (Limpiar Productos Null) - <strong>IMPORTANTE para pedidos 35-39</strong>
+              </li>
               <li>Haz clic en "Verificar Tablas" para confirmar</li>
               <li>¡Listo! Regresa a la aplicación</li>
             </ol>
