@@ -115,10 +115,11 @@ export default function NuevoPedidoPage() {
         cliente_id: clienteSeleccionado.cliente_id,
         fecha_pedido: new Date(fechaPedido).toISOString(),
         productos: productosSeleccionados.map((p) => ({
+          producto_id: p.producto_id, // ← AGREGADO: Esto previene producto_id null
           articulo_numero: p.articulo_numero,
           cantidad: p.cantidad,
-          id: 0, // Se asignará automáticamente
-          pedido_id: 0, // Se asignará automáticamente
+          id: 0,
+          pedido_id: 0,
           created_at: new Date().toISOString(),
           producto: p,
         })),
