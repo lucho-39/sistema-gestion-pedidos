@@ -133,9 +133,15 @@ export default function NuevoPedidoPage() {
       if (createdPedido) {
         toast({
           title: "Pedido creado",
-          description: "El pedido se ha registrado exitosamente",
+          description: "El pedido se ha registrado exitosamente. Puedes seguir creando más pedidos.",
         })
-        router.push("/pedidos")
+
+        setProductosSeleccionados([])
+        setBusquedaProducto("")
+        setFechaPedido(new Date().toISOString().split("T")[0])
+
+        // Scroll al inicio para ver el mensaje de éxito
+        window.scrollTo({ top: 0, behavior: "smooth" })
       } else {
         toast({
           title: "Error",

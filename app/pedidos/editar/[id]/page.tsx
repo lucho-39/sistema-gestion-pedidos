@@ -197,7 +197,8 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
           title: "Éxito",
           description: "Pedido actualizado correctamente",
         })
-        router.push("/pedidos")
+        await loadData()
+        window.scrollTo({ top: 0, behavior: "smooth" })
       } else {
         throw new Error("Failed to update")
       }
