@@ -12,6 +12,29 @@ import { Database as DB } from "@/lib/database"
 import type { Producto } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 
+function groupProductosByProveedor(productos: Producto[]): Map<string, Producto[]> {
+  const grupos = new Map<string, Producto[]>()
+
+  productos.forEach((producto) => {
+    const proveedorNombre = producto.proveedor?.proveedor_nombre || "Sin proveedor"
+    if (!grupos.has(proveedorNombre)) {
+      grupos.set(proveedorNombre, [])
+    }
+    grupos.get(proveedorNombre)!.push(producto)
+  })
+
+  // Sort suppliers alphabetically, but put "Sin proveedor" at the end
+  const sortedGroups = new Map(
+    Array.from(grupos.entries()).sort(([a], [b]) => {
+      if (a === "Sin proveedor") return 1
+      if (b === "Sin proveedor") return -1
+      return a.localeCompare(b, "es")
+    }),
+  )
+
+  return sortedGroups
+}
+
 export default function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -97,6 +120,8 @@ export default function ProductosPage() {
       })
     }
   }
+
+  const productosPorProveedor = groupProductosByProveedor(filteredProductos)
 
   if (isLoading) {
     return (
@@ -276,49 +301,59 @@ export default function ProductosPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredProductos.map((producto) => (
-              <Card key={producto.producto_id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-sm font-medium truncate">
-                        ID: {producto.producto_id}
-                        {producto.articulo_numero && ` | #${producto.articulo_numero}`}
-                      </CardTitle>
-                      <p className="text-xs text-gray-900 mt-1 line-clamp-2">{producto.descripcion}</p>
-                      <p className="text-xs text-gray-500 mt-1 truncate">
-                        Código: {producto.producto_codigo || "Sin código"}
-                      </p>
-                    </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <Link href={`/productos/editar/${producto.producto_id}`}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleDelete(producto.producto_id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex justify-between items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {producto.categoria?.unidad || "N/A"}
-                    </Badge>
-                    <p className="text-xs text-gray-600 truncate">
-                      {producto.proveedor?.proveedor_nombre || "Sin proveedor"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="space-y-6">
+            {Array.from(productosPorProveedor.entries()).map(([proveedorNombre, productosGrupo]) => (
+              <div key={proveedorNombre} className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-px bg-gradient-to-r from-blue-500 to-transparent flex-1" />
+                  <h2 className="text-lg font-semibold text-gray-900 px-3">{proveedorNombre}</h2>
+                  <div className="h-px bg-gradient-to-l from-blue-500 to-transparent flex-1" />
+                  <Badge variant="outline" className="text-xs">
+                    {productosGrupo.length}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {productosGrupo.map((producto) => (
+                    <Card key={producto.producto_id} className="hover:shadow-md transition-shadow">
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-sm font-medium truncate">
+                              ID: {producto.producto_id}
+                              {producto.articulo_numero && ` | #${producto.articulo_numero}`}
+                            </CardTitle>
+                            <p className="text-xs text-gray-900 mt-1 line-clamp-2">{producto.descripcion}</p>
+                            <p className="text-xs text-gray-500 mt-1 truncate">
+                              Código: {producto.producto_codigo || "Sin código"}
+                            </p>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Link href={`/productos/editar/${producto.producto_id}`}>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleDelete(producto.producto_id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <Badge variant="secondary" className="text-xs">
+                          {producto.categoria?.unidad || "N/A"}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
