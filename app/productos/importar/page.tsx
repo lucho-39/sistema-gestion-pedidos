@@ -65,9 +65,12 @@ export default function ImportarProductosPage() {
     try {
       console.log("Starting import process...")
 
-      // Cargar proveedores desde la base de datos
       const proveedores = await Database.getProveedores()
-      console.log(`Loaded ${proveedores.length} proveedores`)
+      const categorias = await Database.getCategorias()
+      const imagenes = await Database.getImagenes()
+      console.log(
+        `Loaded ${proveedores.length} proveedores, ${categorias.length} categorias, and ${imagenes.length} imagenes`,
+      )
 
       if (proveedores.length === 0) {
         toast({
@@ -79,7 +82,27 @@ export default function ImportarProductosPage() {
         return
       }
 
-      // Importar dinámicamente la librería xlsx
+      if (categorias.length === 0) {
+        toast({
+          title: "Error",
+          description: "No se encontraron categorías. Debe crear al menos una categoría antes de importar productos.",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+
+      if (imagenes.length === 0) {
+        toast({
+          title: "Error",
+          description:
+            "No se encontraron imágenes. Debe ejecutar el Script 5 en /setup para crear una imagen por defecto.",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+
       const XLSX = await import("xlsx")
 
       const reader = new FileReader()
@@ -88,25 +111,21 @@ export default function ImportarProductosPage() {
           const data = new Uint8Array(e.target?.result as ArrayBuffer)
           const workbook = XLSX.read(data, { type: "array" })
 
-          // Tomar la primera hoja
           const firstSheetName = workbook.SheetNames[0]
           const worksheet = workbook.Sheets[firstSheetName]
 
-          // Convertir a JSON
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
 
           if (jsonData.length < 2) {
             throw new Error("El archivo debe contener al menos una fila de encabezados y una fila de datos")
           }
 
-          // La primera fila son los encabezados
           const headers = jsonData[0] as string[]
           const rows = jsonData.slice(1) as any[][]
 
           console.log("Headers found:", headers)
           console.log(`Data rows: ${rows.length}`)
 
-          // Convertir filas a objetos
           const excelRows = rows
             .filter((row) => row.some((cell) => cell !== null && cell !== undefined && cell !== ""))
             .map((row, rowIndex) => {
@@ -126,8 +145,7 @@ export default function ImportarProductosPage() {
 
           console.log(`Processing ${excelRows.length} rows...`)
 
-          // Parsear productos usando la función actualizada (ahora asíncrona)
-          const { productos, errores } = await parseExcelToProductos(excelRows, proveedores)
+          const { productos, errores } = await parseExcelToProductos(excelRows, proveedores, categorias, imagenes)
 
           console.log(`Parsing completed: ${productos.length} products, ${errores.length} errors`)
 
@@ -195,24 +213,23 @@ export default function ImportarProductosPage() {
       console.log("Starting save process...")
       console.log("Products to save:", importedProducts)
 
-      // Validar que todos los productos tengan proveedor_id válido
-      const invalidProducts = importedProducts.filter((p) => !p.proveedor_id || p.proveedor_id <= 0)
+      const invalidProducts = importedProducts.filter(
+        (p) => !p.proveedor_id || p.proveedor_id <= 0 || !p.img_id || p.img_id <= 0,
+      )
       if (invalidProducts.length > 0) {
         console.error("Invalid products found:", invalidProducts)
         toast({
           title: "Error de validación",
-          description: `${invalidProducts.length} productos tienen proveedor_id inválido`,
+          description: `${invalidProducts.length} productos tienen proveedor_id o img_id inválido`,
           variant: "destructive",
         })
         setIsLoading(false)
         return
       }
 
-      // Obtener productos existentes
       const existingProducts = await Database.getProductos()
       console.log(`Found ${existingProducts.length} existing products`)
 
-      // Verificar duplicados por número de artículo
       const existingNumbers = new Set(existingProducts.map((p) => p.articulo_numero))
       const duplicates = importedProducts.filter((p) => existingNumbers.has(p.articulo_numero))
 
@@ -225,7 +242,6 @@ export default function ImportarProductosPage() {
         })
       }
 
-      // Filtrar productos no duplicados
       const newProducts = importedProducts.filter((p) => !existingNumbers.has(p.articulo_numero))
 
       if (newProducts.length === 0) {
@@ -240,18 +256,18 @@ export default function ImportarProductosPage() {
 
       console.log(`Saving ${newProducts.length} new products...`)
 
-      // Preparar datos para inserción (sin campos de relación)
       const productosParaInsertar = newProducts.map((p) => ({
         articulo_numero: p.articulo_numero,
         producto_codigo: p.producto_codigo || "",
         descripcion: p.descripcion,
         unidad_medida: p.unidad_medida,
-        proveedor_id: p.proveedor_id, // Asegurar que sea un número válido
+        proveedor_id: p.proveedor_id,
+        categoria_id: p.categoria_id,
+        img_id: p.img_id,
       }))
 
       console.log("Data to insert:", productosParaInsertar)
 
-      // Crear productos en la base de datos
       const createdProducts = await Database.createProductos(productosParaInsertar)
       console.log(`Created ${createdProducts.length} products`)
 
@@ -265,7 +281,6 @@ export default function ImportarProductosPage() {
         setFile(null)
         setParseErrors([])
 
-        // Reset file input
         const fileInput = document.getElementById("excel-file") as HTMLInputElement
         if (fileInput) {
           fileInput.value = ""
@@ -373,6 +388,12 @@ export default function ImportarProductosPage() {
                     <p className="text-indigo-600 text-xs font-medium">
                       Proveedor: {producto.proveedor.proveedor_id} - {producto.proveedor.proveedor_nombre}
                     </p>
+                    <p className="text-indigo-600 text-xs font-medium">
+                      Categoría: {producto.categoria_id} - {producto.categoria?.categoria_nombre}
+                    </p>
+                    <p className="text-indigo-600 text-xs font-medium">
+                      Imagen: {producto.img_id} - {producto.img?.img_nombre}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -406,6 +427,12 @@ export default function ImportarProductosPage() {
               <li>
                 <strong>"Proveedor"</strong> → ID del proveedor (opcional, busca por ID o nombre)
               </li>
+              <li>
+                <strong>"Categoria"</strong> → ID de la categoría (opcional, busca por ID o nombre)
+              </li>
+              <li>
+                <strong>"Img"</strong> → ID de la imagen (opcional)
+              </li>
             </ul>
             <p>
               <strong>Reglas automáticas:</strong>
@@ -413,11 +440,14 @@ export default function ImportarProductosPage() {
             <ul className="list-disc list-inside space-y-1">
               <li>Productos con "CABLE" o "cable" en descripción → unidad en metros</li>
               <li>Si no se encuentra proveedor → se asigna el primer proveedor disponible</li>
+              <li>Si no se encuentra categoría → se asigna la primera categoría disponible</li>
+              <li>Si no se encuentra imagen → se asigna la primera imagen disponible</li>
               <li>Campos faltantes se completan con valores por defecto</li>
               <li>Otros campos del Excel se ignoran automáticamente</li>
             </ul>
             <p className="text-red-600 font-medium">
-              <strong>Importante:</strong> Debe existir al menos un proveedor en el sistema antes de importar productos.
+              <strong>Importante:</strong> Debe existir al menos un proveedor, una categoría y una imagen en el sistema
+              antes de importar productos.
             </p>
           </CardContent>
         </Card>

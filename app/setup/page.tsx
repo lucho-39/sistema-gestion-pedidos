@@ -209,6 +209,42 @@ SELECT
 FROM pedido_productos
 WHERE producto_id IS NULL;`,
     },
+    {
+      title: "5. Verificar Imagen por Defecto",
+      description: "Asegura que exista una imagen por defecto para importar productos",
+      code: `-- ============================================
+-- Script 5: Verificar Imagen por Defecto
+-- ============================================
+
+-- Verificar si existe una imagen por defecto
+SELECT 
+  CASE 
+    WHEN COUNT(*) > 0 THEN '✅ Imagen por defecto existe (ID: ' || MIN(id)::text || ')'
+    ELSE '⚠️ No hay imagen por defecto'
+  END as resultado,
+  COUNT(*) as total_imagenes
+FROM imagenes;
+
+-- Crear imagen por defecto si no existe
+INSERT INTO imagenes (url_img, txt_alt, created_at, updated_at)
+SELECT 
+  '/placeholder.svg?height=200&width=200',
+  'Imagen por defecto',
+  NOW(),
+  NOW()
+WHERE NOT EXISTS (
+  SELECT 1 FROM imagenes WHERE txt_alt ILIKE '%defecto%' OR txt_alt ILIKE '%default%'
+);
+
+-- Mostrar todas las imágenes disponibles
+SELECT 
+  id,
+  url_img,
+  txt_alt,
+  created_at
+FROM imagenes
+ORDER BY id;`,
+    },
   ]
 
   return (
@@ -272,7 +308,11 @@ WHERE producto_id IS NULL;`,
               <li>Copia y ejecuta el Script 2 (Datos Iniciales)</li>
               <li>Copia y ejecuta el Script 3 (Configurar RLS)</li>
               <li>
-                Copia y ejecuta el Script 4 (Limpiar Productos Null) - <strong>IMPORTANTE para pedidos 35-39</strong>
+                Copia y ejecuta el Script 4 (Limpiar Productos Null) - <strong>IMPORTANTE para pedidos 35-41</strong>
+              </li>
+              <li>
+                Copia y ejecuta el Script 5 (Verificar Imagen por Defecto) -{" "}
+                <strong>REQUERIDO para importar productos</strong>
               </li>
               <li>Haz clic en "Verificar Tablas" para confirmar</li>
               <li>¡Listo! Regresa a la aplicación</li>
