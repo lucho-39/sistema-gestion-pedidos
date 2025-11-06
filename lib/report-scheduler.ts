@@ -221,7 +221,7 @@ export class ReportScheduler {
 
     const lastWednesday = new Date(now)
     lastWednesday.setDate(now.getDate() - daysAgo)
-    lastWednesday.setHours(18, 0, 0, 0)
+    lastWednesday.setHours(18, 1, 0, 0)
 
     return lastWednesday
   }

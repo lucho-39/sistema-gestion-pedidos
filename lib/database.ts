@@ -1005,4 +1005,329 @@ export class Database {
       return false
     }
   }
+
+  // ============================================
+  // ESTADÍSTICAS
+  // ============================================
+  static async getProductsRanking(): Promise<
+    Array<{
+      producto: Producto
+      total_pedidos: number
+      total_cantidad: number
+    }>
+  > {
+    try {
+      if (!isSupabaseConfigured()) {
+        return []
+      }
+
+      // Get all pedido_productos
+      const { data: pedidoProductosData, error } = await supabase
+        .from("pedido_productos")
+        .select("producto_id, cantidad, pedido_id")
+
+      if (error) throw error
+
+      if (!pedidoProductosData || pedidoProductosData.length === 0) {
+        return []
+      }
+
+      // Count occurrences and total quantity per product
+      const productoStats = new Map<
+        number,
+        {
+          pedidos: Set<number>
+          totalCantidad: number
+        }
+      >()
+
+      pedidoProductosData.forEach((pp) => {
+        if (!productoStats.has(pp.producto_id)) {
+          productoStats.set(pp.producto_id, {
+            pedidos: new Set(),
+            totalCantidad: 0,
+          })
+        }
+        const stats = productoStats.get(pp.producto_id)!
+        stats.pedidos.add(pp.pedido_id)
+        stats.totalCantidad += pp.cantidad
+      })
+
+      // Convert to array and sort by number of pedidos
+      const ranking = Array.from(productoStats.entries())
+        .map(([productoId, stats]) => ({
+          productoId,
+          totalPedidos: stats.pedidos.size,
+          totalCantidad: stats.totalCantidad,
+        }))
+        .sort((a, b) => b.totalPedidos - a.totalPedidos)
+
+      // Get full product details
+      const productos = await this.getProductos()
+      const productosMap = new Map(productos.map((p) => [p.producto_id, p]))
+
+      const result = ranking
+        .map((item) => {
+          const producto = productosMap.get(item.productoId)
+          if (!producto) return null
+
+          return {
+            producto,
+            total_pedidos: item.totalPedidos,
+            total_cantidad: item.totalCantidad,
+          }
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null)
+
+      return result
+    } catch (error) {
+      console.error("Error in getProductsRanking:", error)
+      return []
+    }
+  }
+
+  static async getMostOrderedProduct(): Promise<{
+    producto: Producto | null
+    cantidad_total: number
+  } | null> {
+    try {
+      if (!isSupabaseConfigured()) {
+        return null
+      }
+
+      const { data: pedidoProductosData, error } = await supabase
+        .from("pedido_productos")
+        .select("producto_id, cantidad")
+
+      if (error) throw error
+
+      if (!pedidoProductosData || pedidoProductosData.length === 0) {
+        return null
+      }
+
+      const productoCantidades = new Map<number, number>()
+      pedidoProductosData.forEach((pp) => {
+        const current = productoCantidades.get(pp.producto_id) || 0
+        productoCantidades.set(pp.producto_id, current + pp.cantidad)
+      })
+
+      let maxProductoId = 0
+      let maxCantidad = 0
+      productoCantidades.forEach((cantidad, productoId) => {
+        if (cantidad > maxCantidad) {
+          maxCantidad = cantidad
+          maxProductoId = productoId
+        }
+      })
+
+      if (maxProductoId === 0) {
+        return null
+      }
+
+      const producto = await this.getProductoById(maxProductoId)
+
+      return {
+        producto,
+        cantidad_total: maxCantidad,
+      }
+    } catch (error) {
+      console.error("Error in getMostOrderedProduct:", error)
+      return null
+    }
+  }
+
+  static async getMostOrderedProductByClient(): Promise<
+    Array<{
+      cliente: Cliente
+      producto: Producto | null
+      cantidad_total: number
+    }>
+  > {
+    try {
+      if (!isSupabaseConfigured()) {
+        return []
+      }
+
+      const { data: pedidosData, error: pedidosError } = await supabase.from("pedidos").select("pedido_id, cliente_id")
+
+      if (pedidosError) throw pedidosError
+
+      const { data: pedidoProductosData, error: ppError } = await supabase
+        .from("pedido_productos")
+        .select("pedido_id, producto_id, cantidad")
+
+      if (ppError) throw ppError
+
+      const pedidoClienteMap = new Map<number, number>()
+      pedidosData?.forEach((p) => {
+        pedidoClienteMap.set(p.pedido_id, p.cliente_id)
+      })
+
+      const clienteProductoCantidad = new Map<number, Map<number, number>>()
+
+      pedidoProductosData?.forEach((pp) => {
+        const clienteId = pedidoClienteMap.get(pp.pedido_id)
+        if (!clienteId) return
+
+        if (!clienteProductoCantidad.has(clienteId)) {
+          clienteProductoCantidad.set(clienteId, new Map())
+        }
+
+        const productosMap = clienteProductoCantidad.get(clienteId)!
+        const current = productosMap.get(pp.producto_id) || 0
+        productosMap.set(pp.producto_id, current + pp.cantidad)
+      })
+
+      const clienteProductoMax: Array<{
+        clienteId: number
+        productoId: number
+        cantidad: number
+      }> = []
+
+      clienteProductoCantidad.forEach((productosMap, clienteId) => {
+        let maxProductoId = 0
+        let maxCantidad = 0
+
+        productosMap.forEach((cantidad, productoId) => {
+          if (cantidad > maxCantidad) {
+            maxCantidad = cantidad
+            maxProductoId = productoId
+          }
+        })
+
+        if (maxProductoId > 0) {
+          clienteProductoMax.push({
+            clienteId,
+            productoId: maxProductoId,
+            cantidad: maxCantidad,
+          })
+        }
+      })
+
+      clienteProductoMax.sort((a, b) => b.cantidad - a.cantidad)
+      const top5 = clienteProductoMax.slice(0, 5)
+
+      const clientes = await this.getClientes()
+      const clientesMap = new Map(clientes.map((c) => [c.cliente_id, c]))
+
+      const result = await Promise.all(
+        top5.map(async (item) => {
+          const cliente = clientesMap.get(item.clienteId)
+          const producto = await this.getProductoById(item.productoId)
+
+          return {
+            cliente: cliente || {
+              cliente_id: item.clienteId,
+              cliente_codigo: 0,
+              nombre: "Cliente no encontrado",
+              domicilio: "",
+              telefono: "",
+              created_at: "",
+              updated_at: "",
+            },
+            producto,
+            cantidad_total: item.cantidad,
+          }
+        }),
+      )
+
+      return result
+    } catch (error) {
+      console.error("Error in getMostOrderedProductByClient:", error)
+      return []
+    }
+  }
+
+  static async getClientRanking(): Promise<
+    Array<{
+      cliente: Cliente
+      total_productos: number
+      total_pedidos: number
+    }>
+  > {
+    try {
+      if (!isSupabaseConfigured()) {
+        return []
+      }
+
+      const { data: pedidosData, error: pedidosError } = await supabase.from("pedidos").select("pedido_id, cliente_id")
+
+      if (pedidosError) throw pedidosError
+
+      const { data: pedidoProductosData, error: ppError } = await supabase
+        .from("pedido_productos")
+        .select("pedido_id, cantidad")
+
+      if (ppError) throw ppError
+
+      const pedidoClienteMap = new Map<number, number>()
+      pedidosData?.forEach((p) => {
+        pedidoClienteMap.set(p.pedido_id, p.cliente_id)
+      })
+
+      const clienteStats = new Map<
+        number,
+        {
+          totalProductos: number
+          totalPedidos: number
+        }
+      >()
+
+      pedidosData?.forEach((p) => {
+        if (!clienteStats.has(p.cliente_id)) {
+          clienteStats.set(p.cliente_id, {
+            totalProductos: 0,
+            totalPedidos: 0,
+          })
+        }
+        const stats = clienteStats.get(p.cliente_id)!
+        stats.totalPedidos += 1
+      })
+
+      pedidoProductosData?.forEach((pp) => {
+        const clienteId = pedidoClienteMap.get(pp.pedido_id)
+        if (!clienteId) return
+
+        const stats = clienteStats.get(clienteId)
+        if (stats) {
+          stats.totalProductos += pp.cantidad
+        }
+      })
+
+      const ranking = Array.from(clienteStats.entries())
+        .map(([clienteId, stats]) => ({
+          clienteId,
+          totalProductos: stats.totalProductos,
+          totalPedidos: stats.totalPedidos,
+        }))
+        .sort((a, b) => b.totalProductos - a.totalProductos)
+        .slice(0, 10)
+
+      const clientes = await this.getClientes()
+      const clientesMap = new Map(clientes.map((c) => [c.cliente_id, c]))
+
+      const result = ranking.map((item) => {
+        const cliente = clientesMap.get(item.clienteId)
+
+        return {
+          cliente: cliente || {
+            cliente_id: item.clienteId,
+            cliente_codigo: 0,
+            nombre: "Cliente no encontrado",
+            domicilio: "",
+            telefono: "",
+            created_at: "",
+            updated_at: "",
+          },
+          total_productos: item.totalProductos,
+          total_pedidos: item.totalPedidos,
+        }
+      })
+
+      return result
+    } catch (error) {
+      console.error("Error in getClientRanking:", error)
+      return []
+    }
+  }
 }

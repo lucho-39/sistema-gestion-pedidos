@@ -1,18 +1,19 @@
 "use client"
 
 import Link from "next/link"
-import { Package, Users, Truck, ShoppingCart, FileText, Upload, UserPlus } from "lucide-react"
+import { Package, Users, Truck, ShoppingCart, FileText, Upload, UserPlus, TrendingUp } from "lucide-react"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="text-center py-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Sistema de Gestión</h1>
           <p className="text-gray-600">Administra productos, clientes, proveedores y pedidos</p>
         </div>
 
+        {/* Navigation cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link href="/productos">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
@@ -94,6 +95,18 @@ export default function HomePage() {
                   Reportes
                 </CardTitle>
                 <CardDescription>Genera reportes y estadísticas</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/estadisticas">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-indigo-600" />
+                  Estadísticas
+                </CardTitle>
+                <CardDescription>Análisis de productos y clientes</CardDescription>
               </CardHeader>
             </Card>
           </Link>
