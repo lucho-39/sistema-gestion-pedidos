@@ -79,6 +79,7 @@ CREATE TABLE productos (
     categoria_id INTEGER NOT NULL REFERENCES categorias(id) ON DELETE RESTRICT,
     img_id INTEGER NOT NULL REFERENCES imagenes(id) ON DELETE RESTRICT,
     proveedor_id INTEGER NOT NULL REFERENCES proveedores(proveedor_id) ON DELETE RESTRICT,
+    precio_costo DECIMAL(10,2),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -127,12 +128,7 @@ BEGIN
             COALESCE(producto_codigo, ''),
             COALESCE(LEFT(descripcion, 50), 'Sin título'),
             descripcion,
-            CASE 
-                WHEN LOWER(unidad_medida) LIKE '%metro%' THEN (SELECT id FROM categorias WHERE nombre = 'Cables' LIMIT 1)
-                WHEN LOWER(unidad_medida) LIKE '%kg%' OR LOWER(unidad_medida) LIKE '%kilo%' THEN (SELECT id FROM categorias WHERE nombre = 'Materiales' LIMIT 1)
-                WHEN LOWER(unidad_medida) LIKE '%litro%' THEN (SELECT id FROM categorias WHERE nombre = 'Líquidos' LIMIT 1)
-                ELSE default_categoria_id
-            END,
+            default_categoria_id, -- Usar categoría General para todos
             default_img_id,
             proveedor_id,
             COALESCE(created_at, NOW()),

@@ -135,7 +135,7 @@ export class ReportExcelGenerator {
           index === 0 ? this.formatDate(pedido.fecha_pedido) : "",
           producto.descripcion,
           producto.cantidad,
-          producto.unidad_medida,
+          producto.unidad_medida || producto.categoria?.unidad || "unidad",
           producto.proveedor_nombre,
         ])
       })
@@ -178,9 +178,9 @@ export class ReportExcelGenerator {
         worksheetData.push([
           index === 0 ? proveedor.proveedor_nombre : "",
           producto.articulo_numero,
-          producto.producto_codigo,
+          producto.producto_codigo || "N/A",
           producto.descripcion,
-          producto.unidad_medida,
+          producto.unidad_medida || producto.categoria?.unidad || "unidad",
           producto.cantidad_total,
         ])
       })
@@ -231,7 +231,7 @@ export class ReportExcelGenerator {
           index === 0 ? this.formatDate(pedido.fecha_pedido) : "",
           producto.descripcion,
           producto.cantidad,
-          producto.unidad_medida,
+          producto.unidad_medida || producto.categoria?.unidad || "unidad",
         ])
       })
     })
@@ -291,7 +291,7 @@ export class ReportExcelGenerator {
           pedido.productos?.map((p: any) => ({
             descripcion: p.producto?.descripcion || "Producto desconocido",
             cantidad: p.cantidad,
-            unidad_medida: p.producto?.unidad_medida || "unidad",
+            unidad_medida: p.producto?.categoria?.unidad || "unidad",
             proveedor_nombre: p.producto?.proveedor?.proveedor_nombre || "Proveedor desconocido",
           })) || [],
       })
@@ -320,7 +320,7 @@ export class ReportExcelGenerator {
             articulo_numero: articuloNumero,
             producto_codigo: p.producto?.producto_codigo || "N/A",
             descripcion: p.producto?.descripcion || "Producto desconocido",
-            unidad_medida: p.producto?.unidad_medida || "unidad",
+            unidad_medida: p.producto?.categoria?.unidad || "unidad",
             cantidad_total: 0,
           })
         }
@@ -362,7 +362,7 @@ export class ReportExcelGenerator {
           productos: p.productos.map((prod: any) => ({
             descripcion: prod.descripcion,
             cantidad: prod.cantidad,
-            unidad_medida: prod.unidad_medida,
+            unidad_medida: prod.unidad_medida || prod.categoria?.unidad || "unidad",
           })),
         })),
         total_pedidos: pedidos.length,
@@ -430,7 +430,7 @@ export async function generateExcelFromReporte(
             index === 0 ? new Date(pedido.fecha_pedido).toLocaleDateString("es-AR") : "",
             producto.producto?.descripcion || "N/A",
             producto.cantidad,
-            producto.producto?.unidad_medida || "u",
+            producto.producto?.categoria?.unidad || "u",
             producto.producto?.proveedor?.proveedor_nombre || "N/A",
           ])
         })
@@ -463,7 +463,7 @@ export async function generateExcelFromReporte(
             producto.articulo_numero,
             producto.producto_codigo || "N/A",
             producto.descripcion,
-            producto.unidad_medida,
+            producto.unidad_medida || producto.categoria?.unidad || "unidad",
             producto.cantidad_total,
           ])
         })
@@ -500,12 +500,12 @@ export async function generateExcelFromReporte(
         pedido.productos.forEach((producto, index) => {
           pedidosData.push([
             index === 0 ? pedido.pedido_id : "",
-            index === 0 ? pedido.cliente?.cliente_codigo || "N/A" : "",
+            index === 0 ? pedido.cliente_codigo : "",
             index === 0 ? pedido.cliente_nombre : "",
             index === 0 ? new Date(pedido.fecha_pedido).toLocaleDateString("es-AR") : "",
             producto.descripcion,
             producto.cantidad,
-            producto.unidad_medida,
+            producto.unidad_medida || producto.categoria?.unidad || "unidad",
           ])
         })
       })

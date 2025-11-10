@@ -310,7 +310,7 @@ export class ReportScheduler {
             articulo_numero: producto.articulo_numero,
             producto_codigo: producto.producto_codigo,
             descripcion: producto.descripcion,
-            unidad_medida: producto.unidad_medida,
+            unidad_medida: producto.categoria?.unidad || "unidad",
             cantidad_total: 0,
           })
         }
@@ -342,7 +342,7 @@ export class ReportScheduler {
         pedido.productos?.map((pp) => ({
           descripcion: pp.producto?.descripcion || "N/A",
           cantidad: pp.cantidad,
-          unidad_medida: pp.producto?.unidad_medida || "N/A",
+          unidad_medida: pp.producto?.categoria?.unidad || "unidad",
         })) || [],
     }))
 

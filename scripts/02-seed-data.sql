@@ -1,4 +1,10 @@
--- Insertar proveedores iniciales
+-- NOTA: Este script es para referencia histórica.
+-- La base de datos actual ya tiene datos migrados.
+-- Este script está obsoleto y no debe ejecutarse
+
+-- Para agregar nuevos datos de prueba al esquema actual, usar este formato:
+
+-- Insertar proveedores
 INSERT INTO proveedores (proveedor_id, proveedor_nombre) VALUES
 (300, 'CAELBI'),
 (400, 'DABOR'),
@@ -11,18 +17,33 @@ INSERT INTO proveedores (proveedor_id, proveedor_nombre) VALUES
 (1, 'Proveedor General')
 ON CONFLICT (proveedor_id) DO NOTHING;
 
--- Insertar algunos productos de ejemplo
-INSERT INTO productos (articulo_numero, producto_codigo, descripcion, unidad_medida, proveedor_id) VALUES
-(1001, 'CAB-001', 'Cable de alimentación 3x2.5mm', 'metros', 300),
-(1002, 'INT-001', 'Interruptor simple', 'unidad', 1000),
-(1003, 'TOM-001', 'Tomacorriente doble', 'unidad', 1000),
-(2001, 'CAB-002', 'Cable telefónico 2 pares', 'metros', 400),
-(2002, 'LUZ-001', 'Lámpara LED 9W', 'unidad', 1200),
-(2003, 'INT-002', 'Interruptor conmutador', 'unidad', 1200),
-(2004, 'TOM-002', 'Tomacorriente triple con protección', 'unidad', 1200)
-ON CONFLICT (articulo_numero) DO NOTHING;
+-- Asegurarse de que exista una categoría e imagen por defecto
+INSERT INTO categorias (nombre, unidad) VALUES
+('General', 'unidad')
+ON CONFLICT (nombre) DO NOTHING;
 
--- Insertar algunos clientes de ejemplo
+INSERT INTO imagenes (url_img, txt_alt) VALUES
+('/placeholder.svg', 'Imagen por defecto')
+ON CONFLICT DO NOTHING;
+
+-- Insertar productos usando el nuevo esquema
+-- Usar categoria_id, img_id en lugar de unidad_medida
+INSERT INTO productos (articulo_numero, producto_codigo, descripcion, categoria_id, img_id, proveedor_id) VALUES
+('1001', 'CAB-001', 'Cable de alimentación 3x2.5mm', 
+ (SELECT id FROM categorias WHERE nombre = 'General' LIMIT 1),
+ (SELECT id FROM imagenes LIMIT 1),
+ 300),
+('1002', 'INT-001', 'Interruptor simple',
+ (SELECT id FROM categorias WHERE nombre = 'General' LIMIT 1),
+ (SELECT id FROM imagenes LIMIT 1),
+ 1000),
+('1003', 'TOM-001', 'Tomacorriente doble',
+ (SELECT id FROM categorias WHERE nombre = 'General' LIMIT 1),
+ (SELECT id FROM imagenes LIMIT 1),
+ 1000)
+ON CONFLICT (producto_id) DO NOTHING;
+
+-- Insertar clientes
 INSERT INTO clientes (cliente_codigo, nombre, domicilio, telefono, cuil) VALUES
 (101, 'Juan Pérez', 'Av. Corrientes 1234, CABA', '11-4567-8901', '20-12345678-9'),
 (102, 'María González', 'San Martín 567, La Plata', '221-456-7890', '27-87654321-3'),

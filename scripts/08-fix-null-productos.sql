@@ -1,13 +1,14 @@
 -- Limpiar productos null en pedido_productos
 -- Este script identifica y elimina registros con producto_id null
 
+-- Removido p.pedido_numero que no existe, usando p.pedido_id
 -- Ver cuántos registros tienen producto_id null
 SELECT 
   pp.id,
   pp.pedido_id,
   pp.producto_id,
   pp.cantidad,
-  p.pedido_numero
+  p.pedido_id as pedido_numero
 FROM pedido_productos pp
 LEFT JOIN pedidos p ON pp.pedido_id = p.pedido_id
 WHERE pp.producto_id IS NULL;
