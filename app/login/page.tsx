@@ -9,6 +9,28 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { isSupabaseConfigured, supabase } from "@/lib/supabase"
 
+/**
+ * Traduce el error de Supabase a algo accionable.
+ *
+ * Un mensaje generico esconde causas muy distintas: credenciales mal escritas,
+ * un usuario sin confirmar, o un proyecto mal apuntado en las variables de
+ * entorno. Mostrar el motivo real ahorra tiempo de diagnostico.
+ */
+function traducirError(mensaje: string): string {
+  const m = mensaje.toLowerCase()
+
+  if (m.includes("invalid login credentials")) {
+    return "Email o contraseña incorrectos."
+  }
+  if (m.includes("email not confirmed")) {
+    return "El usuario existe pero el email no está confirmado. Confirmalo desde Supabase → Authentication → Users."
+  }
+  if (m.includes("failed to fetch") || m.includes("networkerror") || m.includes("load failed")) {
+    return "No se pudo conectar con Supabase. Puede ser la conexión, o que la URL del proyecto esté mal configurada."
+  }
+  return `Error de ingreso: ${mensaje}`
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
@@ -27,13 +49,13 @@ export default function LoginPage() {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
       if (signInError) {
-        setError("Email o contraseña incorrectos")
+        setError(traducirError(signInError.message))
         return
       }
 
       router.replace("/")
-    } catch {
-      setError("No se pudo conectar con el servidor. Intentá de nuevo.")
+    } catch (err) {
+      setError(traducirError(err instanceof Error ? err.message : String(err)))
     } finally {
       setIsLoading(false)
     }
