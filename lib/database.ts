@@ -887,19 +887,77 @@ export class Database {
       if (pedidoError) throw pedidoError
 
       if (pedido.productos) {
-        const { error: deleteError } = await supabase.from("pedido_productos").delete().eq("pedido_id", id)
+        // Reconciliación no destructiva: nunca se borra todo antes de insertar.
+        // Orden: leer estado actual -> insertar faltantes -> actualizar cantidades -> borrar sobrantes.
+        // Así, si un paso falla, el pedido conserva sus productos (no queda vacío de forma permanente).
+        const { data: actuales, error: readError } = await supabase
+          .from("pedido_productos")
+          .select("id, producto_id, cantidad")
+          .eq("pedido_id", id)
 
-        if (deleteError) throw deleteError
+        if (readError) throw readError
 
-        const productosData = pedido.productos.map((producto) => ({
-          pedido_id: id,
-          producto_id: producto.producto_id,
-          cantidad: producto.cantidad,
+        // Si el payload repite un producto, se conserva el último valor.
+        const cantidadPorProducto = new Map<number, number>()
+        for (const item of pedido.productos) {
+          cantidadPorProducto.set(item.producto_id, item.cantidad)
+        }
+        const productosDeseados = Array.from(cantidadPorProducto, ([producto_id, cantidad]) => ({
+          producto_id,
+          cantidad,
         }))
 
-        const { error: insertError } = await supabase.from("pedido_productos").insert(productosData)
+        // Filas existentes agrupadas por producto (se conserva la primera como canónica).
+        const filasPorProducto = new Map<number, { id: number; cantidad: number }[]>()
+        for (const fila of actuales || []) {
+          const filas = filasPorProducto.get(fila.producto_id) || []
+          filas.push({ id: fila.id, cantidad: fila.cantidad ?? 0 })
+          filasPorProducto.set(fila.producto_id, filas)
+        }
 
-        if (insertError) throw insertError
+        // 1) Insertar solo los productos que todavía no existen en el pedido.
+        const aInsertar = productosDeseados.filter((item) => !filasPorProducto.has(item.producto_id))
+        if (aInsertar.length > 0) {
+          const { error: insertError } = await supabase.from("pedido_productos").insert(
+            aInsertar.map((item) => ({
+              pedido_id: id,
+              producto_id: item.producto_id,
+              cantidad: item.cantidad,
+            })),
+          )
+
+          if (insertError) throw insertError
+        }
+
+        // 2) Actualizar la cantidad de los productos existentes que cambiaron.
+        for (const item of productosDeseados) {
+          const filas = filasPorProducto.get(item.producto_id)
+          const canonica = filas?.[0]
+          if (canonica && canonica.cantidad !== item.cantidad) {
+            const { error: updateError } = await supabase
+              .from("pedido_productos")
+              .update({ cantidad: item.cantidad })
+              .eq("id", canonica.id)
+
+            if (updateError) throw updateError
+          }
+        }
+
+        // 3) Borrar al final: productos que ya no pertenecen al pedido y duplicados previos.
+        const idsAEliminar: number[] = []
+        for (const [producto_id, filas] of filasPorProducto) {
+          if (!cantidadPorProducto.has(producto_id)) {
+            idsAEliminar.push(...filas.map((fila) => fila.id))
+          } else {
+            idsAEliminar.push(...filas.slice(1).map((fila) => fila.id))
+          }
+        }
+
+        if (idsAEliminar.length > 0) {
+          const { error: deleteError } = await supabase.from("pedido_productos").delete().in("id", idsAEliminar)
+
+          if (deleteError) throw deleteError
+        }
       }
 
       return true
