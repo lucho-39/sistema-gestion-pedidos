@@ -296,7 +296,7 @@ export default function ProductosPage() {
                   </Link>
                 </>
               ) : (
-                <p className="text-gray-500">No se encontraron productos con "{searchTerm}"</p>
+                <p className="text-gray-500">No se encontraron productos con &quot;{searchTerm}&quot;</p>
               )}
             </CardContent>
           </Card>

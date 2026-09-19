@@ -47,7 +47,7 @@ export default function DetallePedidoPage() {
         day: "numeric",
         timeZone: "UTC",
       })
-    } catch (error) {
+    } catch {
       return "Fecha no válida"
     }
   }

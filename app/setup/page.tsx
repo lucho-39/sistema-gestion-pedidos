@@ -314,7 +314,7 @@ ORDER BY id;`,
                 Copia y ejecuta el Script 5 (Verificar Imagen por Defecto) -{" "}
                 <strong>REQUERIDO para importar productos</strong>
               </li>
-              <li>Haz clic en "Verificar Tablas" para confirmar</li>
+              <li>Haz clic en &quot;Verificar Tablas&quot; para confirmar</li>
               <li>¡Listo! Regresa a la aplicación</li>
             </ol>
           </CardContent>

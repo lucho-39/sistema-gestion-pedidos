@@ -112,7 +112,7 @@ export default function PedidosPage() {
         day: "numeric",
         timeZone: "UTC",
       })
-    } catch (error) {
+    } catch {
       return "Fecha no válida"
     }
   }

@@ -413,32 +413,30 @@ export default function ImportarProductosPage() {
             </p>
             <ul className="list-disc list-inside space-y-1">
               <li>
-                <strong>"Nº Artículo"</strong> o <strong>"Art."</strong> → Número de artículo (obligatorio)
+                <strong>&quot;Nº Artículo&quot;</strong> o <strong>&quot;Art.&quot;</strong> → Número de artículo
+                (obligatorio, máximo 10 caracteres)
               </li>
               <li>
-                <strong>"Desc"</strong>, <strong>"Descripcion"</strong>, <strong>"Descripciom"</strong> → Descripción
-                (obligatorio)
+                <strong>&quot;Desc&quot;</strong>, <strong>&quot;Descripcion&quot;</strong>,{" "}
+                <strong>&quot;Descripciom&quot;</strong> → Descripción (obligatorio)
               </li>
               <li>
-                <strong>"Cod"</strong>, <strong>"Codigo"</strong> → Código del producto (opcional)
+                <strong>&quot;Cod&quot;</strong>, <strong>&quot;Codigo&quot;</strong> → Código del producto (opcional)
               </li>
               <li>
-                <strong>"Proveedor"</strong> → ID del proveedor (opcional, busca por ID o nombre)
+                <strong>&quot;Proveedor&quot;</strong> → ID del proveedor (opcional, busca por ID o nombre)
               </li>
               <li>
-                <strong>"Categoria"</strong> → ID de la categoría (opcional, busca por ID o nombre)
-              </li>
-              <li>
-                <strong>"Img"</strong> → ID de la imagen (opcional)
+                <strong>&quot;Categoría&quot;</strong> → Categoría del producto (opcional, busca por ID o nombre)
               </li>
             </ul>
             <p>
               <strong>Reglas automáticas:</strong>
             </p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Productos con "CABLE" o "cable" en descripción → unidad en metros</li>
+              <li>La unidad de medida la define la categoría del producto</li>
               <li>Si no se encuentra proveedor → se asigna el primer proveedor disponible</li>
-              <li>Si no se encuentra categoría → se asigna la primera categoría disponible</li>
+              <li>Si no se encuentra categoría → se asigna la primera categoría disponible y se avisa</li>
               <li>Si no se encuentra imagen → se asigna la primera imagen disponible</li>
               <li>Campos faltantes se completan con valores por defecto</li>
               <li>Otros campos del Excel se ignoran automáticamente</li>

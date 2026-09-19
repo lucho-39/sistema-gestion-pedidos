@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Database } from "@/lib/database"
-import type { Pedido, Cliente, Producto, ProductoPedido } from "@/lib/types"
+import type { Cliente, Producto, ProductoPedido } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -19,7 +19,6 @@ export default function EditarPedidoPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
-  const [pedido, setPedido] = useState<Pedido | null>(null)
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -60,7 +59,6 @@ export default function EditarPedidoPage() {
         return
       }
 
-      setPedido(pedidoData)
       setClientes(clientesData)
       setProductos(productosData)
 
