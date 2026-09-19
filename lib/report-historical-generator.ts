@@ -44,7 +44,7 @@ export class ReportHistoricalGenerator {
       const pedidosYaReportados = new Set<number>()
 
       reportesExistentes.forEach((reporte) => {
-        reporte.pedidos_incluidos.forEach((pedidoId) => {
+        reporte.pedidos_incluidos.forEach((pedidoId: number) => {
           pedidosYaReportados.add(pedidoId)
         })
       })

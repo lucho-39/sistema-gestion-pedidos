@@ -57,6 +57,7 @@ export interface ProductoPedido {
   id: number
   pedido_id: number
   producto_id: number
+  articulo_numero?: string | null
   cantidad: number
   created_at?: string
   producto?: Producto

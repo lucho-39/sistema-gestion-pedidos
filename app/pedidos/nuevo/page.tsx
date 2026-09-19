@@ -182,26 +182,26 @@ export default function NuevoPedidoPage() {
     setBusquedaProducto("")
   }
 
-  const actualizarCantidad = (articuloNumero: number, cantidad: number) => {
+  const actualizarCantidad = (productoId: number, cantidad: number) => {
     if (cantidad <= 0) {
-      eliminarProducto(articuloNumero)
+      eliminarProducto(productoId)
       return
     }
 
     setProductosSeleccionados((prev) =>
-      prev.map((p) => (p.articulo_numero === articuloNumero ? { ...p, cantidad } : p)),
+      prev.map((p) => (p.producto_id === productoId ? { ...p, cantidad } : p)),
     )
   }
 
-  const eliminarProducto = (articuloNumero: number) => {
-    setProductosSeleccionados((prev) => prev.filter((p) => p.articulo_numero !== articuloNumero))
+  const eliminarProducto = (productoId: number) => {
+    setProductosSeleccionados((prev) => prev.filter((p) => p.producto_id !== productoId))
   }
 
   const productosFiltrados = productos.filter(
     (producto) =>
       producto.descripcion.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
-      producto.producto_codigo.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
-      producto.articulo_numero.toString().includes(busquedaProducto),
+      (producto.producto_codigo || "").toLowerCase().includes(busquedaProducto.toLowerCase()) ||
+      (producto.articulo_numero ?? "").toString().includes(busquedaProducto),
   )
 
   // Filtrar clientes basado en la búsqueda - CORREGIDO para manejar tipos correctamente
@@ -383,7 +383,7 @@ export default function NuevoPedidoPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {productosSeleccionados.map((producto) => (
-                  <div key={producto.articulo_numero} className="flex items-center gap-2 p-2 border rounded">
+                  <div key={producto.producto_id} className="flex items-center gap-2 p-2 border rounded">
                     <div className="flex-1">
                       <p className="text-sm font-medium">
                         #{producto.articulo_numero} - {producto.descripcion}
@@ -395,14 +395,14 @@ export default function NuevoPedidoPage() {
                         type="number"
                         min="1"
                         value={producto.cantidad}
-                        onChange={(e) => actualizarCantidad(producto.articulo_numero, Number(e.target.value))}
+                        onChange={(e) => actualizarCantidad(producto.producto_id, Number(e.target.value))}
                         className="w-16 h-8 text-center"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => eliminarProducto(producto.articulo_numero)}
+                        onClick={() => eliminarProducto(producto.producto_id)}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

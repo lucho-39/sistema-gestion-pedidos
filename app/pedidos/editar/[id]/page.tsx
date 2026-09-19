@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Database } from "@/lib/database"
-import type { Pedido, Cliente, Producto } from "@/lib/types"
+import type { Pedido, Cliente, Producto, ProductoPedido } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -33,7 +33,8 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
 
   const [clienteId, setClienteId] = useState<number>(0)
   const [fechaPedido, setFechaPedido] = useState("")
-  const [pedidoProductos, setPedidoProductos] = useState<PedidoProducto[]>([])
+  // Productos del pedido en edición: todavía no tienen id ni pedido_id hasta que se guardan
+  const [pedidoProductos, setPedidoProductos] = useState<Omit<ProductoPedido, "id" | "pedido_id">[]>([])
   const [hasNullProducts, setHasNullProducts] = useState(false)
 
   const [clienteSearch, setClienteSearch] = useState("")

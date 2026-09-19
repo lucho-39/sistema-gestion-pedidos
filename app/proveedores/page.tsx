@@ -60,7 +60,7 @@ export default function ProveedoresPage() {
     try {
       // Verificar si el proveedor está siendo usado por algún producto
       const productos = await DB.getProductos()
-      const productosConProveedor = productos.filter((p) => p.proveedor.proveedor_id === proveedorId)
+      const productosConProveedor = productos.filter((p) => p.proveedor?.proveedor_id === proveedorId)
 
       if (productosConProveedor.length > 0) {
         toast({
