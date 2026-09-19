@@ -13,7 +13,10 @@ const categorias: Categoria[] = [
   { id: 3, nombre: "Materiales", unidad: "kg" },
 ]
 
-const imagenes: Imagen[] = [{ id: 1, url_img: "/placeholder.svg", txt_alt: "Imagen de producto por defecto" }]
+const imagenes: Imagen[] = [
+  { id: 1, url_img: "/placeholder.svg", txt_alt: "Imagen de producto por defecto" },
+  { id: 2, url_img: "/cable.png", txt_alt: "Foto de cable" },
+]
 
 const parse = (
   rows: Record<string, unknown>[],
@@ -129,6 +132,41 @@ describe("parseExcelToProductos", () => {
       const { productos } = await parse([{ "Nº Artículo": "3008", Descripción: "Cable" }])
 
       expect(productos[0].proveedor_id).toBe(300)
+    })
+  })
+
+  describe("imagen", () => {
+    it("resuelve la imagen por id", async () => {
+      const { productos, errores } = await parse([
+        { "Nº Artículo": "3016", Descripción: "Cable", Img: "2" },
+      ])
+
+      expect(errores).toEqual([])
+      expect(productos[0].img_id).toBe(2)
+    })
+
+    it("resuelve la imagen por nombre", async () => {
+      const { productos } = await parse([
+        { "Nº Artículo": "3017", Descripción: "Cable", Imagen: "Foto de cable" },
+      ])
+
+      expect(productos[0].img_id).toBe(2)
+    })
+
+    it("usa la imagen por defecto cuando el archivo no trae la columna", async () => {
+      const { productos, errores } = await parse([{ "Nº Artículo": "3018", Descripción: "Cable" }])
+
+      expect(productos[0].img_id).toBe(1)
+      expect(errores).toEqual([])
+    })
+
+    it("avisa y usa la default cuando la imagen no existe", async () => {
+      const { productos, errores } = await parse([
+        { "Nº Artículo": "3019", Descripción: "Cable", Img: "NoExiste" },
+      ])
+
+      expect(productos[0].img_id).toBe(1)
+      expect(errores.some((e) => e.includes("NoExiste"))).toBe(true)
     })
   })
 

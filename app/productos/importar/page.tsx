@@ -429,6 +429,9 @@ export default function ImportarProductosPage() {
               <li>
                 <strong>&quot;Categoría&quot;</strong> → Categoría del producto (opcional, busca por ID o nombre)
               </li>
+              <li>
+                <strong>&quot;Img&quot;</strong> → Imagen del producto (opcional, busca por ID o nombre)
+              </li>
             </ul>
             <p>
               <strong>Reglas automáticas:</strong>

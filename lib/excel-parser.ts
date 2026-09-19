@@ -67,6 +67,7 @@ export async function parseExcelToProductos(
     codigo: ["cod", "codigo", "código", "code", "producto_codigo"],
     proveedor: ["proveedor", "provider", "prov", "proveedor_id", "supplier"],
     categoria: ["categoría", "categoria", "category", "rubro"],
+    imagen: ["img", "imagen", "image", "foto"],
   }
 
   rows.forEach((row, index) => {
@@ -188,16 +189,50 @@ export async function parseExcelToProductos(
         }
       }
 
+      let imagen: Imagen = imagenGeneral
+      for (const key of Object.keys(row)) {
+        const keyLower = key.toLowerCase().trim()
+        if (columnMappings.imagen.some((mapping) => keyLower.includes(mapping))) {
+          const value = row[key]
+          if (value !== null && value !== undefined && value !== "") {
+            const imagenValue = String(value).trim()
+
+            const imagenId = Number(imagenValue)
+            if (!isNaN(imagenId)) {
+              const encontradaPorId = imagenes.find((i) => i.id === imagenId)
+              if (encontradaPorId) {
+                imagen = encontradaPorId
+                break
+              }
+            }
+
+            const encontradaPorNombre =
+              imagenes.find((i) => (i.txt_alt || "").toLowerCase() === imagenValue.toLowerCase()) ||
+              imagenes.find((i) => (i.txt_alt || "").toLowerCase().includes(imagenValue.toLowerCase()))
+
+            if (encontradaPorNombre) {
+              imagen = encontradaPorNombre
+              break
+            }
+
+            errores.push(
+              `Fila ${index + 2}: Imagen "${imagenValue}" no encontrada; se usó la imagen por defecto`,
+            )
+            break
+          }
+        }
+      }
+
       const producto: ProductoNuevo = {
         articulo_numero: articuloNumero,
         producto_codigo: productoCodigo,
         descripcion: descripcion,
         proveedor_id: proveedor.proveedor_id,
         categoria_id: categoria.id,
-        img_id: imagenGeneral.id,
+        img_id: imagen.id,
         proveedor: proveedor,
         categoria: categoria,
-        imagen: imagenGeneral,
+        imagen: imagen,
       }
 
       if (!producto.proveedor_id || producto.proveedor_id <= 0) {
