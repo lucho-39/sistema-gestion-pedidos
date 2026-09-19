@@ -45,7 +45,11 @@ Order and inventory management for an electrical supplies business: products, cu
    09-create-default-image.sql
    ```
 
-4. Start the development server:
+   Note that `07-configure-rls.sql` leaves the database readable and writable **only for authenticated users**, so the app requires a login (see step 4).
+
+4. Create the first user. There is no sign-up screen: accounts are created from the dashboard. Go to **Authentication → Users → Add user**, set an email and password, and enable **Auto Confirm User** (otherwise the account stays pending email confirmation and the login will reject it).
+
+5. Start the development server:
 
    ```
    pnpm dev
@@ -74,7 +78,7 @@ Order and inventory management for an electrical supplies business: products, cu
 ## Known caveats
 
 - **The SQL scripts are not a faithful description of the live database.** `scripts/06-restructure-database.sql` defines `productos.precio_costo`, but the live table does not have that column. Verify against the live schema before trusting a script.
-- **There is no authentication and Row Level Security is `USING (true)`** (see `scripts/07-configure-rls.sql`). The anon key ships in the client bundle, so anyone who extracts it can read and write every table. Treat this as a development-only posture until authentication and real RLS policies exist.
+- **The database is closed to anonymous access.** `scripts/07-configure-rls.sql` enables RLS and grants access only to the `authenticated` role, so the anon key that ships in the client bundle — and that anyone can extract — reads nothing and writes nothing. The login screen is experience only; the real boundary is RLS. The script is idempotent, so re-running it is also the migration path for a database created before it was fixed. The model in place is a single business with one shared login: every authenticated user sees everything. Splitting data per user would require owner columns and adjusted policies.
 - Dates and currency are formatted for `es-AR`.
 - The original project was generated on v0.app; this repository may still receive changes from there.
 
