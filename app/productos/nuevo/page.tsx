@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
+import { ARTICULO_NUMERO_MAX_LENGTH } from "@/lib/types"
 import type { Categoria, Imagen, Proveedor } from "@/lib/types"
 
 export default function NuevoProductoPage() {
@@ -88,6 +89,16 @@ export default function NuevoProductoPage() {
     try {
       // El número de artículo es texto (VARCHAR) en la base, no un número
       const articuloNumero = formData.articulo_numero.trim()
+
+      if (articuloNumero.length > ARTICULO_NUMERO_MAX_LENGTH) {
+        toast({
+          title: "Error",
+          description: `El número de artículo no puede superar los ${ARTICULO_NUMERO_MAX_LENGTH} caracteres`,
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
 
       // Verificar si el número de artículo ya existe
       const productos = await Database.getProductos()
@@ -188,7 +199,9 @@ export default function NuevoProductoPage() {
                 <Label htmlFor="articulo_numero">Número de Artículo *</Label>
                 <Input
                   id="articulo_numero"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={ARTICULO_NUMERO_MAX_LENGTH}
                   value={formData.articulo_numero}
                   onChange={(e) => handleChange("articulo_numero", e.target.value)}
                   placeholder="Ej: 1001"

@@ -1,5 +1,8 @@
 // Tipos base para el sistema de gestión de inventario
 
+// Largo máximo de productos.articulo_numero (VARCHAR(10) en la base)
+export const ARTICULO_NUMERO_MAX_LENGTH = 10
+
 export interface Proveedor {
   proveedor_id: number
   proveedor_nombre: string

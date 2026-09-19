@@ -1,3 +1,4 @@
+import { ARTICULO_NUMERO_MAX_LENGTH } from "./types"
 import type { ProductoNuevo, Proveedor, Categoria, Imagen } from "./types"
 
 interface ExcelRow {
@@ -65,6 +66,7 @@ export async function parseExcelToProductos(
     descripcion: ["desc", "descripcion", "descripciom", "description", "producto", "nombre"],
     codigo: ["cod", "codigo", "código", "code", "producto_codigo"],
     proveedor: ["proveedor", "provider", "prov", "proveedor_id", "supplier"],
+    categoria: ["categoría", "categoria", "category", "rubro"],
   }
 
   rows.forEach((row, index) => {
@@ -85,6 +87,13 @@ export async function parseExcelToProductos(
 
       if (!articuloNumero) {
         errores.push(`Fila ${index + 2}: Número de artículo faltante o inválido`)
+        return
+      }
+
+      if (articuloNumero.length > ARTICULO_NUMERO_MAX_LENGTH) {
+        errores.push(
+          `Fila ${index + 2}: El número de artículo "${articuloNumero}" supera los ${ARTICULO_NUMERO_MAX_LENGTH} caracteres permitidos`,
+        )
         return
       }
 
@@ -145,15 +154,49 @@ export async function parseExcelToProductos(
         }
       }
 
+      let categoria: Categoria = categoriaGeneral
+      for (const key of Object.keys(row)) {
+        const keyLower = key.toLowerCase().trim()
+        if (columnMappings.categoria.some((mapping) => keyLower.includes(mapping))) {
+          const value = row[key]
+          if (value !== null && value !== undefined && value !== "") {
+            const categoriaValue = String(value).trim()
+
+            const categoriaId = Number(categoriaValue)
+            if (!isNaN(categoriaId)) {
+              const foundById = categorias.find((c) => c.id === categoriaId)
+              if (foundById) {
+                categoria = foundById
+                break
+              }
+            }
+
+            const foundByName =
+              categorias.find((c) => c.nombre.toLowerCase() === categoriaValue.toLowerCase()) ||
+              categorias.find((c) => c.nombre.toLowerCase().includes(categoriaValue.toLowerCase()))
+
+            if (foundByName) {
+              categoria = foundByName
+              break
+            }
+
+            errores.push(
+              `Fila ${index + 2}: Categoría "${categoriaValue}" no encontrada; se usó "${categoriaGeneral.nombre}"`,
+            )
+            break
+          }
+        }
+      }
+
       const producto: ProductoNuevo = {
         articulo_numero: articuloNumero,
         producto_codigo: productoCodigo,
         descripcion: descripcion,
         proveedor_id: proveedor.proveedor_id,
-        categoria_id: categoriaGeneral.id,
+        categoria_id: categoria.id,
         img_id: imagenGeneral.id,
         proveedor: proveedor,
-        categoria: categoriaGeneral,
+        categoria: categoria,
         imagen: imagenGeneral,
       }
 
