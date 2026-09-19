@@ -79,6 +79,54 @@ export interface Pedido {
   productos: ProductoPedido[]
 }
 
+// Contenido de ReporteAutomatico.reportes, tal como lo arman report-scheduler
+// y report-historical-generator.
+export interface ReporteData {
+  general: {
+    fecha_corte: string
+    resumen: {
+      total_pedidos: number
+      total_productos: number
+      total_clientes: number
+      fecha_inicio: string
+      fecha_fin: string
+    }
+    // La sección "general" guarda los pedidos crudos (ver generateGeneralReport)
+    pedidos: Pedido[]
+  }
+  productos_por_proveedor: {
+    fecha_corte: string
+    proveedores: Array<{
+      proveedor_id: number
+      proveedor_nombre: string
+      productos: Array<{
+        articulo_numero: number
+        producto_codigo: string
+        descripcion: string
+        unidad_medida: string
+        cantidad_total: number
+      }>
+      total_productos: number
+    }>
+    total_proveedores: number
+  }
+  pedidos: {
+    fecha_corte: string
+    pedidos: Array<{
+      pedido_id: number
+      cliente_nombre: string
+      cliente_codigo: string | number
+      fecha_pedido: string
+      productos: Array<{
+        descripcion: string
+        cantidad: number
+        unidad_medida: string
+      }>
+    }>
+    total_pedidos: number
+  }
+}
+
 export interface ReporteAutomatico {
   id: string
   tipo: "automatico" | "manual"
@@ -86,7 +134,7 @@ export interface ReporteAutomatico {
   fecha_inicio_periodo: string
   fecha_fin_periodo: string
   pedidos_incluidos: number[]
-  reportes: any
+  reportes: ReporteData
   created_at: string
   updated_at: string
 }

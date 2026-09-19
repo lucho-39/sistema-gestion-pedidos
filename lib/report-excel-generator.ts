@@ -1,51 +1,8 @@
 import * as XLSX from "xlsx"
-import type { Pedido, ProductoPedido, ReporteAutomatico } from "./types"
+import type { Pedido, ProductoPedido, ReporteAutomatico, ReporteData } from "./types"
 
-export interface ReporteData {
-  general: {
-    fecha_corte: string
-    resumen: {
-      total_pedidos: number
-      total_productos: number
-      total_clientes: number
-      fecha_inicio: string
-      fecha_fin: string
-    }
-    // La sección "general" guarda los pedidos crudos (ver generateGeneralReport)
-    pedidos: Pedido[]
-  }
-  productos_por_proveedor: {
-    fecha_corte: string
-    proveedores: Array<{
-      proveedor_id: number
-      proveedor_nombre: string
-      productos: Array<{
-        articulo_numero: number
-        producto_codigo: string
-        descripcion: string
-        unidad_medida: string
-        cantidad_total: number
-      }>
-      total_productos: number
-    }>
-    total_proveedores: number
-  }
-  pedidos: {
-    fecha_corte: string
-    pedidos: Array<{
-      pedido_id: number
-      cliente_nombre: string
-      cliente_codigo: string | number
-      fecha_pedido: string
-      productos: Array<{
-        descripcion: string
-        cantidad: number
-        unidad_medida: string
-      }>
-    }>
-    total_pedidos: number
-  }
-}
+// Las hojas se arman como matrices de celdas de texto o numero.
+type CeldaExcel = string | number
 
 type ProveedorReporte = ReporteData["productos_por_proveedor"]["proveedores"][number]
 type ProductoDeProveedorReporte = ProveedorReporte["productos"][number]
@@ -65,7 +22,7 @@ export async function generateExcelFromReporte(
     const filename = `reporte_${tipo}_${timestamp}.xlsx`
 
     if (tipo === "general") {
-      const resumenData: any[][] = [
+      const resumenData: CeldaExcel[][] = [
         ["Reporte General"],
         [""],
         ["Fecha de Generación", new Date(reporte.fecha_generacion).toLocaleString("es-AR")],
@@ -82,7 +39,7 @@ export async function generateExcelFromReporte(
       const resumenWS = XLSX.utils.aoa_to_sheet(resumenData)
       XLSX.utils.book_append_sheet(workbook, resumenWS, "Resumen")
 
-      const pedidosData: any[][] = [
+      const pedidosData: CeldaExcel[][] = [
         ["ID Pedido", "Código Cliente", "Cliente", "Fecha Pedido", "Producto", "Cantidad", "Unidad", "Proveedor"],
       ]
 
@@ -117,7 +74,7 @@ export async function generateExcelFromReporte(
       XLSX.utils.book_append_sheet(workbook, pedidosWS, "Pedidos Detallados")
     } else if (tipo === "productos_por_proveedor") {
       reporte.reportes.productos_por_proveedor.proveedores.forEach((proveedor: ProveedorReporte, index: number) => {
-        const worksheetData: any[][] = [
+        const worksheetData: CeldaExcel[][] = [
           [`Proveedor: ${proveedor.proveedor_nombre}`],
           [""],
           ["Artículo", "Código Proveedor", "Descripción", "Unidad", "Cantidad Total"],
@@ -149,7 +106,7 @@ export async function generateExcelFromReporte(
         XLSX.utils.book_append_sheet(workbook, ws, sheetName)
       })
 
-      const resumenData: any[][] = [
+      const resumenData: CeldaExcel[][] = [
         ["Resumen por Proveedores"],
         [""],
         ["Proveedor", "Total Productos", "Total Cantidad"],
@@ -166,7 +123,7 @@ export async function generateExcelFromReporte(
       const resumenWS = XLSX.utils.aoa_to_sheet(resumenData)
       XLSX.utils.book_append_sheet(workbook, resumenWS, "Resumen Proveedores")
     } else if (tipo === "pedidos") {
-      const pedidosData: any[][] = [
+      const pedidosData: CeldaExcel[][] = [
         ["ID Pedido", "Código Cliente", "Cliente", "Fecha", "Producto", "Cantidad", "Unidad"],
       ]
 

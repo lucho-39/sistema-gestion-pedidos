@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   ArrowLeft,
   Download,
@@ -54,6 +54,28 @@ export default function ReportesPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const { toast } = useToast()
 
+  const loadReportes = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const reportes = await Database.getReportesAutomaticos()
+
+      const automaticos = reportes.filter((r) => r.tipo === "automatico")
+      const manuales = reportes.filter((r) => r.tipo === "manual")
+
+      setReportesAutomaticos(automaticos)
+      setReportesManuales(manuales)
+    } catch (error) {
+      console.error("Error loading reportes:", error)
+      toast({
+        title: "Error",
+        description: "Error al cargar los reportes",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [toast])
+
   useEffect(() => {
     loadReportes()
     initializeScheduler()
@@ -84,29 +106,7 @@ export default function ReportesPage() {
       window.removeEventListener("schedulerStatusUpdate", handleStatusUpdate as EventListener)
       window.removeEventListener("reportGenerated", handleReportGenerated as EventListener)
     }
-  }, [toast])
-
-  const loadReportes = async () => {
-    try {
-      setIsLoading(true)
-      const reportes = await Database.getReportesAutomaticos()
-
-      const automaticos = reportes.filter((r) => r.tipo === "automatico")
-      const manuales = reportes.filter((r) => r.tipo === "manual")
-
-      setReportesAutomaticos(automaticos)
-      setReportesManuales(manuales)
-    } catch (error) {
-      console.error("Error loading reportes:", error)
-      toast({
-        title: "Error",
-        description: "Error al cargar los reportes",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  }, [loadReportes, toast])
 
   const initializeScheduler = () => {
     reportAutoScheduler.start()

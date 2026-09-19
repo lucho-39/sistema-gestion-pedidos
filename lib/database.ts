@@ -1,5 +1,23 @@
 import { supabase, isSupabaseConfigured } from "./supabase"
-import type { Producto, Cliente, Pedido, Proveedor, Categoria, Imagen } from "./types"
+import type {
+  Producto,
+  ProductoNuevo,
+  Cliente,
+  Pedido,
+  Proveedor,
+  Categoria,
+  Imagen,
+  ReporteAutomatico,
+} from "./types"
+
+// Fila cruda de pedido_productos tal como la devuelve la base.
+interface FilaPedidoProducto {
+  id: number
+  pedido_id: number
+  producto_id: number
+  cantidad: number
+  created_at?: string
+}
 
 export class Database {
   static async checkTablesExist(): Promise<{ exists: boolean; missingTables: string[] }> {
@@ -389,7 +407,7 @@ export class Database {
         return false
       }
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
       }
 
@@ -427,7 +445,7 @@ export class Database {
     }
   }
 
-  static async createProductos(productos: any[]): Promise<Producto[]> {
+  static async createProductos(productos: ProductoNuevo[]): Promise<Producto[]> {
     try {
       if (!isSupabaseConfigured()) {
         throw new Error("Database not configured")
@@ -513,7 +531,7 @@ export class Database {
         throw new Error("Database not configured")
       }
 
-      const insertData: any = {
+      const insertData: Record<string, unknown> = {
         cliente_codigo: cliente.cliente_codigo,
         nombre: cliente.nombre,
         domicilio: cliente.domicilio,
@@ -540,7 +558,7 @@ export class Database {
         return false
       }
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         ...cliente,
         updated_at: new Date().toISOString(),
       }
@@ -574,14 +592,14 @@ export class Database {
     }
   }
 
-  static async createClientes(clientes: any[]): Promise<Cliente[]> {
+  static async createClientes(clientes: Omit<Cliente, "cliente_id" | "created_at" | "updated_at">[]): Promise<Cliente[]> {
     try {
       if (!isSupabaseConfigured()) {
         throw new Error("Database not configured")
       }
 
       const insertData = clientes.map((c) => {
-        const data: any = {
+        const data: Record<string, unknown> = {
           cliente_codigo: c.cliente_codigo,
           nombre: c.nombre,
           domicilio: c.domicilio,
@@ -643,7 +661,7 @@ export class Database {
       const clientesMap = new Map((clientesData || []).map((c) => [c.cliente_id, c]))
       const productosMap = new Map(productos.map((p) => [p.producto_id, p]))
 
-      const pedidoProductosMap = new Map<number, any[]>()
+      const pedidoProductosMap = new Map<number, FilaPedidoProducto[]>()
       ;(pedidoProductosData || []).forEach((pp) => {
         if (!pedidoProductosMap.has(pp.pedido_id)) {
           pedidoProductosMap.set(pp.pedido_id, [])
@@ -840,7 +858,7 @@ export class Database {
         return false
       }
 
-      const updateData: any = { updated_at: new Date().toISOString() }
+      const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
       if (pedido.cliente_id) updateData.cliente_id = pedido.cliente_id
       if (pedido.fecha_pedido) updateData.fecha_pedido = pedido.fecha_pedido
 
@@ -953,7 +971,7 @@ export class Database {
   // ============================================
   // REPORTES
   // ============================================
-  static async getReportesAutomaticos(): Promise<any[]> {
+  static async getReportesAutomaticos(): Promise<ReporteAutomatico[]> {
     try {
       const stored = localStorage.getItem("reportes_automaticos")
       const reportes = stored ? JSON.parse(stored) : []
@@ -964,7 +982,7 @@ export class Database {
     }
   }
 
-  static async createReporteAutomatico(reporte: any): Promise<any | null> {
+  static async createReporteAutomatico(reporte: ReporteAutomatico): Promise<ReporteAutomatico | null> {
     try {
       const existing = await this.getReportesAutomaticos()
       const updated = [reporte, ...existing]
@@ -976,7 +994,7 @@ export class Database {
     }
   }
 
-  static async saveReporteAutomatico(reporte: any): Promise<boolean> {
+  static async saveReporteAutomatico(reporte: ReporteAutomatico): Promise<boolean> {
     const result = await this.createReporteAutomatico(reporte)
     return result !== null
   }

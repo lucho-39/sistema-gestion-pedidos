@@ -68,7 +68,7 @@ export interface DatabaseReporteSemanal {
   id: number
   tipo_reporte: string
   fecha_corte: string
-  datos: any
+  datos: Record<string, unknown>
   created_at?: string
   updated_at?: string
 }

@@ -1,7 +1,10 @@
 import * as XLSX from "xlsx"
 
+// Valores que devuelve sheet_to_json para las columnas que usa este importador.
+type ValorCelda = string | number | null
+
 interface ClienteRow {
-  [key: string]: any
+  [key: string]: ValorCelda | undefined
 }
 
 export interface ParsedCliente {
@@ -27,7 +30,7 @@ export async function parseClientesExcel(file: File): Promise<ParsedCliente[]> {
 
         for (const row of rows) {
           // Buscar columnas de forma flexible (mayúsculas/minúsculas)
-          const getColumnValue = (possibleNames: string[]): any => {
+          const getColumnValue = (possibleNames: string[]): ValorCelda | undefined => {
             for (const name of possibleNames) {
               for (const key of Object.keys(row)) {
                 if (key.toLowerCase().includes(name.toLowerCase())) {
@@ -52,7 +55,7 @@ export async function parseClientesExcel(file: File): Promise<ParsedCliente[]> {
           // Combinar domicilio y localidad
           let domicilioCompleto = domicilio?.toString() || ""
           if (localidad) {
-            domicilioCompleto += domicilioCompleto ? `, ${localidad}` : localidad
+            domicilioCompleto += domicilioCompleto ? `, ${localidad}` : String(localidad)
           }
 
           clientes.push({

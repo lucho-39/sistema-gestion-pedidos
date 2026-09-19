@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save, Trash2, Search, AlertCircle } from "lucide-react"
@@ -35,11 +35,7 @@ export default function EditarPedidoPage() {
   const [showClienteDropdown, setShowClienteDropdown] = useState(false)
   const [showProductoDropdown, setShowProductoDropdown] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [params.id])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true)
 
@@ -92,7 +88,11 @@ export default function EditarPedidoPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params.id, router, toast])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const filteredClientes = clientes.filter(
     (cliente) =>

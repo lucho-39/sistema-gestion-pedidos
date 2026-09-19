@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { Plus, Search, Eye, Edit, Trash2, Calendar, User, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,15 +18,7 @@ export default function PedidosPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    loadPedidos()
-  }, [])
-
-  useEffect(() => {
-    filterPedidos()
-  }, [searchTerm, pedidos])
-
-  const loadPedidos = async () => {
+  const loadPedidos = useCallback(async () => {
     try {
       setIsLoading(true)
       const data = await Database.getPedidos()
@@ -41,9 +33,9 @@ export default function PedidosPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [toast])
 
-  const filterPedidos = () => {
+  const filterPedidos = useCallback(() => {
     if (!searchTerm.trim()) {
       setFilteredPedidos(pedidos)
       return
@@ -72,7 +64,15 @@ export default function PedidosPage() {
     })
 
     setFilteredPedidos(filtered)
-  }
+  }, [searchTerm, pedidos])
+
+  useEffect(() => {
+    loadPedidos()
+  }, [loadPedidos])
+
+  useEffect(() => {
+    filterPedidos()
+  }, [filterPedidos])
 
   const handleDelete = async (id: number) => {
     if (!confirm("¿Estás seguro de que quieres eliminar este pedido?")) {

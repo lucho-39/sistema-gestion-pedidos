@@ -121,7 +121,7 @@ export default function ImportarProductosPage() {
           }
 
           const headers = jsonData[0] as string[]
-          const rows = jsonData.slice(1) as any[][]
+          const rows = jsonData.slice(1) as unknown[][]
 
           console.log("Headers found:", headers)
           console.log(`Data rows: ${rows.length}`)
@@ -129,7 +129,7 @@ export default function ImportarProductosPage() {
           const excelRows = rows
             .filter((row) => row.some((cell) => cell !== null && cell !== undefined && cell !== ""))
             .map((row, rowIndex) => {
-              const obj: any = {}
+              const obj: Record<string, unknown> = {}
               headers.forEach((header, index) => {
                 if (header && row[index] !== undefined) {
                   obj[header.toString().trim()] = row[index]

@@ -2,7 +2,7 @@ import { ARTICULO_NUMERO_MAX_LENGTH } from "./types"
 import type { ProductoNuevo, Proveedor, Categoria, Imagen } from "./types"
 
 interface ExcelRow {
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface ParseResult {
