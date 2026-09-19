@@ -182,7 +182,7 @@ export default function ReportesPage() {
 
   const downloadExcel = async (reporte: ReporteAutomatico, tipo: "general" | "productos_por_proveedor" | "pedidos") => {
     try {
-      generateExcelFromReporte(reporte, tipo)
+      await generateExcelFromReporte(reporte, tipo)
       toast({
         title: "Descarga Iniciada",
         description: `Se ha iniciado la descarga del reporte ${tipo}`,
