@@ -36,24 +36,26 @@ ALTER TABLE IF EXISTS clientes         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS pedidos          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS pedido_productos ENABLE ROW LEVEL SECURITY;
 
--- 2) Borrar las politicas permisivas de la version anterior
-DROP POLICY IF EXISTS "Permitir todo en proveedores"      ON proveedores;
-DROP POLICY IF EXISTS "Permitir todo en categorias"       ON categorias;
-DROP POLICY IF EXISTS "Permitir todo en imagenes"         ON imagenes;
-DROP POLICY IF EXISTS "Permitir todo en productos"        ON productos;
-DROP POLICY IF EXISTS "Permitir todo en clientes"         ON clientes;
-DROP POLICY IF EXISTS "Permitir todo en pedidos"          ON pedidos;
-DROP POLICY IF EXISTS "Permitir todo en pedido_productos" ON pedido_productos;
+-- 2) Borrar TODAS las politicas existentes en estas tablas, sin importar el
+--    nombre. Si alguien creo politicas a mano desde el dashboard con otro
+--    nombre, un DROP por nombre no las tocaria y el agujero seguiria abierto.
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT schemaname, tablename, policyname
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename IN (
+          'proveedores', 'categorias', 'imagenes', 'productos',
+          'clientes', 'pedidos', 'pedido_productos'
+      )
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', r.policyname, r.schemaname, r.tablename);
+  END LOOP;
+END $$;
 
 -- 3) Acceso solo para usuarios autenticados
-DROP POLICY IF EXISTS "authenticated_all_proveedores"      ON proveedores;
-DROP POLICY IF EXISTS "authenticated_all_categorias"       ON categorias;
-DROP POLICY IF EXISTS "authenticated_all_imagenes"         ON imagenes;
-DROP POLICY IF EXISTS "authenticated_all_productos"        ON productos;
-DROP POLICY IF EXISTS "authenticated_all_clientes"         ON clientes;
-DROP POLICY IF EXISTS "authenticated_all_pedidos"          ON pedidos;
-DROP POLICY IF EXISTS "authenticated_all_pedido_productos" ON pedido_productos;
-
 CREATE POLICY "authenticated_all_proveedores"      ON proveedores      FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "authenticated_all_categorias"       ON categorias       FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "authenticated_all_imagenes"         ON imagenes         FOR ALL TO authenticated USING (true) WITH CHECK (true);
