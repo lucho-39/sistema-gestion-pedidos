@@ -1,17 +1,23 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
-import { Navigation } from "@/components/navigation"
+import { AuthGate } from "@/components/auth-gate"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Sistema de Gestión - Inventario y Pedidos",
   description: "Aplicación para gestionar productos, clientes, pedidos y reportes",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   generator: "v0.app",
+}
+
+// En Next 15 el viewport va en su propio export, no dentro de metadata.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({
@@ -22,8 +28,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
-        <Navigation />
-        <main className="min-h-screen bg-gray-50 pb-24 md:pb-0">{children}</main>
+        <AuthGate>{children}</AuthGate>
         <Toaster />
       </body>
     </html>

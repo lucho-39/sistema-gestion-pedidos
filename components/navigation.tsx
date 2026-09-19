@@ -1,9 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Home, Package, Users, Truck, ShoppingCart, BarChart3, TrendingUp } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { Home, Package, Users, Truck, ShoppingCart, BarChart3, TrendingUp, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase"
 
 const navigationItems = [
   {
@@ -45,6 +46,12 @@ const navigationItems = [
 
 export function Navigation() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const cerrarSesion = async () => {
+    await supabase.auth.signOut()
+    router.replace("/login")
+  }
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -84,6 +91,14 @@ export function Navigation() {
                   </Link>
                 )
               })}
+              <button
+                type="button"
+                onClick={cerrarSesion}
+                className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Salir</span>
+              </button>
             </div>
           </div>
         </div>
