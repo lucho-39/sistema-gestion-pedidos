@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save, Trash2, Search, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,14 +15,8 @@ import type { Pedido, Cliente, Producto, ProductoPedido } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-interface PedidoProducto {
-  producto_id: number
-  articulo_numero: number | null
-  cantidad: number
-  producto?: Producto
-}
-
-export default function EditarPedidoPage({ params }: { params: { id: string } }) {
+export default function EditarPedidoPage() {
+  const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
   const [pedido, setPedido] = useState<Pedido | null>(null)
@@ -51,7 +45,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
       setIsLoading(true)
 
       const [pedidoData, clientesData, productosData] = await Promise.all([
-        Database.getPedidoById(Number.parseInt(params.id)),
+        Database.getPedidoById(Number(params.id)),
         Database.getClientes(),
         Database.getProductos(),
       ])
@@ -184,7 +178,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
     try {
       setIsSaving(true)
 
-      const success = await Database.updatePedido(Number.parseInt(params.id), {
+      const success = await Database.updatePedido(Number(params.id), {
         cliente_id: clienteId,
         fecha_pedido: fechaPedido,
         productos: pedidoProductos.map((pp) => ({
