@@ -105,8 +105,9 @@ export function Navigation() {
       </nav>
 
       {/* Mobile Navigation - Bottom Bar */}
+      {/* 7 items + Salir = 8: entran justo en 4 columnas x 2 filas */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-inset-bottom shadow-lg">
-        <div className="grid grid-cols-6 h-20">
+        <div className="grid grid-cols-4">
           {navigationItems.map((item) => {
             const Icon = item.icon
             return (
@@ -114,7 +115,7 @@ export function Navigation() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center space-y-1 transition-colors active:scale-95 touch-manipulation",
+                  "flex flex-col items-center justify-center space-y-1 py-2 transition-colors active:scale-95 touch-manipulation",
                   isActive(item.href)
                     ? "text-blue-600 bg-blue-50"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
@@ -125,11 +126,19 @@ export function Navigation() {
               </Link>
             )
           })}
+          <button
+            type="button"
+            onClick={cerrarSesion}
+            className="flex flex-col items-center justify-center space-y-1 py-2 text-gray-600 transition-colors active:scale-95 touch-manipulation hover:text-gray-900 hover:bg-gray-50"
+          >
+            <LogOut className="h-6 w-6" />
+            <span className="text-[10px] font-medium leading-tight">Salir</span>
+          </button>
         </div>
       </nav>
 
-      {/* Mobile Bottom Padding - Updated height to match navigation */}
-      <div className="md:hidden h-20" />
+      {/* Mobile Bottom Padding - altura de la barra de dos filas */}
+      <div className="md:hidden h-32" />
     </>
   )
 }
