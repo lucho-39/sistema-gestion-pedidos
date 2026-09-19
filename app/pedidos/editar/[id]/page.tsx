@@ -290,7 +290,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
                           >
                             <div className="font-medium">{cliente.nombre}</div>
                             <div className="text-sm text-gray-500">
-                              Código: {cliente.cliente_codigo} • CUIL: {cliente.CUIL}
+                              Código: {cliente.cliente_codigo} • CUIL: {cliente.cuil}
                             </div>
                           </div>
                         ))
@@ -349,7 +349,7 @@ export default function EditarPedidoPage({ params }: { params: { id: string } })
                             <div className="font-medium">{producto.descripcion}</div>
                             <div className="text-sm text-gray-500">
                               Art: {producto.articulo_numero} • Código: {producto.producto_codigo} •{" "}
-                              {producto.unidad_medida}
+                              {producto.categoria?.unidad || "unidad"}
                             </div>
                           </div>
                         ))

@@ -89,7 +89,7 @@ export default function ImportarClientesPage() {
             nombre: cliente.nombre,
             domicilio: cliente.domicilio,
             telefono: cliente.telefono,
-            CUIL: cliente.CUIL,
+            cuil: cliente.CUIL,
           })
 
           if (newCliente) {

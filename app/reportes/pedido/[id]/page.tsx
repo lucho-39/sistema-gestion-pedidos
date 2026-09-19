@@ -132,7 +132,7 @@ export default function DetallePedidoPage() {
             <div>
               <p className="text-sm text-gray-600">📍 {pedido.cliente?.domicilio || "Domicilio no disponible"}</p>
               <p className="text-sm text-gray-600">📞 {pedido.cliente?.telefono || "Teléfono no disponible"}</p>
-              <p className="text-sm text-gray-600">🆔 CUIL: {pedido.cliente?.CUIL || "CUIL no disponible"}</p>
+              <p className="text-sm text-gray-600">🆔 CUIL: {pedido.cliente?.cuil || "CUIL no disponible"}</p>
             </div>
           </CardContent>
         </Card>
@@ -181,7 +181,7 @@ export default function DetallePedidoPage() {
                       </p>
                     </div>
                     <Badge variant="outline" className="ml-2">
-                      {producto.cantidad || 0} {producto.producto?.unidad_medida || "unidad"}
+                      {producto.cantidad || 0} {producto.producto?.categoria?.unidad || "unidad"}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-600">

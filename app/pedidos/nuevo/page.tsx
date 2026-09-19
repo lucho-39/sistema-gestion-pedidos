@@ -212,7 +212,7 @@ export default function NuevoPedidoPage() {
       cliente.cliente_codigo.toString().includes(searchTerm) ||
       cliente.cliente_id.toString().includes(searchTerm) ||
       (cliente.telefono && cliente.telefono.toLowerCase().includes(searchTerm)) ||
-      (cliente.CUIL && cliente.CUIL.toLowerCase().includes(searchTerm))
+      (cliente.cuil && cliente.cuil.toLowerCase().includes(searchTerm))
     )
   })
 
@@ -314,8 +314,8 @@ export default function NuevoPedidoPage() {
                             </p>
                             <p className="text-xs text-gray-500">
                               {cliente.telefono && `Tel: ${cliente.telefono}`}
-                              {cliente.telefono && cliente.CUIL && " • "}
-                              {cliente.CUIL && `CUIL: ${cliente.CUIL}`}
+                              {cliente.telefono && cliente.cuil && " • "}
+                              {cliente.cuil && `CUIL: ${cliente.cuil}`}
                             </p>
                           </div>
                           {clienteSeleccionado?.cliente_id === cliente.cliente_id && (
@@ -388,7 +388,7 @@ export default function NuevoPedidoPage() {
                       <p className="text-sm font-medium">
                         #{producto.articulo_numero} - {producto.descripcion}
                       </p>
-                      <p className="text-xs text-gray-500">{producto.unidad_medida}</p>
+                      <p className="text-xs text-gray-500">{producto.categoria?.unidad || "unidad"}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Input

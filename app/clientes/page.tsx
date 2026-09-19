@@ -50,7 +50,7 @@ export default function ClientesPage() {
     const filtered = clientes.filter(
       (cliente) =>
         (cliente.nombre || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (cliente.CUIL || "").includes(searchTerm) ||
+        (cliente.cuil || "").includes(searchTerm) ||
         (cliente.telefono || "").includes(searchTerm) ||
         (cliente.cliente_codigo || "").toString().includes(searchTerm),
     )
@@ -244,7 +244,7 @@ export default function ClientesPage() {
                     <Phone className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate">{cliente.telefono}</span>
                   </div>
-                  <p className="text-xs text-gray-500 truncate">CUIL: {cliente.CUIL}</p>
+                  <p className="text-xs text-gray-500 truncate">CUIL: {cliente.cuil}</p>
                 </CardContent>
               </Card>
             ))}
