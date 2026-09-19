@@ -2,23 +2,6 @@ import { supabase, isSupabaseConfigured } from "./supabase"
 import type { Producto, Cliente, Pedido, Proveedor, Categoria, Imagen } from "./types"
 
 export class Database {
-  private static cuilColumnExists: boolean | null = null
-
-  private static async checkCuilColumn(): Promise<boolean> {
-    if (this.cuilColumnExists !== null) {
-      return this.cuilColumnExists
-    }
-
-    try {
-      const { error } = await supabase.from("clientes").select("cuil").limit(1)
-      this.cuilColumnExists = !error
-      return this.cuilColumnExists
-    } catch {
-      this.cuilColumnExists = false
-      return false
-    }
-  }
-
   static async checkTablesExist(): Promise<{ exists: boolean; missingTables: string[] }> {
     const requiredTables = [
       "proveedores",
@@ -482,12 +465,10 @@ export class Database {
         return []
       }
 
-      const hasCuil = await this.checkCuilColumn()
-      const selectColumns = hasCuil
-        ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
-        : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
-
-      const { data, error } = await supabase.from("clientes").select(selectColumns).order("nombre")
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
+        .order("nombre")
 
       if (error) {
         console.error("Error fetching clientes:", error)
@@ -510,12 +491,11 @@ export class Database {
         return null
       }
 
-      const hasCuil = await this.checkCuilColumn()
-      const selectColumns = hasCuil
-        ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
-        : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
-
-      const { data, error } = await supabase.from("clientes").select(selectColumns).eq("cliente_id", id).single()
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
+        .eq("cliente_id", id)
+        .single()
 
       if (error) throw error
       return data
@@ -533,8 +513,6 @@ export class Database {
         throw new Error("Database not configured")
       }
 
-      const hasCuil = await this.checkCuilColumn()
-
       const insertData: any = {
         cliente_codigo: cliente.cliente_codigo,
         nombre: cliente.nombre,
@@ -542,7 +520,7 @@ export class Database {
         telefono: cliente.telefono,
       }
 
-      if (hasCuil && cliente.cuil) {
+      if (cliente.cuil) {
         insertData.cuil = cliente.cuil
       }
 
@@ -562,15 +540,9 @@ export class Database {
         return false
       }
 
-      const hasCuil = await this.checkCuilColumn()
-
       const updateData: any = {
         ...cliente,
         updated_at: new Date().toISOString(),
-      }
-
-      if (!hasCuil) {
-        delete updateData.cuil
       }
 
       delete updateData.cliente_id
@@ -608,8 +580,6 @@ export class Database {
         throw new Error("Database not configured")
       }
 
-      const hasCuil = await this.checkCuilColumn()
-
       const insertData = clientes.map((c) => {
         const data: any = {
           cliente_codigo: c.cliente_codigo,
@@ -618,7 +588,7 @@ export class Database {
           telefono: c.telefono,
         }
 
-        if (hasCuil && c.cuil) {
+        if (c.cuil) {
           data.cuil = c.cuil
         }
 
@@ -662,12 +632,9 @@ export class Database {
         return []
       }
 
-      const hasCuil = await this.checkCuilColumn()
-      const clienteColumns = hasCuil
-        ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
-        : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
-
-      const { data: clientesData } = await supabase.from("clientes").select(clienteColumns)
+      const { data: clientesData } = await supabase
+        .from("clientes")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
       const { data: pedidoProductosData } = await supabase
         .from("pedido_productos")
         .select("id, pedido_id, producto_id, cantidad, created_at")
@@ -748,14 +715,9 @@ export class Database {
         throw pedidoError
       }
 
-      const hasCuil = await this.checkCuilColumn()
-      const clienteColumns = hasCuil
-        ? "cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at"
-        : "cliente_id, cliente_codigo, nombre, domicilio, telefono, created_at, updated_at"
-
       const { data: clienteData } = await supabase
         .from("clientes")
-        .select(clienteColumns)
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
         .eq("cliente_id", pedidoData.cliente_id)
         .single()
 
