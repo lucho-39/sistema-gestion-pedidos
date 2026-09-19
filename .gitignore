@@ -18,6 +18,7 @@ yarn-error.log*
 
 # env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -25,3 +26,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# testing
+/coverage/
+
+# gentle-ai generated skill registry (contains machine-specific absolute paths)
+.atl/

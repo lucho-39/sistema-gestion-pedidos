@@ -1,30 +1,85 @@
-# Customer data management
+# Sistema de Gestión de Pedidos
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+Order and inventory management for an electrical supplies business: products, customers, orders, weekly automatic reports, and Excel import/export.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/luciano-s-projects-ee35cad1/v0-sistema-gestion-pedidos)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/31UMwE8HlBD)
+## Stack
 
-## Overview
+- Next.js 15.2.8 (App Router), React 19, TypeScript
+- Tailwind CSS with shadcn/ui (Radix primitives)
+- Supabase (Postgres) as the datastore, reached from the browser through `@supabase/supabase-js`
+- `xlsx` for spreadsheet import and export
+- Vitest for tests, ESLint for linting
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## Requirements
 
-## Deployment
+- Node 22 or newer
+- pnpm 10 or newer
 
-Your project is live at:
+## Setup
 
-**[https://vercel.com/luciano-s-projects-ee35cad1/v0-sistema-gestion-pedidos](https://vercel.com/luciano-s-projects-ee35cad1/v0-sistema-gestion-pedidos)**
+1. Install dependencies:
 
-## Build your app
+   ```
+   pnpm install
+   ```
 
-Continue building your app on:
+2. Configure the database credentials:
 
-**[https://v0.app/chat/projects/31UMwE8HlBD](https://v0.app/chat/projects/31UMwE8HlBD)**
+   ```
+   cp .env.example .env.local
+   ```
 
-## How It Works
+   Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from your Supabase project: **Project Settings → API**.
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+3. Create the database schema. Run the files in `scripts/` **in numeric order** against the Supabase SQL editor (or `psql`):
+
+   ```
+   01-create-tables.sql
+   02-seed-data.sql
+   03-update-for-auto-reports.sql
+   04-add-cuil-column.sql
+   05-verify-and-fix-proveedores.sql
+   06-restructure-database.sql
+   07-configure-rls.sql
+   08-fix-null-productos.sql
+   09-create-default-image.sql
+   ```
+
+4. Start the development server:
+
+   ```
+   pnpm dev
+   ```
+
+   Then open http://localhost:3000.
+
+## Scripts
+
+| Command        | What it does                                                  |
+| -------------- | ------------------------------------------------------------- |
+| `pnpm dev`     | Development server with hot reload                            |
+| `pnpm build`   | Production build. **Type errors fail the build.**             |
+| `pnpm start`   | Serve the production build                                    |
+| `pnpm lint`    | ESLint (flat config in `eslint.config.mjs`)                   |
+| `pnpm test`    | Vitest, once                                                   |
+
+## Data model notes
+
+- `productos.articulo_numero` is `VARCHAR(10)`: a **text** code, not a number. Keep leading zeros.
+- The unit of measure lives on `categorias.unidad` (General → `unidad`, Cables → `metro`, Materiales → `kg`). Products do **not** carry their own unit; screens read it from the category.
+- `pedido_productos` is identified by its own `id`. There is no unique constraint on `(pedido_id, producto_id)`, so order lines cannot be upserted and are reconciled by id instead.
+- `clientes.cuil` exists and is nullable.
+- Product creation and order editing send `categoria_id` and `img_id`, both `NOT NULL`. New products use the default image.
+
+## Known caveats
+
+- **The SQL scripts are not a faithful description of the live database.** `scripts/06-restructure-database.sql` defines `productos.precio_costo`, but the live table does not have that column. Verify against the live schema before trusting a script.
+- **There is no authentication and Row Level Security is `USING (true)`** (see `scripts/07-configure-rls.sql`). The anon key ships in the client bundle, so anyone who extracts it can read and write every table. Treat this as a development-only posture until authentication and real RLS policies exist.
+- Dates and currency are formatted for `es-AR`.
+- The original project was generated on v0.app; this repository may still receive changes from there.
+
+## Testing
+
+Tests live next to the code they cover (`lib/*.test.ts`) and run with `pnpm test`.
+
+CI (`.github/workflows/ci.yml`) runs the frozen-lockfile install, the type check, lint, the test suite and the production build on every push to `main` and on pull requests. It needs no secrets: the build works without `.env.local`.
