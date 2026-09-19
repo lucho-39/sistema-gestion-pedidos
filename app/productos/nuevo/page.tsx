@@ -12,37 +12,45 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
-import type { Producto, Proveedor } from "@/lib/types"
+import type { Categoria, Imagen, Proveedor } from "@/lib/types"
 
 export default function NuevoProductoPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [imagenes, setImagenes] = useState<Imagen[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     articulo_numero: "",
     producto_codigo: "",
     descripcion: "",
-    unidad_medida: "unidad",
+    categoria_id: "",
     proveedor_id: "",
   })
 
   useEffect(() => {
-    const loadProveedores = async () => {
+    const loadDatos = async () => {
       try {
-        const loadedProveedores = await Database.getProveedores()
+        const [loadedProveedores, loadedCategorias, loadedImagenes] = await Promise.all([
+          Database.getProveedores(),
+          Database.getCategorias(),
+          Database.getImagenes(),
+        ])
         setProveedores(loadedProveedores)
+        setCategorias(loadedCategorias)
+        setImagenes(loadedImagenes)
       } catch (error) {
-        console.error("Error loading proveedores:", error)
+        console.error("Error loading datos:", error)
         toast({
           title: "Error",
-          description: "Error al cargar los proveedores",
+          description: "Error al cargar proveedores, categorías e imágenes",
           variant: "destructive",
         })
       }
     }
 
-    loadProveedores()
+    loadDatos()
   }, [toast])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,6 +60,15 @@ export default function NuevoProductoPage() {
       toast({
         title: "Error",
         description: "Número de artículo y descripción son obligatorios",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!formData.categoria_id) {
+      toast({
+        title: "Error",
+        description: "Debe seleccionar una categoría",
         variant: "destructive",
       })
       return
@@ -69,9 +86,12 @@ export default function NuevoProductoPage() {
     setIsLoading(true)
 
     try {
+      // El número de artículo es texto (VARCHAR) en la base, no un número
+      const articuloNumero = formData.articulo_numero.trim()
+
       // Verificar si el número de artículo ya existe
       const productos = await Database.getProductos()
-      const articuloExiste = productos.some((p) => p.articulo_numero === Number(formData.articulo_numero))
+      const articuloExiste = productos.some((p) => p.articulo_numero === articuloNumero)
 
       if (articuloExiste) {
         toast({
@@ -81,12 +101,6 @@ export default function NuevoProductoPage() {
         })
         setIsLoading(false)
         return
-      }
-
-      // Determinar unidad de medida automáticamente si contiene "cable"
-      let unidadMedida = formData.unidad_medida
-      if (formData.descripcion.toLowerCase().includes("cable")) {
-        unidadMedida = "metros"
       }
 
       const proveedor = proveedores.find((p) => p.proveedor_id === Number(formData.proveedor_id))
@@ -100,12 +114,25 @@ export default function NuevoProductoPage() {
         return
       }
 
-      const nuevoProducto: Producto = {
-        articulo_numero: Number(formData.articulo_numero),
+      // Todo producto nuevo usa la imagen por defecto (no hay selector de imagen todavía)
+      const imgId = imagenes[0]?.id
+      if (!imgId) {
+        toast({
+          title: "Error",
+          description: "No hay imágenes configuradas. Cargue una imagen antes de crear productos.",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+
+      const nuevoProducto = {
+        articulo_numero: articuloNumero,
         producto_codigo: formData.producto_codigo,
         descripcion: formData.descripcion,
-        unidad_medida: unidadMedida,
-        proveedor: proveedor,
+        categoria_id: Number(formData.categoria_id),
+        img_id: imgId,
+        proveedor_id: proveedor.proveedor_id,
       }
 
       const createdProducto = await Database.createProducto(nuevoProducto)
@@ -189,23 +216,23 @@ export default function NuevoProductoPage() {
               </div>
 
               <div>
-                <Label htmlFor="unidad_medida">Unidad de Medida</Label>
-                <Select value={formData.unidad_medida} onValueChange={(value) => handleChange("unidad_medida", value)}>
+                <Label htmlFor="categoria_id">Categoría *</Label>
+                <Select
+                  value={formData.categoria_id}
+                  onValueChange={(value) => handleChange("categoria_id", value)}
+                >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecciona una categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unidad">Unidad</SelectItem>
-                    <SelectItem value="metros">Metros</SelectItem>
-                    <SelectItem value="kilogramos">Kilogramos</SelectItem>
-                    <SelectItem value="litros">Litros</SelectItem>
+                    {categorias.map((categoria) => (
+                      <SelectItem key={categoria.id} value={categoria.id.toString()}>
+                        {categoria.nombre} ({categoria.unidad})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                {formData.descripcion.toLowerCase().includes("cable") && (
-                  <p className="text-xs text-blue-600 mt-1">
-                    ℹ️ Se detectó "cable" en la descripción. Se asignará "metros" automáticamente.
-                  </p>
-                )}
+                <p className="text-xs text-gray-500 mt-1">La unidad de medida la define la categoría.</p>
               </div>
 
               <div>

@@ -1,11 +1,11 @@
-import type { Producto, Proveedor, Categoria, Imagen } from "./types"
+import type { ProductoNuevo, Proveedor, Categoria, Imagen } from "./types"
 
 interface ExcelRow {
   [key: string]: any
 }
 
 interface ParseResult {
-  productos: Producto[]
+  productos: ProductoNuevo[]
   errores: string[]
 }
 
@@ -15,7 +15,7 @@ export async function parseExcelToProductos(
   categorias: Categoria[],
   imagenes: Imagen[],
 ): Promise<ParseResult> {
-  const productos: Producto[] = []
+  const productos: ProductoNuevo[] = []
   const errores: string[] = []
 
   console.log("Starting parseExcelToProductos with:", {
@@ -71,19 +71,19 @@ export async function parseExcelToProductos(
     try {
       console.log(`Processing row ${index + 1}:`, row)
 
-      let articuloNumero: number | null = null
+      let articuloNumero = ""
       for (const key of Object.keys(row)) {
         const keyLower = key.toLowerCase().trim()
         if (columnMappings.articulo_numero.some((mapping) => keyLower.includes(mapping))) {
           const value = row[key]
           if (value !== null && value !== undefined && value !== "") {
-            articuloNumero = Number(value)
+            articuloNumero = String(value).trim()
             break
           }
         }
       }
 
-      if (!articuloNumero || isNaN(articuloNumero)) {
+      if (!articuloNumero) {
         errores.push(`Fila ${index + 2}: Número de artículo faltante o inválido`)
         return
       }
@@ -117,15 +117,6 @@ export async function parseExcelToProductos(
         }
       }
 
-      let unidadMedida = "unidad"
-      if (descripcion.toLowerCase().includes("cable")) {
-        unidadMedida = "metros"
-      } else if (descripcion.toLowerCase().includes("litro")) {
-        unidadMedida = "litros"
-      } else if (descripcion.toLowerCase().includes("kilo") || descripcion.toLowerCase().includes("kg")) {
-        unidadMedida = "kilogramos"
-      }
-
       let proveedor: Proveedor = proveedorGeneral
       for (const key of Object.keys(row)) {
         const keyLower = key.toLowerCase().trim()
@@ -154,16 +145,16 @@ export async function parseExcelToProductos(
         }
       }
 
-      const producto: Producto = {
+      const producto: ProductoNuevo = {
         articulo_numero: articuloNumero,
         producto_codigo: productoCodigo,
         descripcion: descripcion,
-        unidad_medida: unidadMedida,
         proveedor_id: proveedor.proveedor_id,
         categoria_id: categoriaGeneral.id,
         img_id: imagenGeneral.id,
         proveedor: proveedor,
-        img: imagenGeneral,
+        categoria: categoriaGeneral,
+        imagen: imagenGeneral,
       }
 
       if (!producto.proveedor_id || producto.proveedor_id <= 0) {

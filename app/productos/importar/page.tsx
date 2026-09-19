@@ -12,12 +12,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
 import { parseExcelToProductos } from "@/lib/excel-parser"
-import type { Producto } from "@/lib/types"
+import type { ProductoNuevo } from "@/lib/types"
 
 export default function ImportarProductosPage() {
   const [file, setFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [importedProducts, setImportedProducts] = useState<Producto[]>([])
+  const [importedProducts, setImportedProducts] = useState<ProductoNuevo[]>([])
   const [parseErrors, setParseErrors] = useState<string[]>([])
   const { toast } = useToast()
 
@@ -260,7 +260,6 @@ export default function ImportarProductosPage() {
         articulo_numero: p.articulo_numero,
         producto_codigo: p.producto_codigo || "",
         descripcion: p.descripcion,
-        unidad_medida: p.unidad_medida,
         proveedor_id: p.proveedor_id,
         categoria_id: p.categoria_id,
         img_id: p.img_id,
@@ -384,15 +383,14 @@ export default function ImportarProductosPage() {
                       #{producto.articulo_numero} - {producto.descripcion}
                     </p>
                     <p className="text-gray-600">Código: {producto.producto_codigo || "Sin código"}</p>
-                    <p className="text-gray-600">Unidad: {producto.unidad_medida}</p>
                     <p className="text-indigo-600 text-xs font-medium">
-                      Proveedor: {producto.proveedor.proveedor_id} - {producto.proveedor.proveedor_nombre}
+                      Proveedor: {producto.proveedor?.proveedor_id} - {producto.proveedor?.proveedor_nombre}
                     </p>
                     <p className="text-indigo-600 text-xs font-medium">
-                      Categoría: {producto.categoria_id} - {producto.categoria?.categoria_nombre}
+                      Categoría: {producto.categoria_id} - {producto.categoria?.nombre} ({producto.categoria?.unidad})
                     </p>
                     <p className="text-indigo-600 text-xs font-medium">
-                      Imagen: {producto.img_id} - {producto.img?.img_nombre}
+                      Imagen: {producto.img_id} - {producto.imagen?.txt_alt}
                     </p>
                   </div>
                 ))}

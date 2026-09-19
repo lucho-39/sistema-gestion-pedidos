@@ -39,6 +39,9 @@ export interface Producto {
   proveedor?: Proveedor
 }
 
+// Producto tal como se envía al crear: sin los campos que genera la base
+export type ProductoNuevo = Omit<Producto, "producto_id" | "created_at" | "updated_at">
+
 export interface Cliente {
   cliente_id: number
   cliente_codigo: number

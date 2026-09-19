@@ -287,7 +287,7 @@ export default function PedidosPage() {
                                       {producto.producto?.descripcion || "N/A"}
                                     </span>
                                     <span className="text-gray-500 flex-shrink-0 whitespace-nowrap">
-                                      {producto.cantidad || 0} {producto.producto?.unidad_medida || "u"}
+                                      {producto.cantidad || 0} {producto.producto?.categoria?.unidad || "u"}
                                     </span>
                                   </div>
                                   <div className="text-gray-400 text-[10px] truncate">
