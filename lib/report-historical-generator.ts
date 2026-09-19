@@ -328,6 +328,7 @@ export class ReportHistoricalGenerator {
     const pedidosData = pedidos.map((pedido) => ({
       pedido_id: pedido.pedido_id,
       cliente_nombre: pedido.cliente?.nombre || "N/A",
+      cliente_codigo: pedido.cliente?.cliente_codigo ?? "N/A",
       fecha_pedido: pedido.fecha_pedido,
       productos:
         pedido.productos?.map((pp) => ({
