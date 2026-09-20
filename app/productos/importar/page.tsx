@@ -231,19 +231,29 @@ export default function ImportarProductosPage() {
       const existingProducts = await Database.getProductos()
       console.log(`Found ${existingProducts.length} existing products`)
 
-      const existingNumbers = new Set(existingProducts.map((p) => p.articulo_numero))
-      const duplicates = importedProducts.filter((p) => existingNumbers.has(p.articulo_numero))
+      // Un producto esta repetido si ya existe su numero de articulo O su codigo.
+      // Hay que mirar el codigo tambien porque hay productos que todavia no
+      // tienen numero de articulo (se asigna al facturarlos): sin eso, todos los
+      // vacios se verian iguales entre si y no entraria ninguno.
+      const existingNumbers = new Set(existingProducts.map((p) => p.articulo_numero).filter(Boolean))
+      const existingCodigos = new Set(existingProducts.map((p) => p.producto_codigo).filter(Boolean))
+
+      const esDuplicado = (p: ProductoNuevo) =>
+        (p.articulo_numero ? existingNumbers.has(p.articulo_numero) : false) ||
+        (p.producto_codigo ? existingCodigos.has(p.producto_codigo) : false)
+
+      const duplicates = importedProducts.filter(esDuplicado)
 
       if (duplicates.length > 0) {
-        const duplicateNumbers = duplicates.map((p) => p.articulo_numero).join(", ")
+        const duplicateNumbers = duplicates.map((p) => p.articulo_numero || p.producto_codigo).join(", ")
         toast({
           title: "Productos duplicados encontrados",
-          description: `Los siguientes números de artículo ya existen: ${duplicateNumbers}. Se omitirán estos productos.`,
+          description: `Los siguientes ya existen (por número de artículo o por código): ${duplicateNumbers}. Se omitirán estos productos.`,
           variant: "destructive",
         })
       }
 
-      const newProducts = importedProducts.filter((p) => !existingNumbers.has(p.articulo_numero))
+      const newProducts = importedProducts.filter((p) => !esDuplicado(p))
 
       if (newProducts.length === 0) {
         toast({

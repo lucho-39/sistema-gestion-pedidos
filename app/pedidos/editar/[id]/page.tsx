@@ -341,7 +341,7 @@ export default function EditarPedidoPage() {
                           >
                             <div className="font-medium">{producto.descripcion}</div>
                             <div className="text-sm text-muted-foreground">
-                              Art: {producto.articulo_numero} • Código: {producto.producto_codigo} •{" "}
+                              Art: {producto.articulo_numero || "s/n"} • Código: {producto.producto_codigo} •{" "}
                               {producto.categoria?.unidad || "unidad"}
                             </div>
                           </div>

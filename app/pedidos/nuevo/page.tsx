@@ -364,7 +364,7 @@ export default function NuevoPedidoPage() {
                       onClick={() => agregarProducto(producto)}
                     >
                       <p className="text-sm font-medium">
-                        #{producto.articulo_numero} - {producto.descripcion}
+                        {producto.articulo_numero ? `#${producto.articulo_numero}` : producto.producto_codigo} - {producto.descripcion}
                       </p>
                       <p className="text-xs text-muted-foreground">{producto.producto_codigo}</p>
                     </div>
@@ -384,7 +384,7 @@ export default function NuevoPedidoPage() {
                   <div key={producto.producto_id} className="flex items-center gap-2 p-2 border rounded">
                     <div className="flex-1">
                       <p className="text-sm font-medium">
-                        #{producto.articulo_numero} - {producto.descripcion}
+                        {producto.articulo_numero ? `#${producto.articulo_numero}` : producto.producto_codigo} - {producto.descripcion}
                       </p>
                       <p className="text-xs text-muted-foreground">{producto.categoria?.unidad || "unidad"}</p>
                     </div>

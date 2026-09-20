@@ -98,11 +98,10 @@ export async function parseExcelToProductos(
         }
       }
 
-      if (!articuloNumero) {
-        errores.push(`Fila ${index + 2}: Número de artículo faltante o inválido`)
-        return
-      }
-
+      // El numero de articulo PUEDE venir vacio y es valido: en este negocio es
+      // el numero con el que se factura, y lo asigna el sistema de facturacion
+      // recien cuando el producto se vende. Mientras tanto el producto existe y
+      // se pide con su codigo de proveedor.
       if (articuloNumero.length > ARTICULO_NUMERO_MAX_LENGTH) {
         errores.push(
           `Fila ${index + 2}: El número de artículo "${articuloNumero}" supera los ${ARTICULO_NUMERO_MAX_LENGTH} caracteres permitidos`,

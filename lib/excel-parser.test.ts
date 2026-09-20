@@ -115,11 +115,13 @@ describe("parseExcelToProductos", () => {
       expect(productos[0].articulo_numero).toBe("007")
     })
 
-    it("rechaza la fila sin número de artículo", async () => {
-      const { productos, errores } = await parse([{ Descripción: "Sin artículo" }])
+    it("acepta la fila sin número de artículo (producto sin facturar todavía)", async () => {
+      const { productos, errores } = await parse([{ "Nº Artículo": "", Descripción: "Sin artículo", Código: "PR06-18" }])
 
-      expect(productos).toEqual([])
-      expect(errores[0]).toContain("Número de artículo")
+      expect(errores).toEqual([])
+      expect(productos).toHaveLength(1)
+      expect(productos[0].articulo_numero).toBe("")
+      expect(productos[0].producto_codigo).toBe("PR06-18")
     })
   })
 
