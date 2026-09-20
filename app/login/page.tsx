@@ -135,14 +135,20 @@ export default function LoginPage() {
 
               {error && <p className="text-sm text-red-600">{error}</p>}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              {/* Los dos botones comparten el tono de las tarjetas, igual que los
+                  campos, para que los cuatro cuadros queden del mismo color. */}
+              <Button
+                type="submit"
+                className="w-full border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground"
+                disabled={isLoading}
+              >
                 {isLoading ? "Ingresando..." : "Ingresar"}
               </Button>
 
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground"
                 onClick={entrarComoVisitante}
                 disabled={isLoading}
               >
