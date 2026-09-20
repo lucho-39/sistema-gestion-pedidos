@@ -1,6 +1,18 @@
 import { ARTICULO_NUMERO_MAX_LENGTH } from "./types"
 import type { ProductoNuevo, Proveedor, Categoria, Imagen } from "./types"
 
+/**
+ * Normaliza texto para comparar: minusculas, sin espacios al borde y SIN TILDES.
+ * Hace falta porque el Excel escribe "Ferreteria" y la categoria es "Ferretería".
+ */
+function normalizar(texto: string): string {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+}
+
 interface ExcelRow {
   [key: string]: unknown
 }
@@ -48,13 +60,13 @@ export async function parseExcelToProductos(
   }
 
   const proveedorGeneral =
-    proveedores.find((p) => p.proveedor_nombre.toLowerCase().includes("general")) || proveedores[0]
+    proveedores.find((p) => normalizar(p.proveedor_nombre).includes("general")) || proveedores[0]
 
-  const categoriaGeneral = categorias.find((c) => c.nombre.toLowerCase().includes("general")) || categorias[0]
+  const categoriaGeneral = categorias.find((c) => normalizar(c.nombre).includes("general")) || categorias[0]
 
   const imagenGeneral =
     imagenes.find(
-      (i) => i.txt_alt?.toLowerCase().includes("defecto") || i.txt_alt?.toLowerCase().includes("default"),
+      (i) => normalizar(i.txt_alt || "").includes("defecto") || normalizar(i.txt_alt || "").includes("default"),
     ) || imagenes[0]
 
   console.log("Using default provider:", proveedorGeneral)
@@ -76,8 +88,8 @@ export async function parseExcelToProductos(
 
       let articuloNumero = ""
       for (const key of Object.keys(row)) {
-        const keyLower = key.toLowerCase().trim()
-        if (columnMappings.articulo_numero.some((mapping) => keyLower.includes(mapping))) {
+        const keyLower = normalizar(key)
+        if (columnMappings.articulo_numero.some((mapping) => keyLower.includes(normalizar(mapping)))) {
           const value = row[key]
           if (value !== null && value !== undefined && value !== "") {
             articuloNumero = String(value).trim()
@@ -100,8 +112,8 @@ export async function parseExcelToProductos(
 
       let descripcion = ""
       for (const key of Object.keys(row)) {
-        const keyLower = key.toLowerCase().trim()
-        if (columnMappings.descripcion.some((mapping) => keyLower.includes(mapping))) {
+        const keyLower = normalizar(key)
+        if (columnMappings.descripcion.some((mapping) => keyLower.includes(normalizar(mapping)))) {
           const value = row[key]
           if (value !== null && value !== undefined && value !== "") {
             descripcion = String(value).trim()
@@ -117,8 +129,8 @@ export async function parseExcelToProductos(
 
       let productoCodigo = ""
       for (const key of Object.keys(row)) {
-        const keyLower = key.toLowerCase().trim()
-        if (columnMappings.codigo.some((mapping) => keyLower.includes(mapping))) {
+        const keyLower = normalizar(key)
+        if (columnMappings.codigo.some((mapping) => keyLower.includes(normalizar(mapping)))) {
           const value = row[key]
           if (value !== null && value !== undefined && value !== "") {
             productoCodigo = String(value).trim()
@@ -129,8 +141,8 @@ export async function parseExcelToProductos(
 
       let proveedor: Proveedor = proveedorGeneral
       for (const key of Object.keys(row)) {
-        const keyLower = key.toLowerCase().trim()
-        if (columnMappings.proveedor.some((mapping) => keyLower.includes(mapping))) {
+        const keyLower = normalizar(key)
+        if (columnMappings.proveedor.some((mapping) => keyLower.includes(normalizar(mapping)))) {
           const value = row[key]
           if (value !== null && value !== undefined && value !== "") {
             const proveedorValue = String(value).trim()
@@ -145,7 +157,7 @@ export async function parseExcelToProductos(
             }
 
             const foundByName = proveedores.find((p) =>
-              p.proveedor_nombre.toLowerCase().includes(proveedorValue.toLowerCase()),
+              normalizar(p.proveedor_nombre).includes(normalizar(proveedorValue)),
             )
             if (foundByName) {
               proveedor = foundByName
@@ -157,8 +169,8 @@ export async function parseExcelToProductos(
 
       let categoria: Categoria = categoriaGeneral
       for (const key of Object.keys(row)) {
-        const keyLower = key.toLowerCase().trim()
-        if (columnMappings.categoria.some((mapping) => keyLower.includes(mapping))) {
+        const keyLower = normalizar(key)
+        if (columnMappings.categoria.some((mapping) => keyLower.includes(normalizar(mapping)))) {
           const value = row[key]
           if (value !== null && value !== undefined && value !== "") {
             const categoriaValue = String(value).trim()
@@ -173,8 +185,8 @@ export async function parseExcelToProductos(
             }
 
             const foundByName =
-              categorias.find((c) => c.nombre.toLowerCase() === categoriaValue.toLowerCase()) ||
-              categorias.find((c) => c.nombre.toLowerCase().includes(categoriaValue.toLowerCase()))
+              categorias.find((c) => normalizar(c.nombre) === normalizar(categoriaValue)) ||
+              categorias.find((c) => normalizar(c.nombre).includes(normalizar(categoriaValue)))
 
             if (foundByName) {
               categoria = foundByName
@@ -191,8 +203,8 @@ export async function parseExcelToProductos(
 
       let imagen: Imagen = imagenGeneral
       for (const key of Object.keys(row)) {
-        const keyLower = key.toLowerCase().trim()
-        if (columnMappings.imagen.some((mapping) => keyLower.includes(mapping))) {
+        const keyLower = normalizar(key)
+        if (columnMappings.imagen.some((mapping) => keyLower.includes(normalizar(mapping)))) {
           const value = row[key]
           if (value !== null && value !== undefined && value !== "") {
             const imagenValue = String(value).trim()
@@ -207,8 +219,8 @@ export async function parseExcelToProductos(
             }
 
             const encontradaPorNombre =
-              imagenes.find((i) => (i.txt_alt || "").toLowerCase() === imagenValue.toLowerCase()) ||
-              imagenes.find((i) => (i.txt_alt || "").toLowerCase().includes(imagenValue.toLowerCase()))
+              imagenes.find((i) => normalizar(i.txt_alt || "") === normalizar(imagenValue)) ||
+              imagenes.find((i) => normalizar(i.txt_alt || "").includes(normalizar(imagenValue)))
 
             if (encontradaPorNombre) {
               imagen = encontradaPorNombre

@@ -11,6 +11,7 @@ const categorias: Categoria[] = [
   { id: 1, nombre: "General", unidad: "unidad" },
   { id: 2, nombre: "Cables", unidad: "metro" },
   { id: 3, nombre: "Materiales", unidad: "kg" },
+  { id: 4, nombre: "Ferretería", unidad: "unidad" },
 ]
 
 const imagenes: Imagen[] = [
@@ -61,6 +62,15 @@ describe("parseExcelToProductos", () => {
       ])
 
       expect(productos[0].categoria_id).toBe(2)
+    })
+
+    it("matchea la categoría ignorando las tildes", async () => {
+      const { productos, errores } = await parse([
+        { "Nº Artículo": "3020", Descripción: "Cinta aisladora", Categoría: "Ferreteria" },
+      ])
+
+      expect(errores).toEqual([])
+      expect(productos[0].categoria_id).toBe(4)
     })
 
     it("usa la categoría por defecto cuando el archivo no trae la columna", async () => {
