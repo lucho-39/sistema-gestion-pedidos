@@ -9,7 +9,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="text-center py-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Sistema de Gestión</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Punto Ferretero</h1>
           <p className="text-gray-600">Administra productos, clientes, proveedores y pedidos</p>
         </div>
 

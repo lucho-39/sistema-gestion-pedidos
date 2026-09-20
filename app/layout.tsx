@@ -8,7 +8,7 @@ import { AuthGate } from "@/components/auth-gate"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sistema de Gestión - Inventario y Pedidos",
+  title: "Punto Ferretero - Inventario y Pedidos",
   description: "Aplicación para gestionar productos, clientes, pedidos y reportes",
   generator: "v0.app",
 }

@@ -66,7 +66,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Ingreso</CardTitle>
-          <CardDescription>Sistema de Gestión de Pedidos</CardDescription>
+          <CardDescription>Punto Ferretero</CardDescription>
         </CardHeader>
         <CardContent>
           {!configurado ? (

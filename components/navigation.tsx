@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { Home, Package, Users, Truck, ShoppingCart, BarChart3, TrendingUp, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -68,8 +69,17 @@ export function Navigation() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-2">
-                <Package className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">Sistema de Gestión</span>
+                <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-gray-200">
+                  <Image
+                    src="/logo.jpeg"
+                    alt="Punto Ferretero"
+                    width={36}
+                    height={36}
+                    className="h-full w-full object-contain"
+                    priority
+                  />
+                </span>
+                <span className="text-xl font-bold text-gray-900">Punto Ferretero</span>
               </Link>
             </div>
             <div className="flex space-x-8">
