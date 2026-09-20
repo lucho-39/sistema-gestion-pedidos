@@ -29,8 +29,10 @@ function traducirError(mensaje: string): string {
   if (m.includes("failed to fetch") || m.includes("networkerror") || m.includes("load failed")) {
     return "No se pudo conectar con Supabase. Puede ser la conexión, o que la URL del proyecto esté mal configurada."
   }
-  if (m.includes("anonymous_provider_disabled")) {
-    return "El acceso de visitante no está habilitado. Activalo en Supabase → Authentication → Sign In / Providers → Anonymous sign-ins."
+  // Supabase devuelve el codigo tecnico en un campo aparte y el texto legible
+  // en el mensaje, asi que hay que mirar los dos.
+  if (m.includes("anonymous_provider_disabled") || (m.includes("anonymous") && m.includes("disabled"))) {
+    return "El acceso de visitante todavía no está habilitado. Activalo en Supabase → Authentication → Sign In / Providers → Anonymous sign-ins."
   }
   return `Error de ingreso: ${mensaje}`
 }
