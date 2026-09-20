@@ -75,7 +75,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Ingreso</CardTitle>
-          <CardDescription>Punto Ferretero</CardDescription>
+          <CardDescription className="font-bold text-foreground">Punto Ferretero</CardDescription>
         </CardHeader>
         <CardContent>
           {!configurado ? (

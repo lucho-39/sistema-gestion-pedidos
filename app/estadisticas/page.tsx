@@ -99,7 +99,7 @@ export default function EstadisticasPage() {
                 {filteredProducts.map((item, index) => (
                   <div
                     key={item.producto.producto_id}
-                    className="flex items-start justify-between p-4 bg-gradient-to-r from-brand-50 to-white rounded-lg border border-brand-100 hover:shadow-md transition-shadow"
+                    className="flex items-start justify-between p-4 bg-secondary rounded-lg border border-border hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start gap-4 flex-1">
                       {/* Ranking Number */}
