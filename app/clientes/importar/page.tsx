@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { parseClientesExcel, type ParsedCliente } from "@/lib/excel-parser-clientes"
+import { ImportarTabs } from "@/components/importar-tabs"
 import { Database } from "@/lib/database"
 import { useToast } from "@/hooks/use-toast"
 
@@ -136,6 +137,8 @@ export default function ImportarClientesPage() {
           </Link>
           <h1 className="text-xl font-bold">Importar Clientes desde Excel</h1>
         </div>
+
+        <ImportarTabs />
 
         <Alert>
           <AlertCircle className="h-4 w-4" />

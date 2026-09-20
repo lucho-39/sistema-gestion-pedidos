@@ -39,9 +39,9 @@ export default function HomePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Upload className="h-5 w-5 text-green-600" />
-                  Importar Productos
+                  Importar
                 </CardTitle>
-                <CardDescription>Importar productos desde Excel</CardDescription>
+                <CardDescription>Importar desde Excel</CardDescription>
               </CardHeader>
             </Card>
           </Link>

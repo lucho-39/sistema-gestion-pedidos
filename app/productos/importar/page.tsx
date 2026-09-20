@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
 import { parseExcelToProductos } from "@/lib/excel-parser"
+import { ImportarTabs } from "@/components/importar-tabs"
 import type { ProductoNuevo } from "@/lib/types"
 
 export default function ImportarProductosPage() {
@@ -314,6 +315,8 @@ export default function ImportarProductosPage() {
           </Link>
           <h1 className="text-xl font-bold">Importar Excel</h1>
         </div>
+
+        <ImportarTabs />
 
         <Card>
           <CardHeader>
