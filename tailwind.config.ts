@@ -23,6 +23,10 @@ const config: Config = {
   				DEFAULT: 'hsl(var(--popover))',
   				foreground: 'hsl(var(--popover-foreground))'
   			},
+  			surface: {
+  				DEFAULT: 'hsl(var(--surface))',
+  				foreground: 'hsl(var(--surface-foreground))'
+  			},
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
   				foreground: 'hsl(var(--primary-foreground))'

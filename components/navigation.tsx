@@ -64,7 +64,7 @@ export function Navigation() {
   return (
     <>
       {/* Desktop Navigation - Top Bar */}
-      <nav className="hidden md:block bg-accent border-b border-border sticky top-0 z-50 shadow-sm">
+      <nav className="hidden md:block bg-card border-b border-border sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -114,7 +114,7 @@ export function Navigation() {
 
       {/* Mobile Navigation - Bottom Bar */}
       {/* 7 items + Salir = 8: entran justo en 4 columnas x 2 filas */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-accent border-t border-border z-50 safe-area-inset-bottom shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-inset-bottom shadow-lg">
         <div className="grid grid-cols-4">
           {navigationItems.map((item) => {
             const Icon = item.icon

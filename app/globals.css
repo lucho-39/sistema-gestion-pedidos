@@ -13,25 +13,30 @@
     --font-sans: var(--font-geist-sans);
     --font-mono: var(--font-geist-mono);
     /* Paleta de Punto Ferretero.
-       #4F8C7B lienzo | #99BFAD acento | #BFD9C8 secundario | #F2F2F2 superficies | #262626 texto */
+       #4F8C7B lienzo | #99BFAD tarjetas y barra | #F2F2F2 controles
+       #BFD9C8 hovers  | #262626 texto */
     --background: 163 27.9% 42.9%;
     --foreground: 0 0% 14.9%;
-    --card: 0 0% 94.9%;
+    --card: 152 22.9% 67.5%;
     --card-foreground: 0 0% 14.9%;
     --popover: 0 0% 94.9%;
     --popover-foreground: 0 0% 14.9%;
+    /* Superficie de los controles: el tono mas claro, para que se despeguen
+       tanto del lienzo como de las tarjetas. */
+    --surface: 0 0% 94.9%;
+    --surface-foreground: 0 0% 14.9%;
     --primary: 163 27.9% 42.9%;
     --primary-foreground: 0 0% 100%;
     --secondary: 141 25.5% 80%;
     --secondary-foreground: 0 0% 14.9%;
     --muted: 141 25.5% 80%;
-    --muted-foreground: 0 0% 35%;
-    --accent: 152 22.9% 67.5%;
+    --muted-foreground: 0 0% 24%;
+    --accent: 141 25.5% 80%;
     --accent-foreground: 0 0% 14.9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 152 22.9% 67.5%;
-    --input: 152 22.9% 67.5%;
+    --border: 163 27.9% 55%;
+    --input: 163 27.9% 55%;
     --ring: 163 27.9% 42.9%;
     --chart-1: 163 27.9% 42.9%;
     --chart-2: 152 22.9% 67.5%;

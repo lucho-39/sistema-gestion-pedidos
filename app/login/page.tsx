@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -62,7 +63,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-background p-4">
+      <Image
+        src="/logo.png"
+        alt="Punto Ferretero"
+        width={378}
+        height={561}
+        className="h-28 w-auto"
+        priority
+      />
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Ingreso</CardTitle>
