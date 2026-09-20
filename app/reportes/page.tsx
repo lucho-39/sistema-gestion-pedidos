@@ -233,7 +233,7 @@ export default function ReportesPage() {
             <h1 className="text-xl md:text-2xl font-bold">Reportes</h1>
           </div>
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
             <p className="text-gray-500">Cargando reportes...</p>
           </div>
         </div>
@@ -259,7 +259,7 @@ export default function ReportesPage() {
           <Card>
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                <Clock className="h-4 w-4 text-brand-700 flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs text-gray-500 truncate">Estado</p>
                   <p className="font-medium text-sm md:text-base truncate">
@@ -349,7 +349,7 @@ export default function ReportesPage() {
                 onClick={generateHistoricalReports}
                 variant="outline"
                 disabled={isGeneratingHistorical}
-                className="w-full sm:w-auto h-11 text-sm touch-manipulation bg-blue-50 hover:bg-blue-100"
+                className="w-full sm:w-auto h-11 text-sm touch-manipulation bg-brand-50 hover:bg-brand-100"
               >
                 {isGeneratingHistorical ? (
                   <>

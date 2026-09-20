@@ -302,7 +302,7 @@ export default function NuevoPedidoPage() {
                           key={cliente.cliente_id}
                           className={cn(
                             "px-3 py-2 cursor-pointer hover:bg-gray-50 flex items-center justify-between",
-                            clienteSeleccionado?.cliente_id === cliente.cliente_id && "bg-blue-50",
+                            clienteSeleccionado?.cliente_id === cliente.cliente_id && "bg-brand-50",
                           )}
                           onClick={() => seleccionarCliente(cliente)}
                         >
@@ -317,7 +317,7 @@ export default function NuevoPedidoPage() {
                             </p>
                           </div>
                           {clienteSeleccionado?.cliente_id === cliente.cliente_id && (
-                            <Check className="h-4 w-4 text-blue-600" />
+                            <Check className="h-4 w-4 text-brand-700" />
                           )}
                         </div>
                       ))

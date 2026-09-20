@@ -92,7 +92,7 @@ export function Navigation() {
                     className={cn(
                       "flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                       isActive(item.href)
-                        ? "bg-blue-100 text-blue-700"
+                        ? "bg-brand-100 text-brand-700"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100",
                     )}
                   >
@@ -127,7 +127,7 @@ export function Navigation() {
                 className={cn(
                   "flex flex-col items-center justify-center space-y-1 py-2 transition-colors active:scale-95 touch-manipulation",
                   isActive(item.href)
-                    ? "text-blue-600 bg-blue-50"
+                    ? "text-brand-700 bg-brand-50"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
                 )}
               >

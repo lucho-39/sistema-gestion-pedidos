@@ -169,7 +169,7 @@ export default function ProductosPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-blue-600" />
+                <Database className="h-5 w-5 text-brand-700" />
                 Configuración Requerida
               </CardTitle>
             </CardHeader>
@@ -305,9 +305,9 @@ export default function ProductosPage() {
             {Array.from(productosPorProveedor.entries()).map(([proveedorNombre, productosGrupo]) => (
               <div key={proveedorNombre} className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-px bg-gradient-to-r from-blue-500 to-transparent flex-1" />
+                  <div className="h-px bg-gradient-to-r from-brand-500 to-transparent flex-1" />
                   <h2 className="text-lg font-semibold text-gray-900 px-3">{proveedorNombre}</h2>
-                  <div className="h-px bg-gradient-to-l from-blue-500 to-transparent flex-1" />
+                  <div className="h-px bg-gradient-to-l from-brand-500 to-transparent flex-1" />
                   <Badge variant="outline" className="text-xs">
                     {productosGrupo.length}
                   </Badge>

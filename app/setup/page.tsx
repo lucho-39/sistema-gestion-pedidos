@@ -277,7 +277,7 @@ ORDER BY id;`,
             <Card key={index}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <PlayCircle className="h-5 w-5 text-blue-600" />
+                  <PlayCircle className="h-5 w-5 text-brand-700" />
                   {script.title}
                 </CardTitle>
                 <CardDescription>{script.description}</CardDescription>
@@ -297,11 +297,11 @@ ORDER BY id;`,
           ))}
         </div>
 
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-brand-200 bg-brand-50">
           <CardHeader>
-            <CardTitle className="text-blue-900">📋 Instrucciones</CardTitle>
+            <CardTitle className="text-brand-900">📋 Instrucciones</CardTitle>
           </CardHeader>
-          <CardContent className="text-blue-800 space-y-2">
+          <CardContent className="text-brand-800 space-y-2">
             <ol className="list-decimal list-inside space-y-2">
               <li>Abre Supabase y ve a SQL Editor</li>
               <li>Copia y ejecuta el Script 1 (Crear Tablas)</li>

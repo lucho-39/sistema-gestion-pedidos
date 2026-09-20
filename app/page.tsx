@@ -19,7 +19,7 @@ export default function HomePage() {
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-blue-600" />
+                  <Package className="h-5 w-5 text-brand-700" />
                   Productos
                 </CardTitle>
                 <CardDescription>Gestiona el catálogo de productos</CardDescription>

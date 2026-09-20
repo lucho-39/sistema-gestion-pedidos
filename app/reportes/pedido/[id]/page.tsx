@@ -140,7 +140,7 @@ export default function DetallePedidoPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
+              <Calendar className="h-5 w-5 text-brand-700" />
               Información del Pedido
             </CardTitle>
           </CardHeader>

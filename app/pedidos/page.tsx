@@ -157,7 +157,7 @@ export default function PedidosPage() {
             </Link>
           </div>
           <div className="text-center py-8">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-brand-600 border-r-transparent"></div>
             <p className="text-gray-500 mt-4">Cargando pedidos...</p>
           </div>
         </div>
@@ -262,7 +262,7 @@ export default function PedidosPage() {
                         </div>
 
                         <div className="flex items-center gap-2 text-sm min-w-0">
-                          <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                          <Calendar className="h-4 w-4 text-brand-700 flex-shrink-0" />
                           <span className="text-gray-700 truncate">{formatDate(pedido.fecha_pedido)}</span>
                         </div>
 

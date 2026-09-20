@@ -335,11 +335,11 @@ export default function ImportarProductosPage() {
             </div>
 
             {file && (
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="p-3 bg-brand-50 rounded-lg">
+                <p className="text-sm text-brand-800">
                   <strong>Archivo seleccionado:</strong> {file.name}
                 </p>
-                <p className="text-xs text-blue-600 mt-1">Tamaño: {(file.size / 1024).toFixed(1)} KB</p>
+                <p className="text-xs text-brand-700 mt-1">Tamaño: {(file.size / 1024).toFixed(1)} KB</p>
               </div>
             )}
 

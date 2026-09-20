@@ -51,20 +51,20 @@ export default function EstadisticasPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="h-8 w-8 text-blue-600" />
+            <TrendingUp className="h-8 w-8 text-brand-700" />
             <h1 className="text-3xl font-bold text-gray-900">Estadísticas</h1>
           </div>
           <p className="text-gray-600">Ranking de productos más presentes en pedidos</p>
         </div>
 
         {/* Products Ranking */}
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-brand-500">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <CardTitle className="text-lg">Productos Más Presentes en Pedidos</CardTitle>
-                  <Package className="h-5 w-5 text-blue-600" />
+                  <Package className="h-5 w-5 text-brand-700" />
                 </div>
                 <CardDescription>Ordenados por cantidad de pedidos en los que aparecen</CardDescription>
               </div>
@@ -99,7 +99,7 @@ export default function EstadisticasPage() {
                 {filteredProducts.map((item, index) => (
                   <div
                     key={item.producto.producto_id}
-                    className="flex items-start justify-between p-4 bg-gradient-to-r from-blue-50 to-white rounded-lg border border-blue-100 hover:shadow-md transition-shadow"
+                    className="flex items-start justify-between p-4 bg-gradient-to-r from-brand-50 to-white rounded-lg border border-brand-100 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start gap-4 flex-1">
                       {/* Ranking Number */}
@@ -111,7 +111,7 @@ export default function EstadisticasPage() {
                               ? "bg-gray-300 text-gray-700"
                               : index === 2
                                 ? "bg-orange-400 text-orange-900"
-                                : "bg-blue-200 text-blue-700"
+                                : "bg-brand-200 text-brand-700"
                         }`}
                       >
                         {index + 1}
@@ -125,7 +125,7 @@ export default function EstadisticasPage() {
                           {item.producto.proveedor && (
                             <>
                               <span>•</span>
-                              <span className="text-blue-600">{item.producto.proveedor.proveedor_nombre}</span>
+                              <span className="text-brand-700">{item.producto.proveedor.proveedor_nombre}</span>
                             </>
                           )}
                         </div>
