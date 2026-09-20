@@ -3,8 +3,11 @@
 import Link from "next/link"
 import { Package, Users, Truck, ShoppingCart, FileText, Upload, UserPlus, TrendingUp } from "lucide-react"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useVisitante } from "@/hooks/use-visitante"
 
 export default function HomePage() {
+  const visitante = useVisitante()
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-brand-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -27,6 +30,10 @@ export default function HomePage() {
             </Card>
           </Link>
 
+          {/* El visitante solo ve el catalogo: el resto son secciones
+              a las que no tiene acceso (lo aplica RLS en la base). */}
+          {!visitante && (
+            <>
           <Link href="/productos/importar">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
@@ -110,6 +117,8 @@ export default function HomePage() {
               </CardHeader>
             </Card>
           </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

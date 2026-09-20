@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { ArrowLeft, Plus, Search, Edit, Trash2, Database, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useVisitante } from "@/hooks/use-visitante"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -36,6 +37,7 @@ function groupProductosByProveedor(productos: Producto[]): Map<string, Producto[
 }
 
 export default function ProductosPage() {
+  const visitante = useVisitante()
   const [productos, setProductos] = useState<Producto[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredProductos, setFilteredProductos] = useState<Producto[]>([])
@@ -274,12 +276,15 @@ export default function ProductosPage() {
               className="pl-10"
             />
           </div>
-          <Link href="/productos/nuevo">
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo
-            </Button>
-          </Link>
+          {/* El visitante no ve acciones de escritura (RLS tambien las bloquea). */}
+          {!visitante && (
+            <Link href="/productos/nuevo">
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo
+              </Button>
+            </Link>
+          )}
         </div>
 
         {filteredProductos.length === 0 ? (
@@ -288,12 +293,14 @@ export default function ProductosPage() {
               {productos.length === 0 ? (
                 <>
                   <p className="text-muted-foreground mb-4">No hay productos registrados</p>
-                  <Link href="/productos/nuevo" className="inline-block">
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Agregar Producto
-                    </Button>
-                  </Link>
+                  {!visitante && (
+                    <Link href="/productos/nuevo" className="inline-block">
+                      <Button variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar Producto
+                      </Button>
+                    </Link>
+                  )}
                 </>
               ) : (
                 <p className="text-muted-foreground">No se encontraron productos con &quot;{searchTerm}&quot;</p>
@@ -329,6 +336,8 @@ export default function ProductosPage() {
                             </p>
                           </div>
                           <div className="flex gap-1 flex-shrink-0">
+                            {!visitante && (
+                              <>
                             <Link href={`/productos/editar/${producto.producto_id}`}>
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                 <Edit className="h-3 w-3" />
@@ -342,6 +351,8 @@ export default function ProductosPage() {
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </CardHeader>

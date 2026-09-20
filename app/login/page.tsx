@@ -29,6 +29,9 @@ function traducirError(mensaje: string): string {
   if (m.includes("failed to fetch") || m.includes("networkerror") || m.includes("load failed")) {
     return "No se pudo conectar con Supabase. Puede ser la conexión, o que la URL del proyecto esté mal configurada."
   }
+  if (m.includes("anonymous_provider_disabled")) {
+    return "El acceso de visitante no está habilitado. Activalo en Supabase → Authentication → Sign In / Providers → Anonymous sign-ins."
+  }
   return `Error de ingreso: ${mensaje}`
 }
 
@@ -51,6 +54,26 @@ export default function LoginPage() {
 
       if (signInError) {
         setError(traducirError(signInError.message))
+        return
+      }
+
+      router.replace("/")
+    } catch (err) {
+      setError(traducirError(err instanceof Error ? err.message : String(err)))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const entrarComoVisitante = async () => {
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      const { error: visiteanteError } = await supabase.auth.signInAnonymously()
+
+      if (visiteanteError) {
+        setError(traducirError(visiteanteError.message))
         return
       }
 
@@ -113,6 +136,19 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Ingresando..." : "Ingresar"}
               </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={entrarComoVisitante}
+                disabled={isLoading}
+              >
+                Entrar como visitante
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                El visitante puede ver el catálogo, pero no modificarlo.
+              </p>
             </form>
           )}
         </CardContent>

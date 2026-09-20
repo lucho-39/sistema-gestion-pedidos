@@ -55,14 +55,45 @@ BEGIN
   END LOOP;
 END $$;
 
--- 3) Acceso solo para usuarios autenticados
-CREATE POLICY "authenticated_all_proveedores"      ON proveedores      FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all_categorias"       ON categorias       FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all_imagenes"         ON imagenes         FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all_productos"        ON productos        FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all_clientes"         ON clientes         FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all_pedidos"          ON pedidos          FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all_pedido_productos" ON pedido_productos FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- 3) Politicas, con soporte para el usuario VISITANTE
+--
+-- El visitante entra con login ANONIMO de Supabase, asi que tecnicamente es un
+-- usuario autenticado, pero con el claim is_anonymous = true en su token. Eso
+-- permite separarlo de los usuarios reales directamente en la base.
+--
+--   * Tablas de CATALOGO (productos, categorias, imagenes):
+--       lectura para cualquier autenticado (visitante incluido);
+--       escritura solo para los que NO son visitantes.
+--   * Tablas SENSIBLES (clientes, proveedores, pedidos, pedido_productos):
+--       el visitante no tiene acceso NINGUNO.
+--
+-- La restriccion vive ACA, en la base: aunque alguien abra la consola del
+-- navegador y dispare consultas a mano, el servidor las rechaza.
+DO $$
+DECLARE
+  t text;
+  catalogo     text[] := ARRAY['productos', 'categorias', 'imagenes'];
+  sensibles    text[] := ARRAY['clientes', 'proveedores', 'pedidos', 'pedido_productos'];
+  no_visitante text   := '(auth.jwt() ->> ''is_anonymous'') IS DISTINCT FROM ''true''';
+BEGIN
+  FOREACH t IN ARRAY catalogo LOOP
+    -- lectura: cualquier autenticado
+    EXECUTE format('CREATE POLICY %I ON %I FOR SELECT TO authenticated USING (true)', t || '_select', t);
+    -- escritura: solo los que no son visitantes
+    EXECUTE format(
+      'CREATE POLICY %I ON %I FOR ALL TO authenticated USING (%s) WITH CHECK (%s)',
+      t || '_write', t, no_visitante, no_visitante
+    );
+  END LOOP;
+
+  FOREACH t IN ARRAY sensibles LOOP
+    -- ni lectura ni escritura para el visitante
+    EXECUTE format(
+      'CREATE POLICY %I ON %I FOR ALL TO authenticated USING (%s) WITH CHECK (%s)',
+      t || '_solo_reales', t, no_visitante, no_visitante
+    );
+  END LOOP;
+END $$;
 
 COMMIT;
 

@@ -6,7 +6,10 @@ import { usePathname } from "next/navigation"
 import { Home, Package, Users, Truck, ShoppingCart, BarChart3, TrendingUp, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase"
+import { useVisitante } from "@/hooks/use-visitante"
 
+// soloReales: secciones que el visitante no puede usar (no solo escribir:
+// directamente no tiene acceso a esos datos).
 const navigationItems = [
   {
     name: "Inicio",
@@ -22,31 +25,40 @@ const navigationItems = [
     name: "Clientes",
     href: "/clientes",
     icon: Users,
+    soloReales: true,
   },
   {
     name: "Proveedores",
     href: "/proveedores",
     icon: Truck,
+    soloReales: true,
   },
   {
     name: "Pedidos",
     href: "/pedidos",
     icon: ShoppingCart,
+    soloReales: true,
   },
   {
     name: "Estadísticas",
     href: "/estadisticas",
     icon: TrendingUp,
+    soloReales: true,
   },
   {
     name: "Reportes",
     href: "/reportes",
     icon: BarChart3,
+    soloReales: true,
   },
 ]
 
 export function Navigation() {
   const pathname = usePathname()
+  const visitante = useVisitante()
+
+  // El visitante solo ve las secciones a las que tiene acceso.
+  const items = visitante ? navigationItems.filter((item) => !item.soloReales) : navigationItems
 
   const cerrarSesion = async () => {
     try {
@@ -94,7 +106,7 @@ export function Navigation() {
               </Link>
             </div>
             <div className="flex space-x-8">
-              {navigationItems.map((item) => {
+              {items.map((item) => {
                 const Icon = item.icon
                 return (
                   <Link
@@ -129,7 +141,7 @@ export function Navigation() {
       {/* 7 items + Salir = 8: entran justo en 4 columnas x 2 filas */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-inset-bottom shadow-lg">
         <div className="grid grid-cols-4">
-          {navigationItems.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon
             return (
               <Link
