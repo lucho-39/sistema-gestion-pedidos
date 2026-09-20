@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { Home, Package, Users, Truck, ShoppingCart, BarChart3, TrendingUp, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase"
@@ -47,11 +47,24 @@ const navigationItems = [
 
 export function Navigation() {
   const pathname = usePathname()
-  const router = useRouter()
 
   const cerrarSesion = async () => {
-    await supabase.auth.signOut()
-    router.replace("/login")
+    try {
+      await supabase.auth.signOut()
+    } catch (error) {
+      // Si el servidor no responde, el usuario quedaria atrapado adentro.
+      // Limpiamos al menos la sesion local.
+      console.error("Error al cerrar sesión, limpiando la sesión local:", error)
+      try {
+        await supabase.auth.signOut({ scope: "local" })
+      } catch (errorLocal) {
+        console.error("Tampoco se pudo limpiar la sesión local:", errorLocal)
+      }
+    }
+
+    // Recarga completa en vez de navegacion del router: garantiza que la app
+    // relea la sesion desde cero y no quede el estado viejo en memoria.
+    window.location.href = "/login"
   }
 
   const isActive = (href: string) => {
