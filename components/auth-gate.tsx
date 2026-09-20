@@ -68,7 +68,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-background pb-24 md:pb-0">{children}</main>
+      {/* text-white: todo lo que va directo sobre el lienzo teal. Las tarjetas
+          se protegen solas con text-card-foreground, asi que su texto sigue oscuro. */}
+      <main className="min-h-screen bg-background text-white pb-24 md:pb-0">{children}</main>
     </>
   )
 }

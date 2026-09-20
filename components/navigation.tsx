@@ -64,21 +64,19 @@ export function Navigation() {
   return (
     <>
       {/* Desktop Navigation - Top Bar */}
-      <nav className="hidden md:block bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <nav className="hidden md:block bg-card border-b border-border sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-2">
-                <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-gray-200">
-                  <Image
-                    src="/logo.jpeg"
-                    alt="Punto Ferretero"
-                    width={36}
-                    height={36}
-                    className="h-full w-full object-contain"
-                    priority
-                  />
-                </span>
+                <Image
+                  src="/logo.png"
+                  alt="Punto Ferretero"
+                  width={378}
+                  height={561}
+                  className="h-10 w-auto"
+                  priority
+                />
                 <span className="text-xl font-bold text-gray-900">Punto Ferretero</span>
               </Link>
             </div>
@@ -116,7 +114,7 @@ export function Navigation() {
 
       {/* Mobile Navigation - Bottom Bar */}
       {/* 7 items + Salir = 8: entran justo en 4 columnas x 2 filas */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-inset-bottom shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-inset-bottom shadow-lg">
         <div className="grid grid-cols-4">
           {navigationItems.map((item) => {
             const Icon = item.icon

@@ -273,7 +273,7 @@ export default function EditarPedidoPage() {
                     onFocus={() => setShowClienteDropdown(true)}
                   />
                   {showClienteDropdown && clienteSearch && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-card text-card-foreground border border-border rounded-md shadow-lg max-h-60 overflow-auto">
                       {filteredClientes.length > 0 ? (
                         filteredClientes.map((cliente) => (
                           <div
@@ -331,7 +331,7 @@ export default function EditarPedidoPage() {
                     />
                   </div>
                   {showProductoDropdown && productoSearch && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-card text-card-foreground border border-border rounded-md shadow-lg max-h-60 overflow-auto">
                       {filteredProductos.length > 0 ? (
                         filteredProductos.map((producto) => (
                           <div

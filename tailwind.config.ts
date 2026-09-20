@@ -66,16 +66,19 @@ const config: Config = {
   			// Escala de marca derivada del logo de Punto Ferretero.
   			// 600 es el color exacto del logo (#438979).
   			brand: {
-  				'50':  'hsl(166 45% 96%)',
-  				'100': 'hsl(166 42% 92%)',
-  				'200': 'hsl(166 40% 84%)',
-  				'300': 'hsl(166 38% 72%)',
-  				'400': 'hsl(166 36% 58%)',
-  				'500': 'hsl(166 34% 47%)',
-  				'600': 'hsl(166 34% 40%)',
-  				'700': 'hsl(166 36% 32%)',
-  				'800': 'hsl(166 38% 26%)',
-  				'900': 'hsl(166 40% 20%)'
+  				// Paleta exacta de Punto Ferretero
+  				'50':  '#F2F8F6',
+  				'100': '#BFD9C8',
+  				'200': '#ACCFC0',
+  				'300': '#99BFAD',
+  				'400': '#74A697',
+  				'500': '#4F8C7B',
+  				'600': '#4F8C7B',
+  				// 700 en adelante son para TEXTO sobre superficies claras:
+  				// el 500/600 da 3.49:1 sobre #F2F2F2 y no alcanza para texto chico.
+  				'700': '#3D6C5E',
+  				'800': '#30554A',
+  				'900': '#254139'
   			}
   		},
   		borderRadius: {

@@ -294,7 +294,7 @@ export default function NuevoPedidoPage() {
                 {mostrarListaClientes && (
                   <div
                     ref={clienteListRef}
-                    className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                    className="absolute z-50 w-full mt-1 bg-card text-card-foreground border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
                   >
                     {clientesFiltrados.length > 0 ? (
                       clientesFiltrados.map((cliente) => (
