@@ -220,7 +220,7 @@ export default function EditarPedidoPage() {
             <h1 className="text-xl font-bold">Editar Pedido</h1>
           </div>
           <div className="text-center py-8">
-            <p className="text-gray-500">Cargando pedido...</p>
+            <p className="text-muted-foreground">Cargando pedido...</p>
           </div>
         </div>
       </div>
@@ -278,17 +278,17 @@ export default function EditarPedidoPage() {
                         filteredClientes.map((cliente) => (
                           <div
                             key={cliente.cliente_id}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            className="px-4 py-2 hover:bg-accent cursor-pointer"
                             onClick={() => selectCliente(cliente)}
                           >
                             <div className="font-medium">{cliente.nombre}</div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-muted-foreground">
                               Código: {cliente.cliente_codigo} • CUIL: {cliente.cuil}
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="px-4 py-2 text-gray-500">No se encontraron clientes</div>
+                        <div className="px-4 py-2 text-muted-foreground">No se encontraron clientes</div>
                       )}
                     </div>
                   )}
@@ -317,7 +317,7 @@ export default function EditarPedidoPage() {
                 <Label htmlFor="producto-search">Agregar Producto</Label>
                 <div className="relative">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
                       id="producto-search"
                       placeholder="Buscar producto por descripción, artículo o código..."
@@ -336,18 +336,18 @@ export default function EditarPedidoPage() {
                         filteredProductos.map((producto) => (
                           <div
                             key={producto.producto_id}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            className="px-4 py-2 hover:bg-accent cursor-pointer"
                             onClick={() => agregarProducto(producto)}
                           >
                             <div className="font-medium">{producto.descripcion}</div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-muted-foreground">
                               Art: {producto.articulo_numero} • Código: {producto.producto_codigo} •{" "}
                               {producto.categoria?.unidad || "unidad"}
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="px-4 py-2 text-gray-500">No se encontraron productos</div>
+                        <div className="px-4 py-2 text-muted-foreground">No se encontraron productos</div>
                       )}
                     </div>
                   )}
@@ -364,10 +364,10 @@ export default function EditarPedidoPage() {
                     >
                       <div className="flex-1 min-w-0">
                         <div className="font-medium">{pp.producto?.descripcion || "Descripción no disponible"}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           Art: {pp.articulo_numero || "N/A"} • Código: {pp.producto?.producto_codigo || "Sin código"}
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-muted-foreground">
                           Proveedor: {pp.producto?.proveedor?.proveedor_nombre || "Sin proveedor"} • Código Proveedor:{" "}
                           {pp.producto?.producto_codigo || "Sin código proveedor"}
                         </div>
@@ -382,7 +382,7 @@ export default function EditarPedidoPage() {
                           className="w-20"
                           aria-label={`Cantidad de ${pp.producto?.descripcion || "producto"}`}
                         />
-                        <span className="text-sm text-gray-500 min-w-[60px]">
+                        <span className="text-sm text-muted-foreground min-w-[60px]">
                           {pp.producto?.categoria?.unidad || "unidad"}
                         </span>
                         <Button
@@ -399,7 +399,7 @@ export default function EditarPedidoPage() {
                     </div>
                   ))}
 
-                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                  <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
                     <div className="flex justify-between">
                       <span>Total productos:</span>
                       <span>{pedidoProductos.length}</span>
@@ -415,7 +415,7 @@ export default function EditarPedidoPage() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   No hay productos en este pedido. Usa el buscador arriba para agregar productos.
                 </div>
               )}

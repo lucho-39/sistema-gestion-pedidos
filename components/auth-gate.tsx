@@ -59,7 +59,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (estado !== "con-sesion") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">
+      <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
         {estado === "verificando" ? "Verificando sesión..." : "Redirigiendo al ingreso..."}
       </div>
     )

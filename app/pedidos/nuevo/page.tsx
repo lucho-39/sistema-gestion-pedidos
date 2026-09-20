@@ -248,7 +248,7 @@ export default function NuevoPedidoPage() {
             <h1 className="text-xl font-bold">Nuevo Pedido</h1>
           </div>
           <div className="text-center py-8">
-            <p className="text-gray-500">Cargando datos...</p>
+            <p className="text-muted-foreground">Cargando datos...</p>
           </div>
         </div>
       </div>
@@ -286,7 +286,7 @@ export default function NuevoPedidoPage() {
                     className="pr-8"
                   />
                   <ChevronDown
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 cursor-pointer"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
                     onClick={() => setMostrarListaClientes(!mostrarListaClientes)}
                   />
                 </div>
@@ -301,7 +301,7 @@ export default function NuevoPedidoPage() {
                         <div
                           key={cliente.cliente_id}
                           className={cn(
-                            "px-3 py-2 cursor-pointer hover:bg-gray-50 flex items-center justify-between",
+                            "px-3 py-2 cursor-pointer hover:bg-accent flex items-center justify-between",
                             clienteSeleccionado?.cliente_id === cliente.cliente_id && "bg-brand-50",
                           )}
                           onClick={() => seleccionarCliente(cliente)}
@@ -310,7 +310,7 @@ export default function NuevoPedidoPage() {
                             <p className="text-sm font-medium">
                               #{cliente.cliente_codigo} - {cliente.nombre}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               {cliente.telefono && `Tel: ${cliente.telefono}`}
                               {cliente.telefono && cliente.cuil && " • "}
                               {cliente.cuil && `CUIL: ${cliente.cuil}`}
@@ -322,7 +322,7 @@ export default function NuevoPedidoPage() {
                         </div>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-sm text-gray-500">No se encontraron clientes</div>
+                      <div className="px-3 py-2 text-sm text-muted-foreground">No se encontraron clientes</div>
                     )}
                   </div>
                 )}
@@ -346,7 +346,7 @@ export default function NuevoPedidoPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar productos..."
                   value={busquedaProducto}
@@ -360,13 +360,13 @@ export default function NuevoPedidoPage() {
                   {productosFiltrados.slice(0, 5).map((producto) => (
                     <div
                       key={producto.articulo_numero}
-                      className="p-2 border rounded cursor-pointer hover:bg-gray-50"
+                      className="p-2 border rounded cursor-pointer hover:bg-accent"
                       onClick={() => agregarProducto(producto)}
                     >
                       <p className="text-sm font-medium">
                         #{producto.articulo_numero} - {producto.descripcion}
                       </p>
-                      <p className="text-xs text-gray-500">{producto.producto_codigo}</p>
+                      <p className="text-xs text-muted-foreground">{producto.producto_codigo}</p>
                     </div>
                   ))}
                 </div>
@@ -386,7 +386,7 @@ export default function NuevoPedidoPage() {
                       <p className="text-sm font-medium">
                         #{producto.articulo_numero} - {producto.descripcion}
                       </p>
-                      <p className="text-xs text-gray-500">{producto.categoria?.unidad || "unidad"}</p>
+                      <p className="text-xs text-muted-foreground">{producto.categoria?.unidad || "unidad"}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Input

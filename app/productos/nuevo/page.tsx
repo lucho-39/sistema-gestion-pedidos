@@ -245,7 +245,7 @@ export default function NuevoProductoPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500 mt-1">La unidad de medida la define la categoría.</p>
+                <p className="text-xs text-muted-foreground mt-1">La unidad de medida la define la categoría.</p>
               </div>
 
               <div>

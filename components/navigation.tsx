@@ -64,7 +64,7 @@ export function Navigation() {
   return (
     <>
       {/* Desktop Navigation - Top Bar */}
-      <nav className="hidden md:block bg-card border-b border-border sticky top-0 z-50 shadow-sm">
+      <nav className="hidden md:block bg-accent border-b border-border sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -77,7 +77,7 @@ export function Navigation() {
                   className="h-10 w-auto"
                   priority
                 />
-                <span className="text-xl font-bold text-gray-900">Punto Ferretero</span>
+                <span className="text-xl font-bold text-foreground">Punto Ferretero</span>
               </Link>
             </div>
             <div className="flex space-x-8">
@@ -91,7 +91,7 @@ export function Navigation() {
                       "flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                       isActive(item.href)
                         ? "bg-brand-100 text-brand-700"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100",
+                        : "text-foreground/75 hover:text-foreground hover:bg-brand-100",
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -102,7 +102,7 @@ export function Navigation() {
               <button
                 type="button"
                 onClick={cerrarSesion}
-                className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-foreground/75 hover:text-foreground hover:bg-brand-100 transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 <span>Salir</span>
@@ -114,7 +114,7 @@ export function Navigation() {
 
       {/* Mobile Navigation - Bottom Bar */}
       {/* 7 items + Salir = 8: entran justo en 4 columnas x 2 filas */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-inset-bottom shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-accent border-t border-border z-50 safe-area-inset-bottom shadow-lg">
         <div className="grid grid-cols-4">
           {navigationItems.map((item) => {
             const Icon = item.icon
@@ -126,7 +126,7 @@ export function Navigation() {
                   "flex flex-col items-center justify-center space-y-1 py-2 transition-colors active:scale-95 touch-manipulation",
                   isActive(item.href)
                     ? "text-brand-700 bg-brand-50"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+                    : "text-foreground/75 hover:text-foreground hover:bg-brand-100",
                 )}
               >
                 <Icon className="h-6 w-6" />
@@ -137,7 +137,7 @@ export function Navigation() {
           <button
             type="button"
             onClick={cerrarSesion}
-            className="flex flex-col items-center justify-center space-y-1 py-2 text-gray-600 transition-colors active:scale-95 touch-manipulation hover:text-gray-900 hover:bg-gray-50"
+            className="flex flex-col items-center justify-center space-y-1 py-2 text-muted-foreground transition-colors active:scale-95 touch-manipulation hover:text-foreground hover:bg-accent"
           >
             <LogOut className="h-6 w-6" />
             <span className="text-[10px] font-medium leading-tight">Salir</span>

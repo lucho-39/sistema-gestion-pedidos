@@ -158,7 +158,7 @@ export default function PedidosPage() {
           </div>
           <div className="text-center py-8">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-brand-600 border-r-transparent"></div>
-            <p className="text-gray-500 mt-4">Cargando pedidos...</p>
+            <p className="text-muted-foreground mt-4">Cargando pedidos...</p>
           </div>
         </div>
       </div>
@@ -173,7 +173,7 @@ export default function PedidosPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl md:text-3xl font-bold truncate">Pedidos</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
             </p>
           </div>
@@ -186,13 +186,13 @@ export default function PedidosPage() {
         </div>
 
         <div className="mb-6 w-full">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Buscar por ID, cliente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 w-full"
+              className="pl-10 h-11 w-full max-w-md"
             />
           </div>
         </div>
@@ -200,8 +200,8 @@ export default function PedidosPage() {
         {filteredPedidos.length === 0 ? (
           <Card className="w-full">
             <CardContent className="p-8 text-center">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4 px-4">
+              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4 px-4">
                 {searchTerm ? "No se encontraron pedidos" : "No hay pedidos registrados"}
               </p>
               {!searchTerm && (
@@ -218,7 +218,7 @@ export default function PedidosPage() {
           <>
             {pedidosPorMes.map(([mes, pedidosDelMes]) => (
               <div key={mes} className="mb-8">
-                <h2 className="text-xl font-semibold text-gray-700 mb-4 capitalize">{mes}</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4 capitalize">{mes}</h2>
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full">
                   {pedidosDelMes.map((pedido) => (
                     <Card key={pedido.pedido_id} className="hover:shadow-lg transition-shadow w-full overflow-hidden">
@@ -255,7 +255,7 @@ export default function PedidosPage() {
                           <User className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                           <div className="min-w-0 flex-1">
                             <p className="font-medium truncate">{pedido.cliente?.nombre || "Cliente no encontrado"}</p>
-                            <p className="text-xs text-gray-500 truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               Código: #{pedido.cliente?.cliente_codigo || "N/A"}
                             </p>
                           </div>
@@ -263,7 +263,7 @@ export default function PedidosPage() {
 
                         <div className="flex items-center gap-2 text-sm min-w-0">
                           <Calendar className="h-4 w-4 text-brand-700 flex-shrink-0" />
-                          <span className="text-gray-700 truncate">{formatDate(pedido.fecha_pedido)}</span>
+                          <span className="text-foreground truncate">{formatDate(pedido.fecha_pedido)}</span>
                         </div>
 
                         <div className="flex items-center gap-2 text-sm flex-wrap">
@@ -278,25 +278,25 @@ export default function PedidosPage() {
 
                         {pedido.productos && pedido.productos.length > 0 && (
                           <div className="mt-3 pt-3 border-t">
-                            <p className="text-xs text-gray-500 mb-2 font-medium">Productos:</p>
+                            <p className="text-xs text-muted-foreground mb-2 font-medium">Productos:</p>
                             <div className="space-y-2">
                               {pedido.productos.slice(0, 3).map((producto, index) => (
                                 <div key={index} className="text-xs space-y-0.5">
                                   <div className="flex justify-between gap-2 min-w-0">
-                                    <span className="text-gray-700 font-medium truncate flex-1 min-w-0">
+                                    <span className="text-foreground font-medium truncate flex-1 min-w-0">
                                       {producto.producto?.descripcion || "N/A"}
                                     </span>
-                                    <span className="text-gray-500 flex-shrink-0 whitespace-nowrap">
+                                    <span className="text-muted-foreground flex-shrink-0 whitespace-nowrap">
                                       {producto.cantidad || 0} {producto.producto?.categoria?.unidad || "u"}
                                     </span>
                                   </div>
-                                  <div className="text-gray-400 text-[10px] truncate">
+                                  <div className="text-muted-foreground text-[10px] truncate">
                                     Cód. Prov: {producto.producto?.producto_codigo || "N/A"}
                                   </div>
                                 </div>
                               ))}
                               {pedido.productos.length > 3 && (
-                                <p className="text-xs text-gray-400 italic">+{pedido.productos.length - 3} más</p>
+                                <p className="text-xs text-muted-foreground italic">+{pedido.productos.length - 3} más</p>
                               )}
                             </div>
                           </div>
@@ -310,7 +310,7 @@ export default function PedidosPage() {
 
             {searchTerm && filteredPedidos.length > 0 && (
               <div className="mt-6 text-center">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {filteredPedidos.length} de {pedidos.length} pedidos
                 </p>
               </div>

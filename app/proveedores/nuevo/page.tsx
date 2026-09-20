@@ -154,7 +154,7 @@ export default function NuevoProveedorPage() {
           <CardHeader>
             <CardTitle className="text-sm">Proveedores Predefinidos</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-gray-600">
+          <CardContent className="text-xs text-muted-foreground">
             <div className="grid grid-cols-2 gap-2">
               <div>300 - CAELBI</div>
               <div>400 - DABOR</div>

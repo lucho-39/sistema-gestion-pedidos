@@ -253,7 +253,7 @@ ORDER BY id;`,
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Configuración de Base de Datos</h1>
-            <p className="text-gray-600 mt-2">Ejecuta estos scripts en Supabase SQL Editor</p>
+            <p className="text-muted-foreground mt-2">Ejecuta estos scripts en Supabase SQL Editor</p>
           </div>
           <Button onClick={checkTables} disabled={isChecking}>
             <Database className="h-4 w-4 mr-2" />
@@ -283,7 +283,7 @@ ORDER BY id;`,
                 <CardDescription>{script.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto max-h-96 overflow-y-auto">
+                <div className="bg-foreground text-card p-4 rounded-lg font-mono text-sm overflow-x-auto max-h-96 overflow-y-auto">
                   <pre>{script.code}</pre>
                 </div>
                 <div className="flex gap-2">

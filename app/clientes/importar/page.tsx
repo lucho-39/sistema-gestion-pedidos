@@ -158,10 +158,10 @@ export default function ImportarClientesPage() {
                 type="file"
                 accept=".xlsx,.xls"
                 onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
               />
               {file && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <FileSpreadsheet className="h-4 w-4" />
                   <span>{file.name}</span>
                 </div>
@@ -189,8 +189,8 @@ export default function ImportarClientesPage() {
                             <p className="font-medium text-sm">
                               #{cliente.cliente_codigo} - {cliente.nombre}
                             </p>
-                            <p className="text-xs text-gray-600">{cliente.domicilio}</p>
-                            <div className="flex gap-3 text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">{cliente.domicilio}</p>
+                            <div className="flex gap-3 text-xs text-muted-foreground">
                               <span>Tel: {cliente.telefono}</span>
                               <span>CUIT: {cliente.CUIL}</span>
                             </div>
@@ -200,7 +200,7 @@ export default function ImportarClientesPage() {
                     </Card>
                   ))}
                   {parsedClientes.length > 10 && (
-                    <p className="text-xs text-gray-500 text-center">... y {parsedClientes.length - 10} clientes más</p>
+                    <p className="text-xs text-muted-foreground text-center">... y {parsedClientes.length - 10} clientes más</p>
                   )}
                 </div>
               </div>

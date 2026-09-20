@@ -109,7 +109,7 @@ export default function ProveedoresPage() {
             <h1 className="text-xl font-bold">Proveedores</h1>
           </div>
           <div className="text-center py-8">
-            <p className="text-gray-500">Cargando proveedores...</p>
+            <p className="text-muted-foreground">Cargando proveedores...</p>
           </div>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function ProveedoresPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Para gestionar proveedores, primero debes configurar la base de datos ejecutando los scripts SQL en tu
                 proyecto Supabase.
               </p>
@@ -187,8 +187,8 @@ export default function ProveedoresPage() {
         </div>
 
         <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar proveedores..."
               value={searchTerm}
@@ -206,7 +206,7 @@ export default function ProveedoresPage() {
         {filteredProveedores.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
-              <p className="text-gray-500">No hay proveedores registrados</p>
+              <p className="text-muted-foreground">No hay proveedores registrados</p>
               <Link href="/proveedores/nuevo" className="inline-block mt-2">
                 <Button variant="outline" size="sm">
                   <Plus className="h-4 w-4 mr-2" />

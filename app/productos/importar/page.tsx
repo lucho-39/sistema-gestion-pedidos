@@ -378,11 +378,11 @@ export default function ImportarProductosPage() {
             <CardContent className="space-y-3">
               <div className="max-h-60 overflow-y-auto space-y-2">
                 {importedProducts.map((producto, index) => (
-                  <div key={index} className="p-2 bg-gray-50 rounded text-sm">
+                  <div key={index} className="p-2 bg-muted rounded text-sm">
                     <p className="font-medium">
                       #{producto.articulo_numero} - {producto.descripcion}
                     </p>
-                    <p className="text-gray-600">Código: {producto.producto_codigo || "Sin código"}</p>
+                    <p className="text-muted-foreground">Código: {producto.producto_codigo || "Sin código"}</p>
                     <p className="text-indigo-600 text-xs font-medium">
                       Proveedor: {producto.proveedor?.proveedor_id} - {producto.proveedor?.proveedor_nombre}
                     </p>
@@ -407,7 +407,7 @@ export default function ImportarProductosPage() {
           <CardHeader>
             <CardTitle className="text-sm">Formato del archivo Excel</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-gray-600 space-y-2">
+          <CardContent className="text-xs text-muted-foreground space-y-2">
             <p>
               <strong>Campos reconocidos (no distingue mayúsculas/minúsculas):</strong>
             </p>

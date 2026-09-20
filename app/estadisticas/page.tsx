@@ -47,7 +47,7 @@ export default function EstadisticasPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -108,7 +108,7 @@ export default function EstadisticasPage() {
                           index === 0
                             ? "bg-yellow-400 text-yellow-900"
                             : index === 1
-                              ? "bg-gray-300 text-gray-700"
+                              ? "bg-accent text-foreground"
                               : index === 2
                                 ? "bg-orange-400 text-orange-900"
                                 : "bg-brand-200 text-brand-700"
@@ -119,8 +119,8 @@ export default function EstadisticasPage() {
 
                       {/* Product Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 mb-1">{item.producto.descripcion}</p>
-                        <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                        <p className="font-semibold text-foreground mb-1">{item.producto.descripcion}</p>
+                        <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                           <span>Art. {item.producto.articulo_numero || "N/A"}</span>
                           {item.producto.proveedor && (
                             <>
@@ -144,8 +144,8 @@ export default function EstadisticasPage() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Package className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">
+                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">
                   {selectedProveedor === "all"
                     ? "No hay datos disponibles"
                     : "No hay productos de este proveedor en pedidos"}

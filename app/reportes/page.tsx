@@ -223,7 +223,7 @@ export default function ReportesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background pb-24 md:pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
           <div className="flex items-center gap-3 py-2 mb-4">
             <Link href="/">
               <Button variant="ghost" size="sm" className="touch-manipulation">
@@ -234,7 +234,7 @@ export default function ReportesPage() {
           </div>
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
-            <p className="text-gray-500">Cargando reportes...</p>
+            <p className="text-muted-foreground">Cargando reportes...</p>
           </div>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function ReportesPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         {/* Header */}
         <div className="flex items-center gap-3 py-2 mb-6">
           <Link href="/">
@@ -261,7 +261,7 @@ export default function ReportesPage() {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-brand-700 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500 truncate">Estado</p>
+                  <p className="text-xs text-muted-foreground truncate">Estado</p>
                   <p className="font-medium text-sm md:text-base truncate">
                     {schedulerStatus.isRunning ? "Activo" : "Inactivo"}
                   </p>
@@ -275,7 +275,7 @@ export default function ReportesPage() {
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-orange-600 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500 truncate">Pendientes</p>
+                  <p className="text-xs text-muted-foreground truncate">Pendientes</p>
                   <p className="font-medium text-sm md:text-base">{schedulerStatus.pendingOrdersCount}</p>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function ReportesPage() {
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-green-600 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500 truncate">Próximo</p>
+                  <p className="text-xs text-muted-foreground truncate">Próximo</p>
                   <p className="font-medium text-xs md:text-sm truncate">
                     {schedulerStatus.nextReportTime ? formatTimeUntilNext(schedulerStatus.timeUntilNext) : "N/A"}
                   </p>
@@ -301,7 +301,7 @@ export default function ReportesPage() {
               <div className="flex items-center gap-2">
                 <RefreshCw className="h-4 w-4 text-purple-600 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500 truncate">Última</p>
+                  <p className="text-xs text-muted-foreground truncate">Última</p>
                   <p className="font-medium text-xs md:text-sm truncate">
                     {schedulerStatus.lastCheck ? schedulerStatus.lastCheck.toLocaleTimeString("es-AR") : "N/A"}
                   </p>
@@ -391,7 +391,7 @@ export default function ReportesPage() {
               </AlertDescription>
             </Alert>
 
-            <div className="text-xs md:text-sm text-gray-600 space-y-1">
+            <div className="text-xs md:text-sm text-muted-foreground space-y-1">
               <p>
                 <strong>Sistema Automático:</strong> Genera reportes los miércoles a las 10:59 AM
               </p>
@@ -421,8 +421,8 @@ export default function ReportesPage() {
             {reportesAutomaticos.length === 0 ? (
               <Card>
                 <CardContent className="p-6 md:p-8 text-center">
-                  <FileText className="h-12 w-12 md:h-16 md:w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm md:text-base text-gray-500 mb-4">No hay reportes automáticos generados</p>
+                  <FileText className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm md:text-base text-muted-foreground mb-4">No hay reportes automáticos generados</p>
                   <Button
                     onClick={generateHistoricalReports}
                     size="sm"
@@ -453,7 +453,7 @@ export default function ReportesPage() {
                           <CardTitle className="text-sm md:text-base truncate">
                             Reporte #{reporte.id.slice(-8)}
                           </CardTitle>
-                          <p className="text-xs md:text-sm text-gray-500 mt-1">
+                          <p className="text-xs md:text-sm text-muted-foreground mt-1">
                             {formatDate(reporte.fecha_generacion)}
                           </p>
                         </div>
@@ -471,23 +471,23 @@ export default function ReportesPage() {
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs md:text-sm">
                         <div>
-                          <p className="text-gray-500">Pedidos</p>
+                          <p className="text-muted-foreground">Pedidos</p>
                           <p className="font-medium">{reporte.pedidos_incluidos.length}</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Inicio</p>
+                          <p className="text-muted-foreground">Inicio</p>
                           <p className="font-medium">
                             {new Date(reporte.fecha_inicio_periodo).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Fin</p>
+                          <p className="text-muted-foreground">Fin</p>
                           <p className="font-medium">
                             {new Date(reporte.fecha_fin_periodo).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Proveedores</p>
+                          <p className="text-muted-foreground">Proveedores</p>
                           <p className="font-medium">{reporte.reportes.productos_por_proveedor.proveedores.length}</p>
                         </div>
                       </div>
@@ -532,8 +532,8 @@ export default function ReportesPage() {
             {reportesManuales.length === 0 ? (
               <Card>
                 <CardContent className="p-6 md:p-8 text-center">
-                  <FileText className="h-12 w-12 md:h-16 md:w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm md:text-base text-gray-500 mb-4">No hay reportes manuales generados</p>
+                  <FileText className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm md:text-base text-muted-foreground mb-4">No hay reportes manuales generados</p>
                   <Button onClick={generateManualReport} size="sm" className="touch-manipulation">
                     <FileText className="h-4 w-4 mr-2" />
                     Generar Primer Reporte
@@ -550,7 +550,7 @@ export default function ReportesPage() {
                           <CardTitle className="text-sm md:text-base truncate">
                             Reporte #{reporte.id.slice(-8)}
                           </CardTitle>
-                          <p className="text-xs md:text-sm text-gray-500 mt-1">
+                          <p className="text-xs md:text-sm text-muted-foreground mt-1">
                             {formatDate(reporte.fecha_generacion)}
                           </p>
                         </div>
@@ -561,23 +561,23 @@ export default function ReportesPage() {
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs md:text-sm">
                         <div>
-                          <p className="text-gray-500">Pedidos</p>
+                          <p className="text-muted-foreground">Pedidos</p>
                           <p className="font-medium">{reporte.pedidos_incluidos.length}</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Inicio</p>
+                          <p className="text-muted-foreground">Inicio</p>
                           <p className="font-medium">
                             {new Date(reporte.fecha_inicio_periodo).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Fin</p>
+                          <p className="text-muted-foreground">Fin</p>
                           <p className="font-medium">
                             {new Date(reporte.fecha_fin_periodo).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Proveedores</p>
+                          <p className="text-muted-foreground">Proveedores</p>
                           <p className="font-medium">{reporte.reportes.productos_por_proveedor.proveedores.length}</p>
                         </div>
                       </div>

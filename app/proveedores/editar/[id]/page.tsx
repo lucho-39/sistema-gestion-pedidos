@@ -171,8 +171,8 @@ export default function EditarProveedorPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="proveedor_id">ID del Proveedor</Label>
-                <Input id="proveedor_id" type="number" value={formData.proveedor_id} disabled className="bg-gray-100" />
-                <p className="text-xs text-gray-500 mt-1">El ID del proveedor no se puede modificar</p>
+                <Input id="proveedor_id" type="number" value={formData.proveedor_id} disabled className="bg-muted" />
+                <p className="text-xs text-muted-foreground mt-1">El ID del proveedor no se puede modificar</p>
               </div>
 
               <div>

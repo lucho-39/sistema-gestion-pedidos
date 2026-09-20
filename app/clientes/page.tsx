@@ -101,7 +101,7 @@ export default function ClientesPage() {
             <h1 className="text-xl font-bold">Clientes</h1>
           </div>
           <div className="text-center py-8">
-            <p className="text-gray-500">Cargando clientes...</p>
+            <p className="text-muted-foreground">Cargando clientes...</p>
           </div>
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function ClientesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Para gestionar clientes, primero debes configurar la base de datos ejecutando los scripts SQL en tu
                 proyecto Supabase.
               </p>
@@ -179,8 +179,8 @@ export default function ClientesPage() {
         </div>
 
         <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar clientes..."
               value={searchTerm}
@@ -198,7 +198,7 @@ export default function ClientesPage() {
         {filteredClientes.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
-              <p className="text-gray-500">
+              <p className="text-muted-foreground">
                 {searchTerm ? "No se encontraron clientes" : "No hay clientes registrados"}
               </p>
               <Link href="/clientes/nuevo" className="inline-block mt-2">
@@ -236,15 +236,15 @@ export default function ClientesPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-2">
-                  <div className="flex items-start gap-2 text-xs text-gray-600">
+                  <div className="flex items-start gap-2 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
                     <span className="line-clamp-2">{cliente.domicilio}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Phone className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate">{cliente.telefono}</span>
                   </div>
-                  <p className="text-xs text-gray-500 truncate">CUIL: {cliente.cuil}</p>
+                  <p className="text-xs text-muted-foreground truncate">CUIL: {cliente.cuil}</p>
                 </CardContent>
               </Card>
             ))}

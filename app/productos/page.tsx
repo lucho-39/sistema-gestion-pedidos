@@ -136,7 +136,7 @@ export default function ProductosPage() {
             <h1 className="text-xl font-bold">Productos</h1>
           </div>
           <div className="text-center py-8">
-            <p className="text-gray-500">Cargando productos...</p>
+            <p className="text-muted-foreground">Cargando productos...</p>
           </div>
         </div>
       </div>
@@ -174,7 +174,7 @@ export default function ProductosPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Para gestionar productos, primero debes configurar la base de datos ejecutando los scripts SQL en tu
                 proyecto Supabase.
               </p>
@@ -195,7 +195,7 @@ export default function ProductosPage() {
                 </Link>
               </div>
 
-              <div className="text-xs text-gray-500 space-y-1">
+              <div className="text-xs text-muted-foreground space-y-1">
                 <p>
                   <strong>¿Qué necesitas hacer?</strong>
                 </p>
@@ -265,8 +265,8 @@ export default function ProductosPage() {
         </div>
 
         <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar productos..."
               value={searchTerm}
@@ -287,7 +287,7 @@ export default function ProductosPage() {
             <CardContent className="p-6 text-center">
               {productos.length === 0 ? (
                 <>
-                  <p className="text-gray-500 mb-4">No hay productos registrados</p>
+                  <p className="text-muted-foreground mb-4">No hay productos registrados</p>
                   <Link href="/productos/nuevo" className="inline-block">
                     <Button variant="outline" size="sm">
                       <Plus className="h-4 w-4 mr-2" />
@@ -296,7 +296,7 @@ export default function ProductosPage() {
                   </Link>
                 </>
               ) : (
-                <p className="text-gray-500">No se encontraron productos con &quot;{searchTerm}&quot;</p>
+                <p className="text-muted-foreground">No se encontraron productos con &quot;{searchTerm}&quot;</p>
               )}
             </CardContent>
           </Card>
@@ -306,7 +306,7 @@ export default function ProductosPage() {
               <div key={proveedorNombre} className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="h-px bg-gradient-to-r from-brand-500 to-transparent flex-1" />
-                  <h2 className="text-lg font-semibold text-gray-900 px-3">{proveedorNombre}</h2>
+                  <h2 className="text-lg font-semibold text-foreground px-3">{proveedorNombre}</h2>
                   <div className="h-px bg-gradient-to-l from-brand-500 to-transparent flex-1" />
                   <Badge variant="outline" className="text-xs">
                     {productosGrupo.length}
@@ -323,8 +323,8 @@ export default function ProductosPage() {
                               ID: {producto.producto_id}
                               {producto.articulo_numero && ` | #${producto.articulo_numero}`}
                             </CardTitle>
-                            <p className="text-xs text-gray-900 mt-1 line-clamp-2">{producto.descripcion}</p>
-                            <p className="text-xs text-gray-500 mt-1 truncate">
+                            <p className="text-xs text-foreground mt-1 line-clamp-2">{producto.descripcion}</p>
+                            <p className="text-xs text-muted-foreground mt-1 truncate">
                               Código: {producto.producto_codigo || "Sin código"}
                             </p>
                           </div>

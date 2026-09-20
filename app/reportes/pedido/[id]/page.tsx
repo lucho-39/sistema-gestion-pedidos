@@ -70,7 +70,7 @@ export default function DetallePedidoPage() {
             <h1 className="text-xl font-bold">Detalle del Pedido</h1>
           </div>
           <div className="text-center py-8">
-            <p className="text-gray-500">Cargando pedido...</p>
+            <p className="text-muted-foreground">Cargando pedido...</p>
           </div>
         </div>
       </div>
@@ -91,7 +91,7 @@ export default function DetallePedidoPage() {
           </div>
           <Card>
             <CardContent className="p-6 text-center">
-              <p className="text-gray-500">El pedido solicitado no existe</p>
+              <p className="text-muted-foreground">El pedido solicitado no existe</p>
               <Link href="/pedidos" className="inline-block mt-4">
                 <Button variant="outline" className="w-full bg-transparent">
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -127,12 +127,12 @@ export default function DetallePedidoPage() {
           <CardContent className="space-y-3">
             <div>
               <p className="font-medium">{pedido.cliente?.nombre || "Cliente no encontrado"}</p>
-              <p className="text-sm text-gray-600">Código: #{pedido.cliente?.cliente_codigo || "N/A"}</p>
+              <p className="text-sm text-muted-foreground">Código: #{pedido.cliente?.cliente_codigo || "N/A"}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">📍 {pedido.cliente?.domicilio || "Domicilio no disponible"}</p>
-              <p className="text-sm text-gray-600">📞 {pedido.cliente?.telefono || "Teléfono no disponible"}</p>
-              <p className="text-sm text-gray-600">🆔 CUIL: {pedido.cliente?.cuil || "CUIL no disponible"}</p>
+              <p className="text-sm text-muted-foreground">📍 {pedido.cliente?.domicilio || "Domicilio no disponible"}</p>
+              <p className="text-sm text-muted-foreground">📞 {pedido.cliente?.telefono || "Teléfono no disponible"}</p>
+              <p className="text-sm text-muted-foreground">🆔 CUIL: {pedido.cliente?.cuil || "CUIL no disponible"}</p>
             </div>
           </CardContent>
         </Card>
@@ -146,15 +146,15 @@ export default function DetallePedidoPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Fecha del pedido:</span>
+              <span className="text-sm text-muted-foreground">Fecha del pedido:</span>
               <Badge variant="secondary">{formatDate(pedido.fecha_pedido)}</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Total productos:</span>
+              <span className="text-sm text-muted-foreground">Total productos:</span>
               <Badge variant="secondary">{calcularTotalProductos()}</Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Tipos de productos:</span>
+              <span className="text-sm text-muted-foreground">Tipos de productos:</span>
               <Badge variant="secondary">{pedido.productos?.length || 0}</Badge>
             </div>
           </CardContent>
@@ -176,7 +176,7 @@ export default function DetallePedidoPage() {
                       <p className="font-medium text-sm">
                         #{producto.articulo_numero} - {producto.producto?.descripcion || "Descripción no disponible"}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Código: {producto.producto?.producto_codigo || "Sin código"}
                       </p>
                     </div>
@@ -184,7 +184,7 @@ export default function DetallePedidoPage() {
                       {producto.cantidad || 0} {producto.producto?.categoria?.unidad || "unidad"}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Truck className="h-3 w-3" />
                     <span>
                       {producto.producto?.proveedor?.proveedor_id || "N/A"} -{" "}
@@ -194,7 +194,7 @@ export default function DetallePedidoPage() {
                 </div>
               ))
             ) : (
-              <div className="text-center py-4 text-gray-500">
+              <div className="text-center py-4 text-muted-foreground">
                 <p>No hay productos en este pedido</p>
               </div>
             )}
