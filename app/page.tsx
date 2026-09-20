@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Package, Users, Truck, ShoppingCart, FileText, Upload, UserPlus, TrendingUp } from "lucide-react"
+import { Package, Users, Truck, ShoppingCart, FileText, Upload, TrendingUp } from "lucide-react"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useVisitante } from "@/hooks/use-visitante"
 
@@ -54,18 +54,6 @@ export default function HomePage() {
                   Clientes
                 </CardTitle>
                 <CardDescription>Administra la base de clientes</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/clientes/importar">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserPlus className="h-5 w-5 text-green-600" />
-                  Importar Clientes
-                </CardTitle>
-                <CardDescription>Importar clientes desde Excel</CardDescription>
               </CardHeader>
             </Card>
           </Link>

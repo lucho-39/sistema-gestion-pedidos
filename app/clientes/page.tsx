@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, Plus, Search, Edit, Trash2, Phone, MapPin, Database, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Plus, Search, Edit, Trash2, Phone, MapPin, Mail, Database, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -245,6 +245,12 @@ export default function ClientesPage() {
                     <span className="truncate">{cliente.telefono}</span>
                   </div>
                   <p className="text-xs text-muted-foreground truncate">CUIL: {cliente.cuil}</p>
+                  {cliente.email && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Mail className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{cliente.email}</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

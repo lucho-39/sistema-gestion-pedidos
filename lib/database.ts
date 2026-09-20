@@ -485,7 +485,7 @@ export class Database {
 
       const { data, error } = await supabase
         .from("clientes")
-        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, email, cuil, created_at, updated_at")
         .order("nombre")
 
       if (error) {
@@ -511,7 +511,7 @@ export class Database {
 
       const { data, error } = await supabase
         .from("clientes")
-        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, email, cuil, created_at, updated_at")
         .eq("cliente_id", id)
         .single()
 
@@ -540,6 +540,10 @@ export class Database {
 
       if (cliente.cuil) {
         insertData.cuil = cliente.cuil
+      }
+
+      if (cliente.email) {
+        insertData.email = cliente.email
       }
 
       const { data, error } = await supabase.from("clientes").insert([insertData]).select().single()
@@ -610,6 +614,10 @@ export class Database {
           data.cuil = c.cuil
         }
 
+        if (c.email) {
+          data.email = c.email
+        }
+
         return data
       })
 
@@ -652,7 +660,7 @@ export class Database {
 
       const { data: clientesData } = await supabase
         .from("clientes")
-        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, email, cuil, created_at, updated_at")
       const { data: pedidoProductosData } = await supabase
         .from("pedido_productos")
         .select("id, pedido_id, producto_id, cantidad, created_at")
@@ -735,7 +743,7 @@ export class Database {
 
       const { data: clienteData } = await supabase
         .from("clientes")
-        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, cuil, created_at, updated_at")
+        .select("cliente_id, cliente_codigo, nombre, domicilio, telefono, email, cuil, created_at, updated_at")
         .eq("cliente_id", pedidoData.cliente_id)
         .single()
 

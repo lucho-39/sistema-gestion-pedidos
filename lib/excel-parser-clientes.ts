@@ -13,6 +13,7 @@ export interface ParsedCliente {
   domicilio: string
   telefono: string
   CUIL: string
+  email: string
 }
 
 export async function parseClientesExcel(file: File): Promise<ParsedCliente[]> {
@@ -47,6 +48,7 @@ export async function parseClientesExcel(file: File): Promise<ParsedCliente[]> {
           const localidad = getColumnValue(["localidad", "ciudad", "location"])
           const telefono = getColumnValue(["telefono", "tel", "phone", "celular"])
           const cuit = getColumnValue(["cuit", "cuil", "dni"])
+          const email = getColumnValue(["email", "e-mail", "correo", "mail"])
 
           if (!clienteCodigo || !denominacion) {
             continue // Skip rows without required fields
@@ -64,6 +66,8 @@ export async function parseClientesExcel(file: File): Promise<ParsedCliente[]> {
             domicilio: domicilioCompleto || "Sin especificar",
             telefono: telefono?.toString() || "Sin teléfono",
             CUIL: cuit?.toString() || "Sin CUIT",
+            // trim: en el archivo hay emails con espacio al final
+            email: email?.toString().trim() || "",
           })
         }
 

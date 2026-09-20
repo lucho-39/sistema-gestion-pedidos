@@ -51,6 +51,7 @@ export interface Cliente {
   nombre: string
   domicilio: string
   telefono: string
+  email?: string
   cuil?: string
   created_at?: string
   updated_at?: string

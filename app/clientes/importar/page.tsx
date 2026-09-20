@@ -91,6 +91,7 @@ export default function ImportarClientesPage() {
             domicilio: cliente.domicilio,
             telefono: cliente.telefono,
             cuil: cliente.CUIL,
+            email: cliente.email,
           })
 
           if (newCliente) {
@@ -144,7 +145,7 @@ export default function ImportarClientesPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             <strong>Formato esperado:</strong> El archivo Excel debe contener las columnas: ID Cliente, Denominación,
-            Domicilio, Localidad, Teléfono, CUIT
+            Domicilio, Localidad, Teléfono, CUIT, Email
           </AlertDescription>
         </Alert>
 
