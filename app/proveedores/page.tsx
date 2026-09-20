@@ -98,7 +98,7 @@ export default function ProveedoresPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
+      <div className="min-h-screen bg-background p-4">
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
             <Link href="/">
@@ -118,7 +118,7 @@ export default function ProveedoresPage() {
 
   if (needsSetup) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
+      <div className="min-h-screen bg-background p-4">
         <div className="max-w-md mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
             <Link href="/">
@@ -175,7 +175,7 @@ export default function ProveedoresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center gap-3 py-2">
           <Link href="/">

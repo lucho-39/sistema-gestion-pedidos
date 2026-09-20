@@ -68,7 +68,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-gray-50 pb-24 md:pb-0">{children}</main>
+      <main className="min-h-screen bg-background pb-24 md:pb-0">{children}</main>
     </>
   )
 }

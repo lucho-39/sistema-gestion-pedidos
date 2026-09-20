@@ -6,7 +6,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background to-brand-50 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="text-center py-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Punto Ferretero</h1>

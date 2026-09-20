@@ -145,7 +145,7 @@ export default function PedidosPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 p-4 pb-24 md:pb-8">
+      <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background p-4 pb-24 md:pb-8">
         <div className="max-w-6xl mx-auto w-full">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h1 className="text-2xl md:text-3xl font-bold">Pedidos</h1>
@@ -168,7 +168,7 @@ export default function PedidosPage() {
   const pedidosPorMes = groupPedidosByMonth(filteredPedidos)
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 p-4 pb-24 md:pb-8">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background p-4 pb-24 md:pb-8">
       <div className="max-w-6xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="min-w-0 flex-1">

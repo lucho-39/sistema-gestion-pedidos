@@ -12,7 +12,7 @@
   :root {
     --font-sans: var(--font-geist-sans);
     --font-mono: var(--font-geist-mono);
-    --background: 0 0% 100%;
+    --background: 166 30% 95.5%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -20,16 +20,16 @@
     --popover-foreground: 0 0% 3.9%;
     --primary: 166 34% 37%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96.1%;
+    --secondary: 166 22% 93%;
     --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
+    --muted: 166 22% 93%;
     --muted-foreground: 0 0% 45.1%;
-    --accent: 166 40% 96%;
+    --accent: 166 40% 93%;
     --accent-foreground: 166 40% 20%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 200 12% 91%;
-    --input: 200 12% 91%;
+    --border: 166 16% 89%;
+    --input: 166 16% 89%;
     --ring: 166 34% 40%;
     --chart-1: 166 34% 40%;
     --chart-2: 166 36% 58%;
