@@ -97,7 +97,10 @@ END $$;
 
 COMMIT;
 
--- 4) Verificacion: rls_habilitado debe ser true y politicas debe ser 1 en cada tabla
+-- 4) Verificacion. Esperado por tabla:
+--      productos, categorias, imagenes            -> 2 politicas (lectura + escritura)
+--      clientes, proveedores, pedidos, pedido_productos -> 1 politica (solo no visitantes)
+--    Y rls_habilitado = true en las 7.
 SELECT
     t.tablename,
     t.rowsecurity            AS rls_habilitado,
