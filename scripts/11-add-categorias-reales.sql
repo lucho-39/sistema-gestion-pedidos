@@ -13,13 +13,15 @@
 --   * "Venta por Rollo" -> metro  (se corta por metro)
 --   * el resto          -> unidad
 --
--- ES IDEMPOTENTE: usa ON CONFLICT, se puede volver a ejecutar sin romper nada
--- y sin duplicar. La columna nombre tiene indice unico, que es lo que lo hace
--- posible.
+-- ES IDEMPOTENTE y NO depende de que exista un indice unico en "nombre":
+-- usa WHERE NOT EXISTS, asi que se puede volver a ejecutar sin duplicar nada
+-- y sin riesgo de error.
 
 BEGIN;
 
-INSERT INTO categorias (nombre, unidad) VALUES
+INSERT INTO categorias (nombre, unidad)
+SELECT v.nombre, v.unidad
+FROM (VALUES
   ('Ferretería',      'unidad'),
   ('Sanitarios',      'unidad'),
   ('Herramientas',    'unidad'),
@@ -38,11 +40,14 @@ INSERT INTO categorias (nombre, unidad) VALUES
   ('Exhibidores',     'unidad'),
   ('Gas',             'unidad'),
   ('Vidriería',       'unidad')
-ON CONFLICT (nombre) DO NOTHING;
+) AS v(nombre, unidad)
+WHERE NOT EXISTS (
+  SELECT 1 FROM categorias c WHERE c.nombre = v.nombre
+);
 
 COMMIT;
 
--- Verificacion: tienen que aparecer las 23 (las 5 viejas + estas 18)
+-- Verificacion: tienen que aparecer 23 (las 5 viejas + estas 18)
 SELECT id, nombre, unidad
 FROM categorias
 ORDER BY id;
