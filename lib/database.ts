@@ -19,6 +19,21 @@ interface FilaPedidoProducto {
   created_at?: string
 }
 
+// Fila cruda de productos tal como la devuelve la base, antes de combinarla
+// con su categoria, imagen y proveedor.
+interface FilaProducto {
+  producto_id: number
+  articulo_numero: string | null
+  producto_codigo: string | null
+  titulo: string | null
+  descripcion: string
+  categoria_id: number
+  img_id: number
+  proveedor_id: number
+  created_at: string | null
+  updated_at: string | null
+}
+
 export class Database {
   static async checkTablesExist(): Promise<{ exists: boolean; missingTables: string[] }> {
     const requiredTables = [
@@ -228,25 +243,39 @@ export class Database {
 
       console.log("✅ Supabase configurado, obteniendo productos...")
 
-      // Obtener productos
-      const { data: productosData, error: productosError } = await supabase
-        .from("productos")
-        .select(
-          "producto_id, articulo_numero, producto_codigo, titulo, descripcion, categoria_id, img_id, proveedor_id, created_at, updated_at",
-        )
-        .order("producto_id", { ascending: false })
+      // La base entrega como MUCHO 1000 filas por consulta: es un tope del
+      // servidor, y pedir un limit mas grande no sirve (lo ignora). Si no se
+      // pagina, los productos que sobren quedan invisibles en la pantalla sin
+      // ningun error: el 1001 simplemente no llega.
+      const TAMANO_PAGINA = 1000
+      const productosData: FilaProducto[] = []
 
-      if (productosError) {
-        console.error("❌ Error fetching productos:", productosError)
-        if (productosError.message.includes("does not exist")) {
-          throw new Error("Database tables not found. Please run the setup scripts first.")
+      for (let desde = 0; ; desde += TAMANO_PAGINA) {
+        const { data, error } = await supabase
+          .from("productos")
+          .select(
+            "producto_id, articulo_numero, producto_codigo, titulo, descripcion, categoria_id, img_id, proveedor_id, created_at, updated_at",
+          )
+          .order("producto_id", { ascending: false })
+          .range(desde, desde + TAMANO_PAGINA - 1)
+
+        if (error) {
+          console.error("❌ Error fetching productos:", error)
+          if (error.message.includes("does not exist")) {
+            throw new Error("Database tables not found. Please run the setup scripts first.")
+          }
+          return []
         }
-        return []
+
+        const pagina = data || []
+        productosData.push(...pagina)
+
+        if (pagina.length < TAMANO_PAGINA) break
       }
 
-      console.log(`✅ Productos obtenidos: ${productosData?.length || 0}`)
+      console.log(`✅ Productos obtenidos: ${productosData.length}`)
 
-      if (!productosData || productosData.length === 0) {
+      if (productosData.length === 0) {
         console.log("⚠️ No hay productos en la base de datos")
         return []
       }
@@ -300,8 +329,8 @@ export class Database {
           categoria_id: p.categoria_id,
           img_id: p.img_id,
           proveedor_id: p.proveedor_id,
-          created_at: p.created_at,
-          updated_at: p.updated_at,
+          created_at: p.created_at ?? undefined,
+          updated_at: p.updated_at ?? undefined,
           categoria,
           imagen,
           proveedor,

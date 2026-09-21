@@ -41,6 +41,9 @@ export default function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredProductos, setFilteredProductos] = useState<Producto[]>([])
+  // Cuantas tarjetas se dibujan. Con 1500 productos, dibujarlas todas de una
+  // congela la pantalla: se muestran de a tandas.
+  const [visibles, setVisibles] = useState(60)
   const [isLoading, setIsLoading] = useState(true)
   const [needsSetup, setNeedsSetup] = useState(false)
   const [error, setError] = useState<string>("")
@@ -90,6 +93,9 @@ export default function ProductosPage() {
         (producto.articulo_numero && producto.articulo_numero.toString().includes(searchTerm)),
     )
     setFilteredProductos(filtered)
+    // Al cambiar la busqueda se vuelve a empezar por la primera tanda, si no
+    // el resultado nuevo aparece cortado.
+    setVisibles(60)
   }, [searchTerm, productos])
 
   const handleDelete = async (productoId: number) => {
@@ -123,7 +129,7 @@ export default function ProductosPage() {
     }
   }
 
-  const productosPorProveedor = groupProductosByProveedor(filteredProductos)
+  const productosPorProveedor = groupProductosByProveedor(filteredProductos.slice(0, visibles))
 
   if (isLoading) {
     return (
@@ -366,6 +372,14 @@ export default function ProductosPage() {
                 </div>
               </div>
             ))}
+
+            {filteredProductos.length > visibles && (
+              <div className="flex justify-center pt-4">
+                <Button variant="outline" onClick={() => setVisibles((v) => v + 60)}>
+                  Ver más ({filteredProductos.length - visibles} restantes)
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
