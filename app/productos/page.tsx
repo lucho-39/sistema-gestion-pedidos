@@ -422,7 +422,7 @@ export default function ProductosPage() {
               <div className="flex justify-center pt-4">
                 <Button
                   variant="outline"
-                  className="w-full bg-card text-card-foreground border-border hover:bg-accent"
+                  className="bg-card text-card-foreground border-border hover:bg-accent"
                   onClick={() => setVisibles((v) => v + 60)}
                 >
                   Ver más ({filteredProductos.length - visibles} restantes)
