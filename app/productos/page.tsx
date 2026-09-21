@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { ArrowLeft, Plus, Search, Edit, Trash2, Database, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -44,6 +44,8 @@ export default function ProductosPage() {
   // Cuantas tarjetas se dibujan. Con 1500 productos, dibujarlas todas de una
   // congela la pantalla: se muestran de a tandas.
   const [visibles, setVisibles] = useState(60)
+  // Filtro por proveedor: "todos" o el nombre del proveedor elegido.
+  const [proveedorActivo, setProveedorActivo] = useState("todos")
   const [isLoading, setIsLoading] = useState(true)
   const [needsSetup, setNeedsSetup] = useState(false)
   const [error, setError] = useState<string>("")
@@ -86,17 +88,22 @@ export default function ProductosPage() {
   }, [toast])
 
   useEffect(() => {
-    const filtered = productos.filter(
-      (producto) =>
-        producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (producto.producto_codigo && producto.producto_codigo.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (producto.articulo_numero && producto.articulo_numero.toString().includes(searchTerm)),
-    )
+    const termino = searchTerm.toLowerCase()
+    const filtered = productos.filter((producto) => {
+      const proveedor = producto.proveedor?.proveedor_nombre || "Sin proveedor"
+      if (proveedorActivo !== "todos" && proveedor !== proveedorActivo) return false
+
+      return (
+        producto.descripcion.toLowerCase().includes(termino) ||
+        (producto.producto_codigo && producto.producto_codigo.toLowerCase().includes(termino)) ||
+        (producto.articulo_numero && producto.articulo_numero.toString().includes(termino))
+      )
+    })
     setFilteredProductos(filtered)
-    // Al cambiar la busqueda se vuelve a empezar por la primera tanda, si no
-    // el resultado nuevo aparece cortado.
+    // Al cambiar la busqueda o el proveedor se vuelve a empezar por la primera
+    // tanda, si no el resultado nuevo aparece cortado.
     setVisibles(60)
-  }, [searchTerm, productos])
+  }, [searchTerm, productos, proveedorActivo])
 
   const handleDelete = async (productoId: number) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
@@ -128,6 +135,16 @@ export default function ProductosPage() {
       })
     }
   }
+
+  // Proveedores presentes en el catalogo, con cuantos productos tiene cada uno.
+  const proveedoresDelCatalogo = useMemo(() => {
+    const cuenta = new Map<string, number>()
+    for (const p of productos) {
+      const nombre = p.proveedor?.proveedor_nombre || "Sin proveedor"
+      cuenta.set(nombre, (cuenta.get(nombre) || 0) + 1)
+    }
+    return Array.from(cuenta.entries()).sort(([a], [b]) => a.localeCompare(b, "es"))
+  }, [productos])
 
   const productosPorProveedor = groupProductosByProveedor(filteredProductos.slice(0, visibles))
 
@@ -260,37 +277,65 @@ export default function ProductosPage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-7xl mx-auto space-y-4">
-        <div className="flex items-center gap-3 py-2">
+        <div className="flex flex-wrap items-center gap-3 py-2">
           <Link href="/">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <h1 className="text-xl font-bold">Productos</h1>
-          <Badge variant="secondary" className="ml-auto">
-            {productos.length} productos
+
+          {/* Centro: buscador + nuevo producto. En pantalla chica baja a su
+              propia linea, si no el titulo y el contador quedan apretados. */}
+          <div className="order-last flex w-full items-center justify-center gap-2 sm:order-none sm:w-auto sm:flex-1">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar productos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {/* El visitante no ve acciones de escritura (RLS tambien las bloquea). */}
+            {!visitante && (
+              <Link href="/productos/nuevo">
+                <Button size="sm" className="whitespace-nowrap">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuevo
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          <Badge variant="secondary" className="whitespace-nowrap">
+            {proveedorActivo === "todos" && !searchTerm
+              ? `${productos.length} productos`
+              : `${filteredProductos.length} de ${productos.length}`}
           </Badge>
         </div>
 
-        <div className="flex gap-2">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar productos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          {/* El visitante no ve acciones de escritura (RLS tambien las bloquea). */}
-          {!visitante && (
-            <Link href="/productos/nuevo">
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo
-              </Button>
-            </Link>
-          )}
+        {/* Filtro por proveedor: en vez de recorrer 1500 productos, se elige uno. */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant={proveedorActivo === "todos" ? "default" : "outline"}
+            className={proveedorActivo === "todos" ? "" : "bg-card text-card-foreground border-border hover:bg-accent"}
+            onClick={() => setProveedorActivo("todos")}
+          >
+            Todos ({productos.length})
+          </Button>
+          {proveedoresDelCatalogo.map(([nombre, cantidad]) => (
+            <Button
+              key={nombre}
+              size="sm"
+              variant={proveedorActivo === nombre ? "default" : "outline"}
+              className={proveedorActivo === nombre ? "" : "bg-card text-card-foreground border-border hover:bg-accent"}
+              onClick={() => setProveedorActivo(nombre)}
+            >
+              {nombre} ({cantidad})
+            </Button>
+          ))}
         </div>
 
         {filteredProductos.length === 0 ? (
@@ -375,7 +420,11 @@ export default function ProductosPage() {
 
             {filteredProductos.length > visibles && (
               <div className="flex justify-center pt-4">
-                <Button variant="outline" onClick={() => setVisibles((v) => v + 60)}>
+                <Button
+                  variant="outline"
+                  className="w-full bg-card text-card-foreground border-border hover:bg-accent"
+                  onClick={() => setVisibles((v) => v + 60)}
+                >
                   Ver más ({filteredProductos.length - visibles} restantes)
                 </Button>
               </div>
