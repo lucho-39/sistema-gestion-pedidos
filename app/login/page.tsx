@@ -88,7 +88,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-background p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background p-4 pb-20 sm:pb-4">
       <Image
         src="/logo.png"
         alt="Punto Ferretero"

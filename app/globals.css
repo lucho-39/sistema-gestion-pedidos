@@ -95,11 +95,14 @@
   }
   body {
     @apply bg-background text-foreground;
-    overflow-x: hidden;
+    /* clip y no hidden: hidden convierte al navegador en contenedor de scroll y
+       rompe position: sticky (la barra de navegacion no se pegaria al scroll).
+       clip recorta el desborde horizontal igual, pero sin ese efecto. */
+    overflow-x: clip;
     max-width: 100vw;
   }
   html {
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100vw;
   }
 }

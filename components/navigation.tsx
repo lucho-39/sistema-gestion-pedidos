@@ -137,9 +137,10 @@ export function Navigation() {
         </div>
       </nav>
 
-      {/* Mobile Navigation - Bottom Bar */}
-      {/* 7 items + Salir = 8: entran justo en 4 columnas x 2 filas */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-inset-bottom shadow-lg">
+      {/* Mobile Navigation - Top Bar */}
+      {/* 7 items + Salir = 8: entran justo en 4 columnas x 2 filas.
+          sticky (y no fixed) para que ocupe su lugar y no tape el contenido. */}
+      <nav className="md:hidden sticky top-0 bg-card border-b border-border z-50 shadow-sm">
         <div className="grid grid-cols-4">
           {items.map((item) => {
             const Icon = item.icon

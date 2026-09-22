@@ -69,8 +69,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     <>
       <Navigation />
       {/* text-white: todo lo que va directo sobre el lienzo teal. Las tarjetas
-          se protegen solas con text-card-foreground, asi que su texto sigue oscuro. */}
-      <main className="min-h-screen bg-background pb-24 md:pb-0">{children}</main>
+          se protegen solas con text-card-foreground, asi que su texto sigue oscuro.
+          Sin relleno abajo: la barra mobile ahora va arriba y es sticky. */}
+      <main className="min-h-screen bg-background">{children}</main>
     </>
   )
 }
