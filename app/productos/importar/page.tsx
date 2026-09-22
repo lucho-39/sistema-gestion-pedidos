@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
 import { parseExcelToProductos } from "@/lib/excel-parser"
 import { ImportarTabs } from "@/components/importar-tabs"
-import type { ProductoNuevo } from "@/lib/types"
+import type { Producto, ProductoNuevo } from "@/lib/types"
 
 export default function ImportarProductosPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -242,49 +242,96 @@ export default function ImportarProductosPage() {
         (p.articulo_numero ? existingNumbers.has(p.articulo_numero) : false) ||
         (p.producto_codigo ? existingCodigos.has(p.producto_codigo) : false)
 
+      // Para actualizar el precio de los que ya existen hace falta su id.
+      const idPorCodigo = new Map<string, number>()
+      const idPorArticulo = new Map<string, number>()
+      for (const p of existingProducts) {
+        if (p.producto_codigo) idPorCodigo.set(p.producto_codigo, p.producto_id)
+        if (p.articulo_numero) idPorArticulo.set(p.articulo_numero, p.producto_id)
+      }
+
+      const idExistente = (p: ProductoNuevo): number | null =>
+        (p.producto_codigo ? idPorCodigo.get(p.producto_codigo) : undefined) ??
+        (p.articulo_numero ? idPorArticulo.get(p.articulo_numero) : undefined) ??
+        null
+
       const duplicates = importedProducts.filter(esDuplicado)
+      const newProducts = importedProducts.filter((p) => !esDuplicado(p))
+
+      // Los que ya existen no se reinsertan, pero si el archivo informa precio (o
+      // que el producto esta sin stock), se actualizan: re-subir la lista es la
+      // forma de refrescar precios y disponibilidad.
+      const datosAActualizar = duplicates
+        .filter((p) => p.precio_venta != null || p.sin_stock === true)
+        .map((p) => ({
+          id: idExistente(p),
+          precio: p.precio_venta ?? null,
+          sinStock: p.sin_stock === true,
+        }))
+        .filter((x): x is { id: number; precio: number | null; sinStock: boolean } => x.id !== null)
 
       if (duplicates.length > 0) {
-        const duplicateNumbers = duplicates.map((p) => p.articulo_numero || p.producto_codigo).join(", ")
         toast({
-          title: "Productos duplicados encontrados",
-          description: `Los siguientes ya existen (por número de artículo o por código): ${duplicateNumbers}. Se omitirán estos productos.`,
-          variant: "destructive",
+          title: "Productos ya existentes",
+          description:
+            datosAActualizar.length > 0
+              ? `${duplicates.length} ya estaban en el sistema y se omiten. A ${datosAActualizar.length} de ellos se les actualiza el precio y el stock.`
+              : `${duplicates.length} ya estaban en el sistema y se omiten.`,
         })
       }
 
-      const newProducts = importedProducts.filter((p) => !esDuplicado(p))
-
-      if (newProducts.length === 0) {
+      if (newProducts.length === 0 && datosAActualizar.length === 0) {
         toast({
-          title: "Sin productos nuevos",
-          description: "Todos los productos del archivo ya existen en el sistema",
+          title: "Sin novedades",
+          description: "Todos los productos del archivo ya existen y ninguno trae precio o stock para actualizar",
           variant: "destructive",
         })
         setIsLoading(false)
         return
       }
 
-      console.log(`Saving ${newProducts.length} new products...`)
+      // De a tandas, para no disparar cientos de pedidos de golpe.
+      let preciosActualizados = 0
+      const TANDA = 10
+      for (let i = 0; i < datosAActualizar.length; i += TANDA) {
+        const lote = datosAActualizar.slice(i, i + TANDA)
+        const resultados = await Promise.all(
+          lote.map((x) =>
+            Database.updateProducto(x.id, { precio_venta: x.precio, sin_stock: x.sinStock }),
+          ),
+        )
+        preciosActualizados += resultados.filter(Boolean).length
+      }
+      console.log(`Updated ${preciosActualizados} existing products`)
 
-      const productosParaInsertar = newProducts.map((p) => ({
-        articulo_numero: p.articulo_numero,
-        producto_codigo: p.producto_codigo || "",
-        descripcion: p.descripcion,
-        proveedor_id: p.proveedor_id,
-        categoria_id: p.categoria_id,
-        img_id: p.img_id,
-      }))
+      let createdProducts: Producto[] = []
 
-      console.log("Data to insert:", productosParaInsertar)
+      if (newProducts.length > 0) {
+        console.log(`Saving ${newProducts.length} new products...`)
 
-      const createdProducts = await Database.createProductos(productosParaInsertar)
-      console.log(`Created ${createdProducts.length} products`)
+        const productosParaInsertar = newProducts.map((p) => ({
+          articulo_numero: p.articulo_numero,
+          producto_codigo: p.producto_codigo || "",
+          descripcion: p.descripcion,
+          proveedor_id: p.proveedor_id,
+          categoria_id: p.categoria_id,
+          img_id: p.img_id,
+          precio_venta: p.precio_venta,
+          sin_stock: p.sin_stock ?? false,
+        }))
 
-      if (createdProducts.length > 0) {
+        createdProducts = await Database.createProductos(productosParaInsertar)
+        console.log(`Created ${createdProducts.length} products`)
+      }
+
+      if (createdProducts.length > 0 || preciosActualizados > 0) {
+        const partes: string[] = []
+        if (createdProducts.length > 0) partes.push(`${createdProducts.length} productos nuevos`)
+        if (preciosActualizados > 0) partes.push(`${preciosActualizados} precios actualizados`)
+
         toast({
-          title: "Productos importados",
-          description: `Se importaron ${createdProducts.length} productos nuevos exitosamente`,
+          title: "Importación lista",
+          description: `Se guardaron ${partes.join(" y ")}.`,
         })
 
         setImportedProducts([])

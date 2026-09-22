@@ -32,6 +32,8 @@ export default function EditarProductoPage() {
     categoria_id: "",
     img_id: "",
     proveedor_id: "",
+    precio_venta: "",
+    sin_stock: false,
   })
 
   useEffect(() => {
@@ -66,6 +68,8 @@ export default function EditarProductoPage() {
             categoria_id: loadedProducto.categoria_id.toString(),
             img_id: loadedProducto.img_id.toString(),
             proveedor_id: loadedProducto.proveedor_id.toString(),
+            precio_venta: loadedProducto.precio_venta != null ? String(loadedProducto.precio_venta) : "",
+            sin_stock: loadedProducto.sin_stock ?? false,
           })
         } else {
           toast({
@@ -125,6 +129,8 @@ export default function EditarProductoPage() {
         categoria_id: Number(formData.categoria_id),
         img_id: Number(formData.img_id),
         proveedor_id: Number(formData.proveedor_id),
+        precio_venta: formData.precio_venta ? Number(formData.precio_venta) : null,
+        sin_stock: formData.sin_stock,
       }
 
       const success = await Database.updateProducto(Number(params.id), updates)
@@ -283,6 +289,33 @@ export default function EditarProductoPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="precio_venta">Precio de venta</Label>
+                <Input
+                  id="precio_venta"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={formData.precio_venta}
+                  onChange={(e) => handleChange("precio_venta", e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  id="sin_stock"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-input accent-primary"
+                  checked={formData.sin_stock}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, sin_stock: e.target.checked }))}
+                />
+                <Label htmlFor="sin_stock" className="cursor-pointer">
+                  Sin stock
+                </Label>
               </div>
 
               <Button type="submit" disabled={isSaving} className="w-full">

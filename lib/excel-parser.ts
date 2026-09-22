@@ -13,6 +13,25 @@ function normalizar(texto: string): string {
     .trim()
 }
 
+/**
+ * Convierte el valor de una celda a numero, contemplando las dos formas en que
+ * puede venir un importe: 1233.76 (punto decimal) o 1.233,76 (formato local).
+ * Devuelve null si no hay nada usable, en vez de NaN.
+ */
+function aNumero(valor: unknown): number | null {
+  if (valor === null || valor === undefined || valor === "") return null
+  if (typeof valor === "number") return isNaN(valor) ? null : valor
+
+  const texto = String(valor).trim()
+  const normalizado =
+    texto.includes(",") && texto.includes(".")
+      ? texto.replace(/\./g, "").replace(",", ".")
+      : texto.replace(",", ".")
+
+  const n = Number(normalizado.replace(/[^0-9.-]/g, ""))
+  return isNaN(n) ? null : n
+}
+
 interface ExcelRow {
   [key: string]: unknown
 }
@@ -80,6 +99,7 @@ export async function parseExcelToProductos(
     proveedor: ["proveedor", "provider", "prov", "proveedor_id", "supplier"],
     categoria: ["categoría", "categoria", "category", "rubro"],
     imagen: ["img", "imagen", "image", "foto"],
+    precio: ["precio", "price", "costo", "importe"],
   }
 
   rows.forEach((row, index) => {
@@ -234,6 +254,23 @@ export async function parseExcelToProductos(
         }
       }
 
+      let precioValor: unknown = null
+      for (const key of Object.keys(row)) {
+        const keyLower = normalizar(key)
+        if (columnMappings.precio.some((mapping) => keyLower.includes(normalizar(mapping)))) {
+          const value = row[key]
+          if (value !== null && value !== undefined && value !== "") {
+            precioValor = value
+            break
+          }
+        }
+      }
+
+      const precioVenta = aNumero(precioValor)
+      // Ojo: en las listas un precio no numerico (" $-   ") es SIN STOCK, no un
+      // dato que falta. La celda vacia o ausente si es "todavia no cargado".
+      const sinStock = precioVenta === null && precioValor !== null && String(precioValor).trim() !== ""
+
       const producto: ProductoNuevo = {
         articulo_numero: articuloNumero,
         producto_codigo: productoCodigo,
@@ -241,6 +278,8 @@ export async function parseExcelToProductos(
         proveedor_id: proveedor.proveedor_id,
         categoria_id: categoria.id,
         img_id: imagen.id,
+        precio_venta: precioVenta,
+        sin_stock: sinStock,
         proveedor: proveedor,
         categoria: categoria,
         imagen: imagen,

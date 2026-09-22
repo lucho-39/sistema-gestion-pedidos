@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Database } from "@/lib/database"
-import type { Cliente, Producto, ProductoPedido } from "@/lib/types"
+import type { Categoria, Cliente, Producto, ProductoPedido } from "@/lib/types"
+import { coincideBusqueda, mapaDeCategorias, normalizar } from "@/lib/busqueda"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -21,6 +22,8 @@ export default function EditarPedidoPage() {
   const { toast } = useToast()
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
+  // Los rubros: hacen falta para que el buscador encuentre por categoria.
+  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -39,10 +42,11 @@ export default function EditarPedidoPage() {
     try {
       setIsLoading(true)
 
-      const [pedidoData, clientesData, productosData] = await Promise.all([
+      const [pedidoData, clientesData, productosData, categoriasData] = await Promise.all([
         Database.getPedidoById(Number(params.id)),
         Database.getClientes(),
         Database.getProductos(),
+        Database.getCategorias(),
       ])
 
       if (!pedidoData) {
@@ -57,6 +61,7 @@ export default function EditarPedidoPage() {
 
       setClientes(clientesData)
       setProductos(productosData)
+      setCategorias(categoriasData)
 
       setClienteId(pedidoData.cliente_id)
       setClienteSearch(pedidoData.cliente?.nombre || "")
@@ -100,11 +105,9 @@ export default function EditarPedidoPage() {
       (cliente.cliente_codigo || "").toString().includes(clienteSearch),
   )
 
-  const filteredProductos = productos.filter(
-    (producto) =>
-      (producto.descripcion || "").toLowerCase().includes(productoSearch.toLowerCase()) ||
-      (producto.articulo_numero || "").toString().includes(productoSearch) ||
-      (producto.producto_codigo || "").toLowerCase().includes(productoSearch.toLowerCase()),
+  const nombresCategoria = mapaDeCategorias(categorias)
+  const filteredProductos = productos.filter((producto) =>
+    coincideBusqueda(producto, normalizar(productoSearch), nombresCategoria),
   )
 
   const selectCliente = (cliente: Cliente) => {

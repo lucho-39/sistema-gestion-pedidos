@@ -28,6 +28,8 @@ export default function NuevoProductoPage() {
     descripcion: "",
     categoria_id: "",
     proveedor_id: "",
+    precio_venta: "",
+    sin_stock: false,
   })
 
   useEffect(() => {
@@ -144,6 +146,8 @@ export default function NuevoProductoPage() {
         categoria_id: Number(formData.categoria_id),
         img_id: imgId,
         proveedor_id: proveedor.proveedor_id,
+        precio_venta: formData.precio_venta ? Number(formData.precio_venta) : null,
+        sin_stock: formData.sin_stock,
       }
 
       const createdProducto = await Database.createProducto(nuevoProducto)
@@ -262,6 +266,36 @@ export default function NuevoProductoPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="precio_venta">Precio de venta</Label>
+                <Input
+                  id="precio_venta"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={formData.precio_venta}
+                  onChange={(e) => handleChange("precio_venta", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Opcional: si lo dejás vacío, se carga desde la lista del proveedor.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  id="sin_stock"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-input accent-primary"
+                  checked={formData.sin_stock}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, sin_stock: e.target.checked }))}
+                />
+                <Label htmlFor="sin_stock" className="cursor-pointer">
+                  Sin stock
+                </Label>
               </div>
 
               <Button type="submit" disabled={isLoading} className="w-full">

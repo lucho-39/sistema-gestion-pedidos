@@ -35,6 +35,15 @@ export interface Producto {
   categoria_id: number
   img_id: number
   proveedor_id: number
+  // Precio de VENTA: el precio final al publico. El de costo no viene en estos
+  // archivos.
+  precio_venta?: number | null
+  // En las listas, una celda de precio sin numero significa que el producto esta
+  // sin stock. Es distinto de "todavia no le cargue el precio".
+  sin_stock?: boolean
+  // Todos los rubros del producto, incluido el principal. Son caminos de
+  // busqueda: buscar "gas" tiene que encontrar el soplete.
+  categoria_ids?: number[] | null
   created_at?: string
   updated_at?: string
   categoria?: Categoria

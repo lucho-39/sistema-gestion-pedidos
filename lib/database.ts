@@ -30,6 +30,9 @@ interface FilaProducto {
   categoria_id: number
   img_id: number
   proveedor_id: number
+  precio_venta: number | null
+  sin_stock: boolean | null
+  categoria_ids: number[] | null
   created_at: string | null
   updated_at: string | null
 }
@@ -254,7 +257,7 @@ export class Database {
         const { data, error } = await supabase
           .from("productos")
           .select(
-            "producto_id, articulo_numero, producto_codigo, titulo, descripcion, categoria_id, img_id, proveedor_id, created_at, updated_at",
+            "producto_id, articulo_numero, producto_codigo, titulo, descripcion, categoria_id, img_id, proveedor_id, precio_venta, sin_stock, categoria_ids, created_at, updated_at",
           )
           .order("producto_id", { ascending: false })
           .range(desde, desde + TAMANO_PAGINA - 1)
@@ -329,6 +332,9 @@ export class Database {
           categoria_id: p.categoria_id,
           img_id: p.img_id,
           proveedor_id: p.proveedor_id,
+          precio_venta: p.precio_venta,
+          sin_stock: p.sin_stock ?? false,
+          categoria_ids: p.categoria_ids,
           created_at: p.created_at ?? undefined,
           updated_at: p.updated_at ?? undefined,
           categoria,
@@ -357,7 +363,7 @@ export class Database {
       const { data: productoData, error: productoError } = await supabase
         .from("productos")
         .select(
-          "producto_id, articulo_numero, producto_codigo, titulo, descripcion, categoria_id, img_id, proveedor_id, created_at, updated_at",
+          "producto_id, articulo_numero, producto_codigo, titulo, descripcion, categoria_id, img_id, proveedor_id, precio_venta, sin_stock, categoria_ids, created_at, updated_at",
         )
         .eq("producto_id", productoId)
         .single()
@@ -416,6 +422,9 @@ export class Database {
             categoria_id: producto.categoria_id,
             img_id: producto.img_id,
             proveedor_id: producto.proveedor_id,
+            precio_venta: producto.precio_venta ?? null,
+            sin_stock: producto.sin_stock ?? false,
+            categoria_ids: producto.categoria_ids ?? [producto.categoria_id],
           },
         ])
         .select()
@@ -447,6 +456,9 @@ export class Database {
       if (producto.categoria_id !== undefined) updateData.categoria_id = producto.categoria_id
       if (producto.img_id !== undefined) updateData.img_id = producto.img_id
       if (producto.proveedor_id !== undefined) updateData.proveedor_id = producto.proveedor_id
+      if (producto.precio_venta !== undefined) updateData.precio_venta = producto.precio_venta
+      if (producto.sin_stock !== undefined) updateData.sin_stock = producto.sin_stock
+      if (producto.categoria_ids !== undefined) updateData.categoria_ids = producto.categoria_ids
 
       const { error } = await supabase.from("productos").update(updateData).eq("producto_id", productoId)
 
@@ -488,6 +500,9 @@ export class Database {
         categoria_id: p.categoria_id,
         img_id: p.img_id,
         proveedor_id: p.proveedor_id,
+        precio_venta: p.precio_venta ?? null,
+        sin_stock: p.sin_stock ?? false,
+        categoria_ids: p.categoria_ids ?? [p.categoria_id],
       }))
 
       const { data, error } = await supabase.from("productos").insert(insertData).select()

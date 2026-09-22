@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
-import type { Cliente, Producto } from "@/lib/types"
+import type { Categoria, Cliente, Producto } from "@/lib/types"
+import { coincideBusqueda, mapaDeCategorias, normalizar } from "@/lib/busqueda"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
@@ -21,6 +22,8 @@ export default function NuevoPedidoPage() {
   const { toast } = useToast()
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [productos, setProductos] = useState<Producto[]>([])
+  // Los rubros: hacen falta para que el buscador encuentre por categoria.
+  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null)
   const [busquedaCliente, setBusquedaCliente] = useState("")
   const [mostrarListaClientes, setMostrarListaClientes] = useState(false)
@@ -37,9 +40,14 @@ export default function NuevoPedidoPage() {
     const loadData = async () => {
       try {
         setIsLoading(true)
-        const [loadedClientes, loadedProductos] = await Promise.all([Database.getClientes(), Database.getProductos()])
+        const [loadedClientes, loadedProductos, loadedCategorias] = await Promise.all([
+          Database.getClientes(),
+          Database.getProductos(),
+          Database.getCategorias(),
+        ])
         setClientes(loadedClientes)
         setProductos(loadedProductos)
+        setCategorias(loadedCategorias)
       } catch (error) {
         console.error("Error loading data:", error)
         toast({
@@ -195,11 +203,9 @@ export default function NuevoPedidoPage() {
     setProductosSeleccionados((prev) => prev.filter((p) => p.producto_id !== productoId))
   }
 
-  const productosFiltrados = productos.filter(
-    (producto) =>
-      producto.descripcion.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
-      (producto.producto_codigo || "").toLowerCase().includes(busquedaProducto.toLowerCase()) ||
-      (producto.articulo_numero ?? "").toString().includes(busquedaProducto),
+  const nombresCategoria = mapaDeCategorias(categorias)
+  const productosFiltrados = productos.filter((producto) =>
+    coincideBusqueda(producto, normalizar(busquedaProducto), nombresCategoria),
   )
 
   // Filtrar clientes basado en la búsqueda - CORREGIDO para manejar tipos correctamente

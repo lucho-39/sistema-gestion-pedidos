@@ -92,6 +92,65 @@ describe("parseExcelToProductos", () => {
     })
   })
 
+  describe("precio de venta", () => {
+    it("lee el precio de la columna Precio", async () => {
+      const { productos, errores } = await parse([
+        { "Nº Artículo": "4001", Descripción: "Martillo", Precio: 6800 },
+      ])
+
+      expect(errores).toEqual([])
+      expect(productos[0].precio_venta).toBe(6800)
+    })
+
+    it("lee el precio con decimales en formato local", async () => {
+      const { productos } = await parse([
+        { "Nº Artículo": "4002", Descripción: "Pinza", Precio: "1.233,76" },
+      ])
+
+      expect(productos[0].precio_venta).toBe(1233.76)
+    })
+
+    it("deja el precio en null cuando el archivo no trae la columna", async () => {
+      const { productos, errores } = await parse([{ "Nº Artículo": "4003", Descripción: "Sin precio" }])
+
+      expect(errores).toEqual([])
+      expect(productos[0].precio_venta).toBeNull()
+    })
+
+    it("ignora la celda vacía en vez de guardar cero", async () => {
+      const { productos } = await parse([
+        { "Nº Artículo": "4004", Descripción: "Precio vacío", Precio: "" },
+      ])
+
+      expect(productos[0].precio_venta).toBeNull()
+    })
+
+    it("acepta el encabezado con espacio al final", async () => {
+      const { productos } = await parse([
+        { "Nº Artículo": "4005", Descripción: "Encabezado sucio", "precio ": 2500 },
+      ])
+
+      expect(productos[0].precio_venta).toBe(2500)
+    })
+
+    it("marca sin stock cuando la celda no trae un numero (lo usa el proveedor)", async () => {
+      const { productos, errores } = await parse([
+        { "Nº Artículo": "4006", Descripción: "Agotado", Precio: " $-   " },
+      ])
+
+      expect(errores).toEqual([])
+      expect(productos[0].precio_venta).toBeNull()
+      expect(productos[0].sin_stock).toBe(true)
+    })
+
+    it("no marca sin stock cuando el precio simplemente no esta cargado", async () => {
+      const { productos } = await parse([{ "Nº Artículo": "4007", Descripción: "Sin dato de precio" }])
+
+      expect(productos[0].precio_venta).toBeNull()
+      expect(productos[0].sin_stock).toBe(false)
+    })
+  })
+
   describe("número de artículo", () => {
     it("rechaza un artículo más largo que la columna VARCHAR(10)", async () => {
       const { productos, errores } = await parse([

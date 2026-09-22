@@ -10,8 +10,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Database as DB } from "@/lib/database"
-import type { Producto } from "@/lib/types"
+import type { Categoria, Producto } from "@/lib/types"
+import { coincideBusqueda, mapaDeCategorias, normalizar } from "@/lib/busqueda"
 import { useToast } from "@/hooks/use-toast"
+
+/** Importes en formato local: 6800 -> $ 6.800,00 */
+function formatearPrecio(valor: number): string {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 2,
+  }).format(valor)
+}
 
 function groupProductosByProveedor(productos: Producto[]): Map<string, Producto[]> {
   const grupos = new Map<string, Producto[]>()
@@ -49,6 +59,8 @@ export default function ProductosPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [needsSetup, setNeedsSetup] = useState(false)
   const [error, setError] = useState<string>("")
+  // Los rubros: hacen falta para que el buscador encuentre por categoria.
+  const [categorias, setCategorias] = useState<Categoria[]>([])
   const { toast } = useToast()
 
   useEffect(() => {
@@ -59,12 +71,13 @@ export default function ProductosPage() {
         setNeedsSetup(false)
         setError("")
 
-        const loadedProductos = await DB.getProductos()
+        const [loadedProductos, loadedCategorias] = await Promise.all([DB.getProductos(), DB.getCategorias()])
         console.log("Productos cargados:", loadedProductos.length)
         console.log("Primera muestra:", loadedProductos[0])
 
         setProductos(loadedProductos)
         setFilteredProductos(loadedProductos)
+        setCategorias(loadedCategorias)
       } catch (error) {
         console.error("Error loading productos:", error)
         const errorMessage = error instanceof Error ? error.message : "Error desconocido"
@@ -88,22 +101,16 @@ export default function ProductosPage() {
   }, [toast])
 
   useEffect(() => {
-    const termino = searchTerm.toLowerCase()
-    const filtered = productos.filter((producto) => {
-      const proveedor = producto.proveedor?.proveedor_nombre || "Sin proveedor"
-      if (proveedorActivo !== "todos" && proveedor !== proveedorActivo) return false
-
-      return (
-        producto.descripcion.toLowerCase().includes(termino) ||
-        (producto.producto_codigo && producto.producto_codigo.toLowerCase().includes(termino)) ||
-        (producto.articulo_numero && producto.articulo_numero.toString().includes(termino))
-      )
-    })
+    const termino = normalizar(searchTerm)
+    const nombres = mapaDeCategorias(categorias)
+    const filtered = productos.filter((producto) =>
+      coincideBusqueda(producto, termino, nombres, proveedorActivo === "todos" ? undefined : proveedorActivo),
+    )
     setFilteredProductos(filtered)
     // Al cambiar la busqueda o el proveedor se vuelve a empezar por la primera
     // tanda, si no el resultado nuevo aparece cortado.
     setVisibles(60)
-  }, [searchTerm, productos, proveedorActivo])
+  }, [searchTerm, productos, proveedorActivo, categorias])
 
   const handleDelete = async (productoId: number) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
@@ -382,9 +389,22 @@ export default function ProductosPage() {
                               {producto.articulo_numero && ` | #${producto.articulo_numero}`}
                             </CardTitle>
                             <p className="text-xs text-foreground mt-1 line-clamp-2">{producto.descripcion}</p>
-                            <p className="text-xs text-muted-foreground mt-1 truncate">
-                              Código: {producto.producto_codigo || "Sin código"}
-                            </p>
+                            <div className="mt-1 flex items-center gap-2">
+                              <p className="text-xs text-muted-foreground truncate">
+                                Código: {producto.producto_codigo || "Sin código"}
+                              </p>
+                              {producto.sin_stock ? (
+                                <p className="text-xs font-semibold text-destructive whitespace-nowrap">
+                                  Sin stock
+                                </p>
+                              ) : (
+                                producto.precio_venta != null && (
+                                  <p className="text-xs font-semibold text-foreground whitespace-nowrap">
+                                    {formatearPrecio(producto.precio_venta)}
+                                  </p>
+                                )
+                              )}
+                            </div>
                           </div>
                           <div className="flex gap-1 flex-shrink-0">
                             {!visitante && (
