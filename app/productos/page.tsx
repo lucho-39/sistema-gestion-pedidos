@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, Plus, Search, Edit, Trash2, Database, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -383,27 +384,38 @@ export default function ProductosPage() {
                     <Card key={producto.producto_id} className="hover:shadow-md transition-shadow">
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start gap-2">
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-sm font-medium truncate">
-                              ID: {producto.producto_id}
-                              {producto.articulo_numero && ` | #${producto.articulo_numero}`}
-                            </CardTitle>
-                            <p className="text-xs text-foreground mt-1 line-clamp-2">{producto.descripcion}</p>
-                            <div className="mt-1 flex items-center gap-2">
-                              <p className="text-xs text-muted-foreground truncate">
-                                Código: {producto.producto_codigo || "Sin código"}
-                              </p>
-                              {producto.sin_stock ? (
-                                <p className="text-xs font-semibold text-destructive whitespace-nowrap">
-                                  Sin stock
+                          <div className="flex min-w-0 flex-1 items-start gap-3">
+                            <Image
+                              src={producto.imagen?.url_img || "/placeholder.svg"}
+                              alt={producto.descripcion}
+                              width={56}
+                              height={56}
+                              unoptimized
+                              loading="lazy"
+                              className="h-14 w-14 shrink-0 rounded border border-border/50 bg-muted object-contain"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="text-sm font-medium truncate">
+                                ID: {producto.producto_id}
+                                {producto.articulo_numero && ` | #${producto.articulo_numero}`}
+                              </CardTitle>
+                              <p className="text-xs text-foreground mt-1 line-clamp-2">{producto.descripcion}</p>
+                              <div className="mt-1 flex items-center gap-2">
+                                <p className="text-xs text-muted-foreground truncate">
+                                  Código: {producto.producto_codigo || "Sin código"}
                                 </p>
-                              ) : (
-                                producto.precio_venta != null && (
-                                  <p className="text-xs font-semibold text-foreground whitespace-nowrap">
-                                    {formatearPrecio(producto.precio_venta)}
+                                {producto.sin_stock ? (
+                                  <p className="text-xs font-semibold text-destructive whitespace-nowrap">
+                                    Sin stock
                                   </p>
-                                )
-                              )}
+                                ) : (
+                                  producto.precio_venta != null && (
+                                    <p className="text-xs font-semibold text-foreground whitespace-nowrap">
+                                      {formatearPrecio(producto.precio_venta)}
+                                    </p>
+                                  )
+                                )}
+                              </div>
                             </div>
                           </div>
                           <div className="flex gap-1 flex-shrink-0">
