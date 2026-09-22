@@ -13,16 +13,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Database as DB } from "@/lib/database"
 import type { Categoria, Producto } from "@/lib/types"
 import { coincideBusqueda, mapaDeCategorias, normalizar } from "@/lib/busqueda"
+import { formatearPrecio } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-
-/** Importes en formato local: 6800 -> $ 6.800,00 */
-function formatearPrecio(valor: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 2,
-  }).format(valor)
-}
 
 function groupProductosByProveedor(productos: Producto[]): Map<string, Producto[]> {
   const grupos = new Map<string, Producto[]>()

@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, Save, Trash2, Search, ChevronDown, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,7 @@ import { Database } from "@/lib/database"
 import type { Categoria, Cliente, Producto } from "@/lib/types"
 import { coincideBusqueda, mapaDeCategorias, normalizar } from "@/lib/busqueda"
 import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
+import { cn, formatearPrecio } from "@/lib/utils"
 
 interface ProductoPedido extends Producto {
   cantidad: number
@@ -362,19 +363,39 @@ export default function NuevoPedidoPage() {
               </div>
 
               {busquedaProducto && (
-                <div className="max-h-40 overflow-y-auto space-y-2">
-                  {productosFiltrados.slice(0, 5).map((producto) => (
-                    <div
-                      key={producto.articulo_numero}
-                      className="p-2 border rounded cursor-pointer hover:bg-accent"
+                <div className="max-h-80 overflow-y-auto rounded-lg border border-border/60">
+                  {productosFiltrados.slice(0, 10).map((producto) => (
+                    <button
+                      key={producto.producto_id}
+                      type="button"
                       onClick={() => agregarProducto(producto)}
+                      className="flex w-full items-center gap-3 border-b border-border/40 p-2 text-left last:border-b-0 hover:bg-accent active:bg-accent"
                     >
-                      <p className="text-sm font-medium">
-                        {producto.articulo_numero ? `#${producto.articulo_numero}` : producto.producto_codigo} - {producto.descripcion}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{producto.producto_codigo}</p>
-                    </div>
+                      <Image
+                        src={producto.imagen?.url_img || "/placeholder.svg"}
+                        alt=""
+                        width={44}
+                        height={44}
+                        unoptimized
+                        className="h-11 w-11 shrink-0 rounded border border-border/50 bg-muted object-contain"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{producto.descripcion}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {producto.articulo_numero
+                            ? `#${producto.articulo_numero}`
+                            : producto.producto_codigo || "sin código"}
+                          {producto.sin_stock && <span className="ml-2 font-semibold text-destructive">Sin stock</span>}
+                        </p>
+                      </div>
+                      {producto.precio_venta != null && (
+                        <p className="shrink-0 text-sm font-semibold">{formatearPrecio(producto.precio_venta)}</p>
+                      )}
+                    </button>
                   ))}
+                  {productosFiltrados.length === 0 && (
+                    <p className="p-3 text-sm text-muted-foreground">No se encontraron productos</p>
+                  )}
                 </div>
               )}
             </CardContent>
