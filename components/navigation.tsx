@@ -138,10 +138,10 @@ export function Navigation() {
       </nav>
 
       {/* Mobile Navigation - Top Bar */}
-      {/* 7 items + Salir = 8: entran justo en 4 columnas x 2 filas.
-          sticky (y no fixed) para que ocupe su lugar y no tape el contenido. */}
-      <nav className="md:hidden sticky top-0 bg-card border-b border-border z-50 shadow-sm">
-        <div className="grid grid-cols-4">
+      {/* UNA fila con scroll horizontal: con 8 secciones, dos filas se comian
+          un sexto de la pantalla. Se desliza para ver las que quedan afuera. */}
+      <nav className="md:hidden sticky top-0 z-50 border-b border-border bg-card shadow-sm">
+        <div className="flex overflow-x-auto">
           {items.map((item) => {
             const Icon = item.icon
             return (
@@ -149,30 +149,27 @@ export function Navigation() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center space-y-1 py-2 transition-colors active:scale-95 touch-manipulation",
+                  "flex shrink-0 flex-col items-center justify-center gap-0.5 px-4 py-2 text-xs transition-colors active:scale-95 touch-manipulation",
                   isActive(item.href)
-                    ? "text-brand-700 bg-brand-50"
-                    : "text-foreground/75 hover:text-foreground hover:bg-brand-100",
+                    ? "bg-brand-100 font-semibold text-brand-700"
+                    : "text-foreground/75 hover:bg-brand-100",
                 )}
               >
-                <Icon className="h-6 w-6" />
-                <span className="text-[10px] font-medium leading-tight">{item.name}</span>
+                <Icon className="h-5 w-5" />
+                <span>{item.name}</span>
               </Link>
             )
           })}
           <button
             type="button"
             onClick={cerrarSesion}
-            className="flex flex-col items-center justify-center space-y-1 py-2 text-muted-foreground transition-colors active:scale-95 touch-manipulation hover:text-foreground hover:bg-accent"
+            className="flex shrink-0 flex-col items-center justify-center gap-0.5 px-4 py-2 text-xs text-foreground/75 transition-colors hover:bg-brand-100 active:scale-95 touch-manipulation"
           >
-            <LogOut className="h-6 w-6" />
-            <span className="text-[10px] font-medium leading-tight">Salir</span>
+            <LogOut className="h-5 w-5" />
+            <span>Salir</span>
           </button>
         </div>
       </nav>
-
-      {/* Mobile Bottom Padding - altura de la barra de dos filas */}
-      <div className="md:hidden h-32" />
     </>
   )
 }
