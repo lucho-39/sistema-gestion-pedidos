@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, Save, Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -273,6 +273,15 @@ export default function EditarProductoPage() {
                     ))}
                   </SelectContent>
                 </Select>
+
+                {/* Atajo para sacarle la foto al producto con la camara del
+                    telefono. Es lo que se usa en el mostrador. */}
+                <Link href={`/productos/foto/${params.id}`} className="mt-2 block">
+                  <Button type="button" variant="outline" size="sm" className="w-full">
+                    <Camera className="mr-2 h-4 w-4" />
+                    Sacar foto con el celular
+                  </Button>
+                </Link>
               </div>
 
               <div>
