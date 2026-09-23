@@ -180,14 +180,17 @@ export default function PedidosPage() {
             </p>
           </div>
 
-          <div className="relative w-full sm:max-w-md sm:flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Buscar por ID, cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 w-full"
-            />
+          {/* Centrado en el espacio libre, no pegado al titulo. */}
+          <div className="flex w-full items-center justify-center sm:flex-1">
+            <div className="relative w-full max-w-lg">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Buscar por ID, cliente..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11 w-full"
+              />
+            </div>
           </div>
 
           <Link href="/pedidos/nuevo" className="w-full sm:w-auto flex-shrink-0">

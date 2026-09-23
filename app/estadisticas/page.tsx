@@ -69,10 +69,11 @@ export default function EstadisticasPage() {
                 <CardDescription>Ordenados por cantidad de pedidos en los que aparecen</CardDescription>
               </div>
 
-              {/* Proveedor Filter */}
+              {/* Proveedor Filter: mismos colores que los botones de filtro de
+                  Productos, para que no parezca un titulo con un recuadro. */}
               <div className="w-full sm:w-64">
                 <Select value={selectedProveedor} onValueChange={setSelectedProveedor}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10 border-border bg-card text-card-foreground hover:bg-accent">
                     <SelectValue placeholder="Filtrar por proveedor" />
                   </SelectTrigger>
                   <SelectContent>
