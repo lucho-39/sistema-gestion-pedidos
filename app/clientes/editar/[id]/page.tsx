@@ -232,7 +232,7 @@ export default function EditarClientePage() {
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="w-full border border-border bg-card text-card-foreground hover:bg-brand-100"
+                className="w-full"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {isSaving ? "Guardando..." : "Guardar Cambios"}

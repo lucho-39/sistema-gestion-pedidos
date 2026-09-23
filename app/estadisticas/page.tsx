@@ -76,7 +76,7 @@ export default function EstadisticasPage() {
                   Va en el tono claro, que es el que la app usa para los controles. */}
               <div className="w-full sm:w-64">
                 <Select value={selectedProveedor} onValueChange={setSelectedProveedor}>
-                  <SelectTrigger className="h-10 border-border bg-brand-100 text-foreground hover:bg-brand-50">
+                  <SelectTrigger>
                     <SelectValue placeholder="Filtrar por proveedor" />
                   </SelectTrigger>
                   <SelectContent>

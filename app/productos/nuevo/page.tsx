@@ -301,7 +301,7 @@ export default function NuevoProductoPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full border border-border bg-card text-card-foreground hover:bg-brand-100"
+                className="w-full"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {isLoading ? "Guardando..." : "Guardar Producto"}

@@ -429,7 +429,7 @@ export default function EditarPedidoPage() {
             <Button
               type="submit"
               disabled={isSaving}
-              className="flex-1 border border-border bg-card text-card-foreground hover:bg-brand-100"
+              className="flex-1"
             >
               <Save className="h-4 w-4 mr-2" />
               {isSaving ? "Guardando..." : "Guardar Cambios"}
