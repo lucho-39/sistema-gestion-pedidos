@@ -177,30 +177,37 @@ export default function ProveedoresPage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-7xl mx-auto space-y-4">
-        <div className="flex items-center gap-3 py-2">
+        <div className="flex flex-wrap items-center gap-3 py-2">
           <Link href="/">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <h1 className="text-xl font-bold">Proveedores</h1>
-        </div>
 
-        <div className="flex gap-2">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar proveedores..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          {/* Igual que en Productos: buscador y boton dentro de la cabecera. En
+              pantalla chica bajan a su propia linea. */}
+          <div className="order-last flex w-full items-center justify-center gap-2 sm:order-none sm:w-auto sm:flex-1">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar proveedores..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Link href="/proveedores/nuevo">
+              <Button size="sm" className="whitespace-nowrap">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo
+              </Button>
+            </Link>
           </div>
-          <Link href="/proveedores/nuevo">
-            <Button size="sm">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </Link>
+
+          <Badge variant="secondary" className="whitespace-nowrap">
+            {searchTerm ? `${filteredProveedores.length} de ${proveedores.length}` : `${proveedores.length} proveedores`}
+          </Badge>
         </div>
 
         {filteredProveedores.length === 0 ? (

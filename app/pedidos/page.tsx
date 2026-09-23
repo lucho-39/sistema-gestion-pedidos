@@ -145,7 +145,7 @@ export default function PedidosPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background p-4 pb-24 md:pb-8">
+      <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background p-4 md:pb-8">
         <div className="max-w-6xl mx-auto w-full">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h1 className="text-2xl md:text-3xl font-bold">Pedidos</h1>
@@ -168,33 +168,34 @@ export default function PedidosPage() {
   const pedidosPorMes = groupPedidosByMonth(filteredPedidos)
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background p-4 pb-24 md:pb-8">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background p-4">
       <div className="max-w-6xl mx-auto w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="min-w-0 flex-1">
+        {/* Cabecera con el buscador adentro, igual que Productos, Clientes y
+            Proveedores. En pantalla chica los tres bloques se apilan. */}
+        <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-shrink-0">
             <h1 className="text-2xl md:text-3xl font-bold truncate">Pedidos</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
             </p>
           </div>
+
+          <div className="relative w-full sm:max-w-md sm:flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Buscar por ID, cliente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-11 w-full"
+            />
+          </div>
+
           <Link href="/pedidos/nuevo" className="w-full sm:w-auto flex-shrink-0">
             <Button className="w-full h-11 whitespace-nowrap">
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Pedido
             </Button>
           </Link>
-        </div>
-
-        <div className="mb-6 w-full">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Buscar por ID, cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 w-full max-w-md"
-            />
-          </div>
         </div>
 
         {filteredPedidos.length === 0 ? (

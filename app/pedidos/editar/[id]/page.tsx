@@ -212,7 +212,7 @@ export default function EditarPedidoPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-4 pb-24 md:pb-8">
+      <div className="min-h-screen bg-background p-4 md:pb-8">
         <div className="max-w-4xl mx-auto w-full">
           <div className="flex items-center gap-3 py-2 mb-6">
             <Link href="/pedidos">
@@ -231,7 +231,7 @@ export default function EditarPedidoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-24 md:pb-8">
+    <div className="min-h-screen bg-background p-4 md:pb-8">
       <div className="max-w-4xl mx-auto w-full">
         <div className="flex items-center gap-3 py-2 mb-6">
           <Link href="/pedidos">
