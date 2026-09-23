@@ -142,7 +142,11 @@ export default function NuevoProveedorPage() {
                 />
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full">
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full border border-border bg-card text-card-foreground hover:bg-brand-100"
+              >
                 <Save className="h-4 w-4 mr-2" />
                 {isLoading ? "Guardando..." : "Guardar Proveedor"}
               </Button>
