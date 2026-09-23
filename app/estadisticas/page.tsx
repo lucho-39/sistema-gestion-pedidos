@@ -69,11 +69,14 @@ export default function EstadisticasPage() {
                 <CardDescription>Ordenados por cantidad de pedidos en los que aparecen</CardDescription>
               </div>
 
-              {/* Proveedor Filter: mismos colores que los botones de filtro de
-                  Productos, para que no parezca un titulo con un recuadro. */}
+              {/* Proveedor Filter.
+                  Ojo con el color: los botones de filtro de Productos usan bg-card
+                  sobre el fondo de la pagina, pero este desplegable vive DENTRO de
+                  una tarjeta, que tambien es bg-card: pintado asi desaparecia.
+                  Va en el tono claro, que es el que la app usa para los controles. */}
               <div className="w-full sm:w-64">
                 <Select value={selectedProveedor} onValueChange={setSelectedProveedor}>
-                  <SelectTrigger className="h-10 border-border bg-card text-card-foreground hover:bg-accent">
+                  <SelectTrigger className="h-10 border-border bg-muted text-foreground hover:bg-card">
                     <SelectValue placeholder="Filtrar por proveedor" />
                   </SelectTrigger>
                   <SelectContent>
