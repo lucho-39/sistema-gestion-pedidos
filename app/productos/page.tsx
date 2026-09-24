@@ -393,7 +393,9 @@ export default function ProductosPage() {
                               </CardTitle>
                               <p className="text-xs text-foreground mt-1 line-clamp-2">{producto.descripcion}</p>
                               <div className="mt-1 flex items-center gap-2">
-                                <p className="text-xs text-muted-foreground truncate">
+                                {/* min-w-0: sin esto el texto largo no sabe encogerse
+                                    y el truncate lo deja en nada ("Cód."). */}
+                                <p className="min-w-0 text-xs text-muted-foreground truncate">
                                   Código: {producto.producto_codigo || "Sin código"}
                                 </p>
                               {/* El precio ES el dato de disponibilidad: si el
