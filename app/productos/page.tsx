@@ -396,17 +396,18 @@ export default function ProductosPage() {
                                 <p className="text-xs text-muted-foreground truncate">
                                   Código: {producto.producto_codigo || "Sin código"}
                                 </p>
-                                {producto.sin_stock ? (
-                                  <p className="text-xs font-semibold text-destructive whitespace-nowrap">
-                                    Sin stock
-                                  </p>
-                                ) : (
-                                  producto.precio_venta != null && (
-                                    <p className="text-xs font-semibold text-foreground whitespace-nowrap">
-                                      {formatearPrecio(producto.precio_venta)}
-                                    </p>
-                                  )
-                                )}
+                              {/* El precio ES el dato de disponibilidad: si el
+                                  proveedor manda precio, tiene el producto. Si no
+                                  hay precio, no lo tiene. No se maneja stock fisico. */}
+                              {producto.precio_venta != null ? (
+                                <p className="text-xs font-semibold text-foreground whitespace-nowrap">
+                                  {formatearPrecio(producto.precio_venta)}
+                                </p>
+                              ) : (
+                                <p className="text-xs font-semibold text-destructive whitespace-nowrap">
+                                  Sin stock
+                                </p>
+                              )}
                               </div>
                             </div>
                           </div>

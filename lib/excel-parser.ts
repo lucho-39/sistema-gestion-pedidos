@@ -255,11 +255,13 @@ export async function parseExcelToProductos(
       }
 
       let precioValor: unknown = null
+      let hayColumnaDePrecio = false
       for (const key of Object.keys(row)) {
         const keyLower = normalizar(key)
         if (columnMappings.precio.some((mapping) => keyLower.includes(normalizar(mapping)))) {
+          hayColumnaDePrecio = true
           const value = row[key]
-          if (value !== null && value !== undefined && value !== "") {
+          if (value !== null && value !== undefined) {
             precioValor = value
             break
           }
@@ -267,9 +269,11 @@ export async function parseExcelToProductos(
       }
 
       const precioVenta = aNumero(precioValor)
-      // Ojo: en las listas un precio no numerico (" $-   ") es SIN STOCK, no un
-      // dato que falta. La celda vacia o ausente si es "todavia no cargado".
-      const sinStock = precioVenta === null && precioValor !== null && String(precioValor).trim() !== ""
+      // El precio es el dato de disponibilidad: si el archivo trae una columna de
+      // precio y la celda esta vacia (o no es un numero), el proveedor no tiene el
+      // producto. Ojo: si el archivo NO trae columna de precio, no se marca nada,
+      // porque no hay dato del que deducirlo.
+      const sinStock = hayColumnaDePrecio && precioVenta === null
 
       const producto: ProductoNuevo = {
         articulo_numero: articuloNumero,

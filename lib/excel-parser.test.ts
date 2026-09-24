@@ -117,12 +117,15 @@ describe("parseExcelToProductos", () => {
       expect(productos[0].precio_venta).toBeNull()
     })
 
-    it("ignora la celda vacía en vez de guardar cero", async () => {
+    it("marca sin stock cuando la celda de precio esta vacia", async () => {
       const { productos } = await parse([
         { "Nº Artículo": "4004", Descripción: "Precio vacío", Precio: "" },
       ])
 
       expect(productos[0].precio_venta).toBeNull()
+      // Hay precio = hay stock. Si el archivo trae la columna de precio y la celda
+      // esta vacia, el proveedor no tiene el producto.
+      expect(productos[0].sin_stock).toBe(true)
     })
 
     it("acepta el encabezado con espacio al final", async () => {
@@ -143,10 +146,11 @@ describe("parseExcelToProductos", () => {
       expect(productos[0].sin_stock).toBe(true)
     })
 
-    it("no marca sin stock cuando el precio simplemente no esta cargado", async () => {
+    it("no marca sin stock cuando el archivo no trae columna de precio", async () => {
       const { productos } = await parse([{ "Nº Artículo": "4007", Descripción: "Sin dato de precio" }])
 
       expect(productos[0].precio_venta).toBeNull()
+      // Sin columna de precio no hay dato del que deducir disponibilidad.
       expect(productos[0].sin_stock).toBe(false)
     })
   })
