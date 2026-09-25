@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { ReportScheduler } from "@/lib/report-scheduler"
+import { Database } from "@/lib/database"
 
 // Nunca se cachea: cada llamada tiene que mirar los pedidos del momento.
 export const dynamic = "force-dynamic"
@@ -21,6 +22,18 @@ export async function GET(request: Request) {
   }
 
   try {
+    // El boton "Detener Sistema" de la pantalla escribe esto. Si esta detenido,
+    // los pedidos se acumulan: no se pierde ninguno, salen todos juntos cuando
+    // se reactive.
+    const activo = await Database.getConfiguracion("reportes_activos")
+    if (activo === "false") {
+      return NextResponse.json({
+        ok: true,
+        generado: false,
+        motivo: "El sistema de reportes esta detenido",
+      })
+    }
+
     const reporte = await ReportScheduler.generateAutomaticReport()
 
     if (!reporte) {

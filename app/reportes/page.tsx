@@ -108,8 +108,15 @@ export default function ReportesPage() {
     }
   }, [loadReportes, toast])
 
-  const initializeScheduler = () => {
-    reportAutoScheduler.start()
+  const initializeScheduler = async () => {
+    // El estado real vive en la base: si el sistema estaba detenido, el servidor
+    // no genera reportes aunque el navegador diga otra cosa.
+    const activo = await Database.getConfiguracion("reportes_activos")
+    if (activo === "false") {
+      reportAutoScheduler.stop()
+    } else {
+      reportAutoScheduler.start()
+    }
     setSchedulerStatus(reportAutoScheduler.getStatus())
   }
 
@@ -119,11 +126,24 @@ export default function ReportesPage() {
     }
   }
 
-  const toggleScheduler = () => {
-    if (schedulerStatus.isRunning) {
+  const toggleScheduler = async () => {
+    const detener = schedulerStatus.isRunning
+
+    if (detener) {
       reportAutoScheduler.stop()
     } else {
       reportAutoScheduler.start()
+    }
+
+    // El reporte automatico ahora lo genera el servidor, asi que el estado tiene
+    // que quedar guardado donde el servidor lo lea, no solo en el navegador.
+    const guardado = await Database.setConfiguracion("reportes_activos", detener ? "false" : "true")
+    if (!guardado) {
+      toast({
+        title: "No se pudo guardar el estado",
+        description: "El reporte automatico del servidor sigue funcionando como estaba.",
+        variant: "destructive",
+      })
     }
   }
 

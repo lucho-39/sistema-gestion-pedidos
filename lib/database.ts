@@ -1021,6 +1021,41 @@ export class Database {
   }
 
   // ============================================
+  // CONFIGURACION
+  // ============================================
+  // Estado del sistema que tiene que ver tambien el servidor. Hoy se usa para
+  // saber si el reporte automatico esta activo o detenido.
+  static async getConfiguracion(clave: string): Promise<string | null> {
+    try {
+      if (!isSupabaseConfigured()) return null
+      const { data, error } = await supabase
+        .from("configuracion")
+        .select("valor")
+        .eq("clave", clave)
+        .maybeSingle()
+      if (error) throw error
+      return data?.valor ?? null
+    } catch (error) {
+      console.error("Error leyendo la configuracion:", error)
+      return null
+    }
+  }
+
+  static async setConfiguracion(clave: string, valor: string): Promise<boolean> {
+    try {
+      if (!isSupabaseConfigured()) return false
+      const { error } = await supabase
+        .from("configuracion")
+        .upsert({ clave, valor, updated_at: new Date().toISOString() }, { onConflict: "clave" })
+      if (error) throw error
+      return true
+    } catch (error) {
+      console.error("Error guardando la configuracion:", error)
+      return false
+    }
+  }
+
+  // ============================================
   // REPORTES
   // ============================================
   // Los reportes van a la base, no al navegador: asi quedan disponibles desde
