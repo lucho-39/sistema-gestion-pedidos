@@ -1023,25 +1023,56 @@ export class Database {
   // ============================================
   // REPORTES
   // ============================================
+  // Los reportes van a la base, no al navegador: asi quedan disponibles desde
+  // cualquier dispositivo y no se pierden al limpiar los datos del navegador.
   static async getReportesAutomaticos(): Promise<ReporteAutomatico[]> {
     try {
-      const stored = localStorage.getItem("reportes_automaticos")
-      const reportes = stored ? JSON.parse(stored) : []
-      return reportes
+      if (!isSupabaseConfigured()) return []
+
+      const { data, error } = await supabase
+        .from("reportes")
+        .select("*")
+        .order("fecha_generacion", { ascending: false })
+
+      if (error) throw error
+
+      return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+        id: String(r.id),
+        tipo: r.tipo as ReporteAutomatico["tipo"],
+        fecha_generacion: String(r.fecha_generacion),
+        fecha_inicio_periodo: String(r.fecha_inicio_periodo),
+        fecha_fin_periodo: String(r.fecha_fin_periodo),
+        pedidos_incluidos: (r.pedidos_incluidos ?? []) as number[],
+        reportes: r.contenido as ReporteAutomatico["reportes"],
+        created_at: String(r.created_at),
+        updated_at: String(r.updated_at),
+      }))
     } catch (error) {
-      console.error("Error reading reportes from localStorage:", error)
+      console.error("Error leyendo los reportes:", error)
       return []
     }
   }
 
   static async createReporteAutomatico(reporte: ReporteAutomatico): Promise<ReporteAutomatico | null> {
     try {
-      const existing = await this.getReportesAutomaticos()
-      const updated = [reporte, ...existing]
-      localStorage.setItem("reportes_automaticos", JSON.stringify(updated))
+      if (!isSupabaseConfigured()) return null
+
+      const { error } = await supabase.from("reportes").insert([
+        {
+          id: reporte.id,
+          tipo: reporte.tipo,
+          fecha_generacion: reporte.fecha_generacion,
+          fecha_inicio_periodo: reporte.fecha_inicio_periodo,
+          fecha_fin_periodo: reporte.fecha_fin_periodo,
+          pedidos_incluidos: reporte.pedidos_incluidos,
+          contenido: reporte.reportes,
+        },
+      ])
+
+      if (error) throw error
       return reporte
     } catch (error) {
-      console.error("Error saving reporte to localStorage:", error)
+      console.error("Error guardando el reporte:", error)
       return null
     }
   }

@@ -16,17 +16,19 @@ export class ReportScheduler {
       console.log(`Encontrados ${pedidosSinReportar.length} pedidos sin reportar`)
 
       const now = new Date()
-      const lastWednesday = this.getLastWednesdayAt6PM()
-      const currentWednesday = this.getCurrentWednesdayAt6PM()
+      const desde = this.getPreviousCutoff()
+      const hasta = this.getCurrentCutoff()
 
       console.log("Período de reporte:")
-      console.log(`- Inicio: ${lastWednesday.toISOString()}`)
-      console.log(`- Fin: ${currentWednesday.toISOString()}`)
+      console.log(`- Inicio: ${desde.toISOString()}`)
+      console.log(`- Fin: ${hasta.toISOString()}`)
 
-      // Filtrar pedidos del período actual (desde último miércoles 18:00 hasta hoy 18:00)
+      // Solo los pedidos del período: desde el corte anterior hasta el corte
+      // vigente (miércoles 10:59 de Argentina). El reporte manual respeta la
+      // misma regla de corte que el automático.
       const pedidosDelPeriodo = pedidosSinReportar.filter((pedido) => {
         const fechaPedido = new Date(pedido.fecha_pedido)
-        const enPeriodo = fechaPedido >= lastWednesday && fechaPedido <= currentWednesday
+        const enPeriodo = fechaPedido >= desde && fechaPedido <= hasta
 
         if (enPeriodo) {
           console.log(`- Pedido ${pedido.pedido_id} incluido: ${fechaPedido.toISOString()}`)
@@ -50,8 +52,8 @@ export class ReportScheduler {
         id: `auto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         tipo: "automatico",
         fecha_generacion: now.toISOString(),
-        fecha_inicio_periodo: lastWednesday.toISOString(),
-        fecha_fin_periodo: currentWednesday.toISOString(),
+        fecha_inicio_periodo: desde.toISOString(),
+        fecha_fin_periodo: hasta.toISOString(),
         pedidos_incluidos: pedidosDelPeriodo.map((p) => p.pedido_id),
         reportes: {
           general: reporteGeneral,
@@ -96,7 +98,7 @@ export class ReportScheduler {
       console.log(`Generando reporte manual con ${pedidosSinReportar.length} pedidos`)
 
       const now = new Date()
-      const lastWednesday = this.getLastWednesdayAt6PM()
+      const lastWednesday = this.getPreviousCutoff()
 
       const pedidosParaReporte = pedidosSinReportar.filter((pedido) => {
         const fechaPedido = new Date(pedido.fecha_pedido)
@@ -156,93 +158,61 @@ export class ReportScheduler {
     }
   }
 
+  // El corte semanal es el miercoles a las 10:59 en Argentina, que son las
+  // 13:59 UTC. Se calcula en UTC a proposito: asi da el mismo instante en el
+  // navegador (que corre en hora local) y en el servidor (que corre en UTC).
+  // Argentina no cambia de horario, asi que el desfasaje es fijo.
+  private static readonly CORTE_HORA_UTC = 13
+  private static readonly CORTE_MINUTO_UTC = 59
+
   static shouldGenerateReport(): boolean {
-    const now = new Date()
-    const dayOfWeek = now.getDay()
-    const hour = now.getHours()
-    const minute = now.getMinutes()
-
-    // Miércoles (día 3) a las 18:00 (6:00 PM)
-    const isWednesday = dayOfWeek === 3
-    const isCorrectTime = hour === 18 && minute === 0
-
-    console.log(`Verificando si es momento de generar reporte:`)
-    console.log(`- Día actual: ${dayOfWeek} (${isWednesday ? "Miércoles ✓" : "No es miércoles"})`)
-    console.log(`- Hora actual: ${hour}:${minute} (${isCorrectTime ? "18:00 ✓" : "No es 18:00"})`)
-
-    return isWednesday && isCorrectTime
+    const ahora = new Date()
+    const corte = this.getCurrentCutoff()
+    // El cron pasa una vez por minuto cerca del corte; si por lo que sea corre
+    // unos segundos despues, igual cuenta.
+    const diff = ahora.getTime() - corte.getTime()
+    return diff >= 0 && diff < 120_000
   }
 
+  /** El corte vigente: el ultimo miercoles 10:59 (13:59 UTC) que ya paso. */
+  static getCurrentCutoff(): Date {
+    const ahora = new Date()
+    const corte = new Date(ahora)
+    corte.setUTCHours(this.CORTE_HORA_UTC, this.CORTE_MINUTO_UTC, 0, 0)
+
+    // Cuantos dias retroceder para caer en el miercoles del corte.
+    const atras = (ahora.getUTCDay() + 7 - 3) % 7
+    corte.setUTCDate(corte.getUTCDate() - atras)
+
+    // Si el corte de esta semana todavia no llego, el vigente es el anterior.
+    if (corte.getTime() > ahora.getTime()) corte.setUTCDate(corte.getUTCDate() - 7)
+
+    return corte
+  }
+
+  /** El corte anterior: donde arranca el periodo que se reporta. */
+  static getPreviousCutoff(): Date {
+    const anterior = this.getCurrentCutoff()
+    anterior.setUTCDate(anterior.getUTCDate() - 7)
+    return anterior
+  }
+
+  /** El proximo corte, para mostrar cuanto falta. */
+  static getNextCutoff(): Date {
+    const proximo = this.getCurrentCutoff()
+    proximo.setUTCDate(proximo.getUTCDate() + 7)
+    return proximo
+  }
+
+  /** Se mantiene para no romper llamadas existentes. */
   static getNextWednesday(): Date {
-    const now = new Date()
-    const dayOfWeek = now.getDay()
-
-    let daysUntilWednesday: number
-
-    if (dayOfWeek === 3) {
-      const currentHour = now.getHours()
-
-      if (currentHour >= 18) {
-        daysUntilWednesday = 7
-      } else {
-        daysUntilWednesday = 0
-      }
-    } else if (dayOfWeek < 3) {
-      daysUntilWednesday = 3 - dayOfWeek
-    } else {
-      daysUntilWednesday = 7 - dayOfWeek + 3
-    }
-
-    const nextWednesday = new Date(now)
-    nextWednesday.setDate(now.getDate() + daysUntilWednesday)
-    nextWednesday.setHours(18, 0, 0, 0)
-
-    return nextWednesday
-  }
-
-  static getLastWednesdayAt6PM(): Date {
-    const now = new Date()
-    const dayOfWeek = now.getDay()
-    const currentHour = now.getHours()
-
-    let daysAgo: number
-
-    if (dayOfWeek === 3) {
-      if (currentHour < 18) {
-        daysAgo = 7
-      } else {
-        daysAgo = 0
-      }
-    } else if (dayOfWeek > 3) {
-      daysAgo = dayOfWeek - 3
-    } else {
-      daysAgo = dayOfWeek + 4
-    }
-
-    const lastWednesday = new Date(now)
-    lastWednesday.setDate(now.getDate() - daysAgo)
-    lastWednesday.setHours(18, 1, 0, 0)
-
-    return lastWednesday
-  }
-
-  static getCurrentWednesdayAt6PM(): Date {
-    const now = new Date()
-    const dayOfWeek = now.getDay()
-
-    if (dayOfWeek === 3) {
-      const currentWednesday = new Date(now)
-      currentWednesday.setHours(18, 0, 0, 0)
-      return currentWednesday
-    } else {
-      return this.getNextWednesday()
-    }
+    return this.getNextCutoff()
   }
 
   static getTimeUntilNextReport(): { days: number; hours: number; minutes: number } {
-    const now = new Date()
-    const nextReport = this.getNextWednesday()
-    const diff = nextReport.getTime() - now.getTime()
+    const ahora = new Date()
+    const proximo = this.getNextCutoff()
+    const diff = proximo.getTime() - ahora.getTime()
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
