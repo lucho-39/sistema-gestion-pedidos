@@ -2,9 +2,14 @@ import { createClient } from "@supabase/supabase-js"
 
 // Use placeholder values during build time if env vars are not available
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co"
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key"
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// En el servidor (la ruta que dispara el cron) se usa la clave de servicio, que
+// puede escribir sin pasar por RLS. En el navegador esa variable no existe —las
+// variables sin NEXT_PUBLIC_ no viajan al cliente— asi que cae a la publica.
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key"
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Helper function to check if Supabase is properly configured
 export function isSupabaseConfigured(): boolean {
