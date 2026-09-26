@@ -184,8 +184,15 @@ export class ReportScheduler {
     const atras = (ahora.getUTCDay() + 7 - 3) % 7
     corte.setUTCDate(corte.getUTCDate() - atras)
 
-    // Si el corte de esta semana todavia no llego, el vigente es el anterior.
-    if (corte.getTime() > ahora.getTime()) corte.setUTCDate(corte.getUTCDate() - 7)
+    // Tolerancia de una hora: en el plan Hobby los cron de Vercel corren en
+    // cualquier momento dentro de la hora programada. Si el reporte sale a las
+    // 13:05, el corte de hoy a las 13:59 todavia "no paso" y el periodo se iria
+    // a la semana anterior, dejando el reporte vacio sin ningun error visible.
+    // Un corte que cae dentro de la proxima hora se toma como el vigente.
+    const tolerancia = 60 * 60 * 1000
+    if (corte.getTime() > ahora.getTime() + tolerancia) {
+      corte.setUTCDate(corte.getUTCDate() - 7)
+    }
 
     return corte
   }
