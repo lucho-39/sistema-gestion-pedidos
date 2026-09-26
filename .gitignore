@@ -32,3 +32,6 @@ next-env.d.ts
 
 # gentle-ai generated skill registry (contains machine-specific absolute paths)
 .atl/
+
+# fotos de pedidos en papel: traen datos de clientes, no van al repositorio
+pedidos-viejos/
