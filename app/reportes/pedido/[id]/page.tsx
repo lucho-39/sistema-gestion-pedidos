@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { ArrowLeft, User, Calendar, Package, Truck } from "lucide-react"
+import { ArrowLeft, Edit, User, Calendar, Package, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -60,7 +60,7 @@ export default function DetallePedidoPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-4">
-        <div className="max-w-md mx-auto space-y-4">
+        <div className="max-w-4xl mx-auto space-y-4">
           <div className="flex items-center gap-3 py-2">
             <Link href="/pedidos">
               <Button variant="ghost" size="sm">
@@ -80,7 +80,7 @@ export default function DetallePedidoPage() {
   if (!pedido) {
     return (
       <div className="min-h-screen bg-background p-4">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 py-2">
             <Link href="/pedidos">
               <Button variant="ghost" size="sm">
@@ -107,14 +107,20 @@ export default function DetallePedidoPage() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-md mx-auto space-y-4">
-        <div className="flex items-center gap-3 py-2">
+      <div className="max-w-4xl mx-auto space-y-4">
+        <div className="flex flex-wrap items-center gap-3 py-2">
           <Link href="/pedidos">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <h1 className="text-xl font-bold">Pedido #{pedido.pedido_id}</h1>
+          <Link href={`/pedidos/editar/${pedido.pedido_id}`} className="ml-auto">
+            <Button size="sm" className="h-9">
+              <Edit className="h-4 w-4 mr-2" />
+              Editar Pedido
+            </Button>
+          </Link>
         </div>
 
         <Card>
@@ -167,32 +173,34 @@ export default function DetallePedidoPage() {
               Productos del Pedido
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent>
             {pedido.productos && pedido.productos.length > 0 ? (
-              pedido.productos.map((producto, index) => (
-                <div key={index} className="border rounded-lg p-3 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">
-                        #{producto.articulo_numero} - {producto.producto?.descripcion || "Descripción no disponible"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Código: {producto.producto?.producto_codigo || "Sin código"}
-                      </p>
+              <div className="grid gap-3 md:grid-cols-2">
+                {pedido.productos.map((producto, index) => (
+                  <div key={index} className="border rounded-lg p-3 space-y-2 min-w-0">
+                    <div className="flex justify-between items-start gap-2 min-w-0">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm break-words">
+                          #{producto.articulo_numero} - {producto.producto?.descripcion || "Descripción no disponible"}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          Código: {producto.producto?.producto_codigo || "Sin código"}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="flex-shrink-0">
+                        {producto.cantidad || 0} {producto.producto?.categoria?.unidad || "unidad"}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="ml-2">
-                      {producto.cantidad || 0} {producto.producto?.categoria?.unidad || "unidad"}
-                    </Badge>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                      <Truck className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">
+                        {producto.producto?.proveedor?.proveedor_id || "N/A"} -{" "}
+                        {producto.producto?.proveedor?.proveedor_nombre || "Proveedor no disponible"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Truck className="h-3 w-3" />
-                    <span>
-                      {producto.producto?.proveedor?.proveedor_id || "N/A"} -{" "}
-                      {producto.producto?.proveedor?.proveedor_nombre || "Proveedor no disponible"}
-                    </span>
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
               <div className="text-center py-4 text-muted-foreground">
                 <p>No hay productos en este pedido</p>
