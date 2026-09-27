@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { TimelineScrubber } from "@/components/timeline-scrubber"
 import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
 import type { Pedido } from "@/lib/types"
@@ -220,8 +221,8 @@ export default function PedidosPage() {
           </Card>
         ) : (
           <>
-            {pedidosPorMes.map(([mes, pedidosDelMes]) => (
-              <div key={mes} className="mb-8">
+            {pedidosPorMes.map(([mes, pedidosDelMes], index) => (
+              <div key={mes} id={`mes-${index}`} className="mb-8 scroll-mt-24">
                 <h2 className="text-xl font-semibold text-foreground mb-4 capitalize">{mes}</h2>
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full">
                   {pedidosDelMes.map((pedido) => (
@@ -311,6 +312,14 @@ export default function PedidosPage() {
                 </div>
               </div>
             ))}
+
+            {/* Barra cronológica lateral para saltar entre meses */}
+            <TimelineScrubber
+              items={pedidosPorMes.map(([mes], index) => ({
+                id: `mes-${index}`,
+                label: mes,
+              }))}
+            />
 
             {searchTerm && filteredPedidos.length > 0 && (
               <div className="mt-6 text-center">
