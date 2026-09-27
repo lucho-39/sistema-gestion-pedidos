@@ -199,9 +199,9 @@ export function TimelineScrubber({ items }: TimelineScrubberProps) {
         className="flex h-[70vh] min-h-[260px] max-h-[720px] cursor-pointer touch-none flex-col items-end justify-between py-1 pr-1"
       >
         {items.map((item, index) => (
-          <div key={item.id} className="relative flex w-full items-center justify-end">
-            {/* Nombre del mes al pasar el mouse (solo desktop) */}
-            <span className="pointer-events-none absolute right-full mr-2 hidden whitespace-nowrap rounded bg-card px-1.5 py-0.5 text-[11px] font-medium text-brand-700 opacity-0 shadow-sm ring-1 ring-border transition-opacity duration-150 group-hover:opacity-100 md:block">
+          <div key={item.id} className="group/tick relative flex w-full items-center justify-end">
+            {/* Nombre del mes de ESTA marca, solo al pasar el mouse por encima (desktop) */}
+            <span className="pointer-events-none absolute right-full mr-2 hidden whitespace-nowrap rounded bg-card px-1.5 py-0.5 text-[11px] font-medium text-brand-700 opacity-0 shadow-sm ring-1 ring-border transition-opacity duration-150 group-hover/tick:opacity-100 md:block">
               {item.label}
             </span>
             <span
