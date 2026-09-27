@@ -12,6 +12,10 @@ import { useToast } from "@/hooks/use-toast"
 import { Database } from "@/lib/database"
 import type { Pedido } from "@/lib/types"
 
+// Abreviaturas para la barra cronológica ("ago-2026"): fijas para que no
+// dependan del locale del navegador.
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+
 export default function PedidosPage() {
   const { toast } = useToast()
   const [pedidos, setPedidos] = useState<Pedido[]>([])
@@ -116,6 +120,14 @@ export default function PedidosPage() {
     } catch {
       return "Fecha no válida"
     }
+  }
+
+  // Etiqueta corta para la barra cronológica: "ago-2026".
+  const mesCorto = (dateString: string) => {
+    const d = new Date(dateString)
+    if (Number.isNaN(d.getTime())) return ""
+    const mes = MESES_CORTOS[d.getUTCMonth()] || ""
+    return mes ? `${mes}-${d.getUTCFullYear()}` : ""
   }
 
   const calcularTotalProductos = (pedido: Pedido) => {
@@ -315,9 +327,9 @@ export default function PedidosPage() {
 
             {/* Barra cronológica lateral para saltar entre meses */}
             <TimelineScrubber
-              items={pedidosPorMes.map(([mes], index) => ({
+              items={pedidosPorMes.map(([, pedidosDelMes], index) => ({
                 id: `mes-${index}`,
-                label: mes,
+                label: mesCorto(pedidosDelMes[0]?.fecha_pedido ?? ""),
               }))}
             />
 

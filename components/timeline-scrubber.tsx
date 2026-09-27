@@ -182,7 +182,7 @@ export function TimelineScrubber({ items }: TimelineScrubberProps) {
         aria-hidden={!showLabel}
         style={{ top: `${activePct}%` }}
         className={cn(
-          "pointer-events-none absolute right-full z-10 mr-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-brand-600 px-2.5 py-1 text-xs font-medium capitalize text-white shadow-md transition-opacity duration-500",
+          "pointer-events-none absolute right-full z-10 mr-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-brand-600 px-2.5 py-1 text-xs font-medium text-white shadow-md transition-opacity duration-500",
           showLabel ? "opacity-100" : "opacity-0",
         )}
       >
@@ -196,12 +196,12 @@ export function TimelineScrubber({ items }: TimelineScrubberProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
-        className="flex h-[42vh] min-h-[160px] max-h-[360px] cursor-pointer touch-none flex-col items-end justify-between py-1 pr-1"
+        className="flex h-[70vh] min-h-[260px] max-h-[720px] cursor-pointer touch-none flex-col items-end justify-between py-1 pr-1"
       >
         {items.map((item, index) => (
           <div key={item.id} className="relative flex w-full items-center justify-end">
             {/* Nombre del mes al pasar el mouse (solo desktop) */}
-            <span className="pointer-events-none absolute right-full mr-2 hidden whitespace-nowrap rounded bg-card px-1.5 py-0.5 text-[11px] font-medium capitalize text-brand-700 opacity-0 shadow-sm ring-1 ring-border transition-opacity duration-150 group-hover:opacity-100 md:block">
+            <span className="pointer-events-none absolute right-full mr-2 hidden whitespace-nowrap rounded bg-card px-1.5 py-0.5 text-[11px] font-medium text-brand-700 opacity-0 shadow-sm ring-1 ring-border transition-opacity duration-150 group-hover:opacity-100 md:block">
               {item.label}
             </span>
             <span
